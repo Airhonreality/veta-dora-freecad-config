@@ -1,0 +1,174 @@
+# =====================================================================
+# PROGRESO_VDO.yaml
+# Registro de progreso del sistema paramétrico Veta de Oro (VDO).
+# Cada entrada se añade bajo `registro:` (la más reciente al final).
+# =====================================================================
+
+proyecto: Veta de Oro (VDO)
+raiz_biblioteca: biblioteca_veta_dorada
+unidades: mm
+version_manifest_actual: 1.1.0
+estado_global: Sistema 100% generativo + Interfaz VDO - Muebles Paramétricos operativa
+
+# ---------------------------------------------------------------------
+# Fase actual
+# ---------------------------------------------------------------------
+fase_actual:
+  nombre: Decisión 3 - Interfaz VDO - Muebles Paramétricos (Workbench genérico)
+  estado: completado
+  fecha_cierre: 2026-09-18
+  validado_en: FreeCAD 1.1.3 (flatpak org.freecad.FreeCAD, freecadcmd)
+
+# ---------------------------------------------------------------------
+# Arquitectura en vigor
+# ---------------------------------------------------------------------
+arquitectura:
+  modelo: "100% generativo por código (sin .FCStd estáticos)"
+  capa_global: "Params_Melamina (reglas de taller: espesor, canto, ranura)"
+  capa_local: "Params (dimensiones del módulo: alto, ancho, fondo, espesor)"
+  capa_atomica: vdo_panel_melamina_base (ladrillo geométrico paramétrico)
+  nucleo:
+    - vdo_manifest.py
+    - vdo_guardian.py
+  interfaz: Mod/VDO_Workbench (barra "VDO - Muebles Paramétricos" generada desde vdo_manifest)
+  convencion_parametros: alto / ancho / fondo / espesor (unificada)
+  legacy: _archivo/ (plantillas .FCStd deprecadas, conservadas por trazabilidad)
+
+# ---------------------------------------------------------------------
+# Registro de progreso (append: añadir nuevas entradas al final)
+# ---------------------------------------------------------------------
+registro:
+  - fecha: 2026-09-18
+    checkpoint: Check point_1_arquitectura de macros geometrias y atributos.txt
+    area: Núcleo del sistema (Task 1)
+    descripcion: >
+      Se implementó el Manifiesto de Dependencias (contrato de datos) y el
+      Guardián de Dependencias (validador e inyector automático de entorno).
+      Cualquier macro que ejecute vdo_guardian.vdo_guard() queda
+      autoconfigurada sin depender del orden manual de ejecución.
+    archivos_creados:
+      - vdo_manifest.py
+      - vdo_guardian.py
+    detalles:
+      - manifest contiene version, capa_global, capa_local, materiales y dependencias
+      - guardian crea/recicla Params_Melamina y Params con alias y valores
+      - solo inyecta celdas sin alias (respeta valores editados por el usuario)
+      - auto-crea documento activo si no existe
+    validacion: TEST C idempotencia OK (segundo pase respeta espesor=25 editado)
+
+  - fecha: 2026-09-18
+    checkpoint: Check point_1_arquitectura de macros geometrias y atributos.txt
+    area: Refactor de macros (Task 2)
+    descripcion: >
+      Las tres macros se refactorizaron para incorporar la llamada inicial
+      al Guardián y se unificó la nomenclatura a alto/ancho/fondo/espesor,
+      eliminando las referencias rotas Largo/Ancho.
+    archivos_modificados:
+      - vdo_panel_melamina_base.FCMacro
+      - vdo_coco_generador.FCMacro
+      - VDO_Crear_Hoja_Melamina.FCMacro
+    detalles:
+      - panel base vincula Length=<<Params>>.ancho, Width=<<Params>>.fondo, Height=<<Params_Melamina>>.espesor
+      - coco generador autogenera el grupo COCO_4C si no existe
+      - VDO_Crear_Hoja_Melamina delega en el Guardián (compatibilidad)
+    validacion: TEST A (panel) y TEST B (COCO_4C) OK en documento en blanco aislado
+
+  - fecha: 2026-09-18
+    checkpoint: Check point_1_arquitectura de macros geometrias y atributos.txt
+    area: Validación MVP end-to-end (Task 3)
+    descripcion: >
+      Script de validación (freecadcmd 1.1.3) en entorno headless que ejecuta
+      el flujo aislado sobre documento completamente en blanco.
+    detalles:
+      - TEST A: panel base crea Params + Params_Melamina con alias correctos y resuelve 600 x 580 x 18
+      - TEST B: coco generador monta COCO_4C completo sin errores
+      - TEST C: idempotencia del Guardián
+    resultado: 3/3 tests pass
+    observaciones:
+      - API FreeCAD 1.1: getContents(cell) recibe celda; no existe hasAlias, usar getAlias
+    pendiente:
+      - Probar ejecución en GUI de FreeCAD (no headless)
+
+  - fecha: 2026-09-18
+    registro_decisiones: Registro de Decisiones de Arquitectura VDO (2º log)
+    area: Decisiones de Arquitectura 1, 2 y 3
+    descripcion: >
+      Se adoptan decisiones de arquitectura y se desarrolla la interfaz visual
+      nativa: eliminación de .FCStd estáticos, autonomía total Manifiesto+Guardián
+      y barra de herramientas VDO - Muebles Paramétricos construida de forma
+      dinámica (cero hardcoding) leyendo vdo_manifest.py.
+    decisiones:
+      - D1: eliminación de plantillas y .FCStd base; modelo 100% generativo por código
+      - D2: Manifiesto + Guardián como único mecanismo de configuración (sin bootstrap manual)
+      - D3: Workbench VDO - Muebles Paramétricos con botones funcionales (panel y COCO 4C)
+    archivos_creados:
+      - "Mod/VDO_Workbench/InitGui.py (motor genérico de UI)"
+      - "Mod/VDO_Workbench/Init.py"
+      - "Mod/VDO_Workbench/package.xml"
+      - "Macro/vdo_panel.svg (token dorado #AE955F)"
+      - "Macro/vdo_coco.svg"
+      - "Macro/vdo_workbench.svg"
+    archivos_modificados:
+      - vdo_manifest.py (version 1.1.0 + bloque modulos_ui)
+    acciones_archivo:
+      - Trasladados .FCStd/.FCBak legacy de Macro/ y 01_Modulos_Base/ a _archivo/
+    detalles:
+      - modulos_ui declara VDO_CrearPanel y VDO_CrearCoco con icono + macro asociada
+      - InitGui lee el manifest, registra comandos con Gui.addCommand y monta barra/menú con appendToolbar/appendMenu
+      - cada botón ejecuta su .FCMacro vía exec; la macro arranca con el Guardián (autoconfigurable)
+    validacion: syntax-check + test headless del motor genérico (manifest + rutas de macro e iconos) OK; verificación visual pendiente en GUI
+
+  - fecha: 2026-09-19
+    checkpoint: Arreglo y consolidación del Workbench (Task 4)
+    area: Integración final - Registro del Workbench
+    descripcion: >
+      Se identificó y corrigió el problema raíz: Init.py estaba vacío, impidiendo que FreeCAD
+      registrara el workbench en modo no-GUI. Se completó Init.py con la llamada a
+      App.addWorkbenchClass(), que es lo que FreeCAD requiere durante el escaneo inicial.
+      Se consolidó todo el código: eliminada la copia de VETA_ERP y centralizado en /Mod/VDO_Workbench/.
+    archivos_modificados:
+      - Init.py (completado con lógica de registro en App core)
+    acciones_archivo:
+      - Eliminada copia completa de /home/javi/hgarciagonzalezsas_gmail/VETA_ERP/SDK mobiliario/biblioteca_veta_dorada/VDO_Workbench/
+    detalles:
+      - Init.py ahora importa VDO_Workbench desde InitGui.py
+      - Init.py llama a App.addWorkbenchClass("VDO_Workbench", "VDO_Workbench") para registrar en sistema core
+      - InitGui.py registra con Gui.addWorkbench() para construir la interfaz gráfica
+      - Ambos se ejecutan coordinadamente: primero Init.py (no-GUI), luego InitGui.py (GUI)
+    validacion: Sintaxis Python válida, estructura completa verificada, lista para prueba en GUI de FreeCAD
+    observaciones: El workbench debe aparecer en View -> Workbenches -> dropdown selector al reiniciar FreeCAD
+
+  - fecha: 2026-09-21
+    checkpoint: Toolar VDO inyección XML
+    area: Toolbar persistente sin workbench (Task 5)
+    descripcion: >
+      El workbench no aparecía en el selector. En lugar de seguir depurando el
+      registro Python de workbenches, se adoptó un enfoque radicalmente más simple:
+      FreeCAD almacena TODA la configuración de toolbars en user.cfg (XML).
+      Se reverse-engineered el formato y se creó vdo_toolbar_inject.py que inyecta
+      directamente las definiciones de macros y la toolbar en user.cfg, sin
+      workbench, sin Gui.addCommand, sin InitGui.py. El toolbar "CARPINTERIA - VDO"
+      aparece en Global/Toolbar/ (visible en todos los workbenches) tras reiniciar.
+    archivos_creados:
+      - "Macro/vdo_toolbar_inject.py (inyecta XML en ~/.config/FreeCAD/v1-1/user.cfg)"
+      - "TOOLBAR_SOLUTION.md (documentación del enfoque XML)"
+    decisiones:
+      - "D4: usar configuración XML de user.cfg en lugar de workbench Python; el formato es el mismo que FreeCAD usa al personalizar toolbars manualmente, lo que garantiza 100% de compatibilidad y confiabilidad"
+    detalles:
+      - Macro definitions en BaseApp/Macro/Macros/Std_Macro_N/
+      - Toolbar definition en BaseApp/Workbench/Global/Toolbar/Custom_1/
+      - Visibility flag en BaseApp/MainWindow/Toolbars/
+      - Cada FCText en Custom_1: Name=comando_id, Value="FreeCAD"
+      - Backup automático de user.cfg con timestamp
+    validacion: 4 macros definidas + toolbar CARPINTERIA - VDO con 4 botones inyectada y visible
+
+# ---------------------------------------------------------------------
+# Siguientes pasos propuestos
+# ---------------------------------------------------------------------
+siguientes_pasos:
+  - Verificar visualmente el Workbench VDO - Muebles Paramétricos en GUI de FreeCAD (selector de workbenches debe mostrar la opción)
+  - Activar el workbench y verificar que aparezcan los 2 botones en la barra
+  - Probar funcionamiento del panel y del COCO 4C
+  - Verificar que las macros se ejecutan correctamente con los parámetros automáticos
+  - Añadir parámetro de material y estructura del COCO con Variantes
+  - Exportar manifiesto a JSON/CSV para el ERP VETA

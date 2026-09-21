@@ -1,0 +1,142 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.7.0",
+  "taller": "Veta de Oro",
+  "unidades": "mm",
+
+  "materiales": {
+    "melamina_standar": {
+      "nombre": "Melamina Estándar",
+      "tipo": "standar",
+      "referencia": "melamina",
+      "costo_m2": 15.5,
+      "espesores": [18, 25, 30],
+      "presentacion": "2440 x 1830",
+      "procesos_compatibles": ["cortar", "acanalar", "perforar"],
+      "herrajes_compatibles": ["bisagra_simple", "bisagra_raff", "tirador_plastico"]
+    },
+    "roble_rh": {
+      "nombre": "Roble RH",
+      "tipo": "rh",
+      "referencia": "roble",
+      "costo_m2": 28.0,
+      "espesores": [18, 25],
+      "presentacion": "2440 x 1830",
+      "procesos_compatibles": ["cortar", "acanalar", "perforar", "cepillar"],
+      "herrajes_compatibles": ["bisagra_raff", "tirador_metal", "bisagra_invisible"]
+    },
+    "mdf": {
+      "nombre": "MDF",
+      "tipo": "standar",
+      "referencia": "mdf",
+      "costo_m2": 12.0,
+      "espesores": [18, 25, 30],
+      "presentacion": "2440 x 1830",
+      "procesos_compatibles": ["cortar", "acanalar", "perforar"],
+      "herrajes_compatibles": ["bisagra_simple", "tirador_plastico"]
+    }
+  },
+
+  "herrajes": {
+    "bisagra_simple": {
+      "nombre": "Bisagra Simple",
+      "costo_unitario": 2.5,
+      "compatible_materiales": ["melamina_standar", "mdf"],
+      "uso": "Puertas estándar"
+    },
+    "bisagra_raff": {
+      "nombre": "Bisagra Raff",
+      "costo_unitario": 5.8,
+      "compatible_materiales": ["melamina_standar", "roble_rh", "mdf"],
+      "uso": "Puertas de calidad"
+    },
+    "bisagra_invisible": {
+      "nombre": "Bisagra Invisible",
+      "costo_unitario": 8.5,
+      "compatible_materiales": ["roble_rh"],
+      "uso": "Puertas fachada premium"
+    },
+    "tirador_plastico": {
+      "nombre": "Tirador Plástico",
+      "costo_unitario": 0.8,
+      "compatible_materiales": ["melamina_standar", "mdf"],
+      "uso": "Tiradores básicos"
+    },
+    "tirador_metal": {
+      "nombre": "Tirador Metal",
+      "costo_unitario": 3.5,
+      "compatible_materiales": ["roble_rh", "melamina_standar"],
+      "uso": "Tiradores de acabado"
+    }
+  },
+
+  "procesos": {
+    "cortar": {
+      "nombre": "Corte",
+      "costo_por_m_lineal": 0.3,
+      "unidad": "m_lineal",
+      "compatible_materiales": ["melamina_standar", "roble_rh", "mdf"]
+    },
+    "acanalar": {
+      "nombre": "Acanalar",
+      "costo_por_m_lineal": 0.5,
+      "unidad": "m_lineal",
+      "compatible_materiales": ["melamina_standar", "roble_rh", "mdf"]
+    },
+    "perforar": {
+      "nombre": "Perforación",
+      "costo_por_agujero": 0.15,
+      "unidad": "agujero",
+      "compatible_materiales": ["melamina_standar", "roble_rh", "mdf"]
+    },
+    "cepillar": {
+      "nombre": "Cepillado",
+      "costo_por_m2": 2.0,
+      "unidad": "m2",
+      "compatible_materiales": ["roble_rh"]
+    }
+  },
+
+  "parametros_globales": {
+    "espesor_default": {
+      "valor": 18,
+      "unidad": "mm",
+      "min": 10,
+      "max": 50
+    },
+    "canto_grueso": {
+      "valor": 2,
+      "unidad": "mm",
+      "descripcion": "Espesor de cinta de canto"
+    },
+    "ranura_fondo": {
+      "valor": 3,
+      "unidad": "mm",
+      "descripcion": "Profundidad de ranura para trasera"
+    }
+  },
+
+  "parametros_locales": {
+    "alto": {
+      "valor": 720,
+      "unidad": "mm",
+      "min": 100,
+      "max": 2500,
+      "descripcion": "Alto total del módulo"
+    },
+    "ancho": {
+      "valor": 600,
+      "unidad": "mm",
+      "min": 100,
+      "max": 2440,
+      "descripcion": "Ancho total del módulo"
+    },
+    "fondo_modulo": {
+      "valor": 580,
+      "unidad": "mm",
+      "min": 100,
+      "max": 1000,
+      "descripcion": "Profundidad total del módulo"
+    }
+  }
+}

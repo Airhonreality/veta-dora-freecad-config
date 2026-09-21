@@ -1,0 +1,19 @@
+=== SNAPSHOT INICIAL - Estado antes de crear toolbar personalizada ===
+Fecha: $(date)
+Sistema: FreeCAD
+
+=== Configuración de FreeCAD (user.cfg) ===
+$(cat ~/.config/FreeCAD/v1-1/user.cfg 2>/dev/null || echo "Archivo no encontrado")
+
+=== Preferencias guardadas (backup) ===
+$(ls -la ~/.local/share/FreeCAD/v1-1/SavedPreferencePacks/Backups/ 2>/dev/null || echo "No hay backups")
+
+=== Directorio de macros de FreeCAD ===
+$(ls -la ~/.local/share/FreeCAD/usermacros/ 2>/dev/null || echo "Directorio de macros no existe")
+
+=== Estructura de archivos de FreeCAD ===
+Directorio v1-1:
+$(find ~/.local/share/FreeCAD/v1-1/ -type f 2>/dev/null | sort || echo "No se encontró el directorio v1-1")
+
+Directorio v1.1:
+$(find ~/.local/share/FreeCAD/v1.1/ -type f 2>/dev/null | sort || echo "No se encontró el directorio v1.1")

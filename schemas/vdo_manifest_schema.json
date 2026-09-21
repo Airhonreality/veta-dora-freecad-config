@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VDO Manifest Schema",
+  "description": "Esquema de validación para configuración del sistema VDO",
+  "type": "object",
+  "required": ["version", "taller", "materiales", "herrajes", "procesos"],
+
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Versión semántica (ej: 1.7.0)"
+    },
+
+    "taller": {
+      "type": "string",
+      "description": "Nombre del taller"
+    },
+
+    "unidades": {
+      "type": "string",
+      "enum": ["mm", "cm", "m", "inch"],
+      "description": "Unidades de medida del sistema"
+    },
+
+    "materiales": {
+      "type": "object",
+      "description": "Catálogo de materiales",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["nombre", "tipo", "referencia", "costo_m2", "espesores"],
+        "properties": {
+          "nombre": {"type": "string"},
+          "tipo": {
+            "type": "string",
+            "enum": ["standar", "rh", "premium"]
+          },
+          "referencia": {"type": "string"},
+          "costo_m2": {
+            "type": "number",
+            "minimum": 0
+          },
+          "espesores": {
+            "type": "array",
+            "items": {"type": "integer", "minimum": 1},
+            "minItems": 1
+          },
+          "presentacion": {"type": "string"},
+          "procesos_compatibles": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "herrajes_compatibles": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        }
+      }
+    },
+
+    "herrajes": {
+      "type": "object",
+      "description": "Catálogo de herrajes",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["nombre", "costo_unitario", "compatible_materiales"],
+        "properties": {
+          "nombre": {"type": "string"},
+          "costo_unitario": {
+            "type": "number",
+            "minimum": 0
+          },
+          "compatible_materiales": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 1
+          },
+          "uso": {"type": "string"}
+        }
+      }
+    },
+
+    "procesos": {
+      "type": "object",
+      "description": "Procesos de manufactura",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["nombre", "compatible_materiales"],
+        "properties": {
+          "nombre": {"type": "string"},
+          "costo_por_m_lineal": {
+            "type": "number",
+            "minimum": 0
+          },
+          "costo_por_agujero": {
+            "type": "number",
+            "minimum": 0
+          },
+          "costo_por_m2": {
+            "type": "number",
+            "minimum": 0
+          },
+          "unidad": {"type": "string"},
+          "compatible_materiales": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 1
+          }
+        }
+      }
+    },
+
+    "parametros_globales": {
+      "type": "object",
+      "description": "Parámetros globales del taller"
+    },
+
+    "parametros_locales": {
+      "type": "object",
+      "description": "Parámetros locales de módulos"
+    }
+  }
+}

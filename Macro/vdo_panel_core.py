@@ -83,7 +83,7 @@ def _inyectar_propiedades(panel, tipo, cantos, etiqueta):
     
     # Cantos (4 direcciones)
     for direccion in ["Norte", "Sur", "Este", "Oeste"]:
-        prop_name = f"VDO_Canto {direccion}"
+        prop_name = f"VDO_Canto_{direccion}"
         if not hasattr(panel, prop_name):
             panel.addProperty("App::PropertyBool", prop_name, "VDO")
         setattr(panel, prop_name, cantos.get(direccion.lower(), False))
