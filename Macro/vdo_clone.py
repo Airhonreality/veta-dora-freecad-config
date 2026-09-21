@@ -103,12 +103,17 @@ def clone_macros(repo_root, freecad_macro_dir):
     for file in src_macros.glob("*"):
         if file.is_file():
             dst = dst_dir / file.name
+
+            # Evitar copiar si origen == destino (mismo archivo)
+            if file.resolve() == dst.resolve():
+                continue
+
             try:
                 shutil.copy2(file, dst)
                 print(f"  ✅ {file.name}")
                 count += 1
             except Exception as e:
-                print(f"  ❌ {file.name}: {e}")
+                print(f"  ⚠️  {file.name}: {e}")
 
     return count
 
