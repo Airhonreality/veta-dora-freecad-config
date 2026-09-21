@@ -5,6 +5,7 @@ vdo_export_cutting_list.py
 Exporta lista de corte desde modelo VDO a CSV para OpenCutList
 
 Sin hardcode: Lee especificaciones desde vdo_manifest.json
+Filtro: Solo exporta paneles de melamina (excluye muros, paneles BIM, etc)
 """
 
 import sys
@@ -13,6 +14,7 @@ from pathlib import Path
 
 try:
     import FreeCAD as App
+    import FreeCADGui as Gui
 except ImportError:
     print("❌ Este script debe ejecutarse dentro de FreeCAD")
     sys.exit(1)
@@ -23,29 +25,58 @@ sys.path.insert(0, str(_macro_dir))
 import vdo_loader
 
 
-def extraer_piezas_del_documento():
-    """Extrae todas las piezas de melamina del documento activo"""
+def extraer_pieza(obj):
+    """Extrae información de una pieza individual"""
+    pieza = {
+        "nombre": obj.Label,
+        "tipo": getattr(obj, "VDO_Tipo", "desconocido"),
+        "largo": obj.Length if hasattr(obj, "Length") else 0,
+        "ancho": obj.Width if hasattr(obj, "Width") else 0,
+        "espesor": obj.Height if hasattr(obj, "Height") else 0,
+        "cantidad": 1,
+        "material_ref": getattr(obj, "VDO_Material_Ref", "melamina_standar"),
+        "herrajes": getattr(obj, "VDO_Hardware", ""),
+        "herrajes_qty": getattr(obj, "VDO_HardwareQty", 0),
+    }
+    return pieza
+
+
+def extraer_piezas_del_documento(modo="todo"):
+    """
+    Extrae piezas de melamina del documento
+
+    modo: "todo" | "seleccion" | "grupo"
+    Filtro: Solo paneles (VDO_Tipo == "panel")
+    Excluye: muros, paneles BIM, otros objetos
+    """
     doc = App.ActiveDocument
     if not doc:
         print("❌ No hay documento activo")
         return []
 
     piezas = []
-    for obj in doc.Objects:
-        # Buscar objetos con propiedades VDO
-        if hasattr(obj, "VDO_Tipo"):
-            pieza = {
-                "nombre": obj.Label,
-                "tipo": obj.VDO_Tipo,
-                "largo": obj.Length if hasattr(obj, "Length") else 0,
-                "ancho": obj.Width if hasattr(obj, "Width") else 0,
-                "espesor": obj.Height if hasattr(obj, "Height") else 0,
-                "cantidad": 1,
-                "material_ref": getattr(obj, "VDO_Material_Ref", "melamina_standar"),
-                "herrajes": getattr(obj, "VDO_Hardware", ""),
-                "herrajes_qty": getattr(obj, "VDO_HardwareQty", 0),
-            }
-            piezas.append(pieza)
+
+    if modo == "seleccion":
+        # Solo objetos seleccionados
+        selected = Gui.Selection.getSelectionEx()
+        for sel in selected:
+            obj = sel.Object
+            # Filtrar: solo paneles de melamina
+            if hasattr(obj, "VDO_Tipo") and obj.VDO_Tipo == "panel":
+                piezas.append(extraer_pieza(obj))
+
+    elif modo == "grupo":
+        # Solo el módulo activo
+        modulo = doc.ActiveObject
+        if modulo and hasattr(modulo, "VDO_Tipo"):
+            piezas.append(extraer_pieza(modulo))
+
+    else:  # "todo"
+        # Todas las piezas del documento
+        for obj in doc.Objects:
+            # Filtrar: solo paneles de melamina
+            if hasattr(obj, "VDO_Tipo") and obj.VDO_Tipo == "panel":
+                piezas.append(extraer_pieza(obj))
 
     return piezas
 
@@ -129,47 +160,29 @@ def generar_csv_opencutlist(piezas, output_path):
         return False
 
 
-def main():
+def main(modo="todo"):
+    """Main: Extrae, previsualia, exporta"""
     print("=" * 70)
-    print("📊 VDO EXPORT CUTTING LIST")
+    print(f"📊 VDO EXPORT CUTTING LIST - {modo.upper()}")
     print("=" * 70)
 
     # Extraer piezas
-    print("\n🔍 Extrayendo piezas del documento...")
-    piezas = extraer_piezas_del_documento()
+    print(f"\n🔍 Extrayendo piezas ({modo})...")
+    piezas = extraer_piezas_del_documento(modo)
 
     if not piezas:
-        print("⚠️  No se encontraron piezas con propiedades VDO")
+        print("⚠️  No se encontraron piezas de melamina para exportar")
         return False
 
     print(f"✅ {len(piezas)} piezas encontradas")
 
-    # Agrupar por material
-    print("\n📦 Agrupando por material...")
-    agrupadas = agrupar_piezas_por_material(piezas)
-    for mat, lista in agrupadas.items():
-        print(f"  - {mat}: {len(lista)} piezas")
+    # Mostrar preview (colorear y confirmar)
+    print("\n🎨 Mostrando preview...")
+    import vdo_cutting_list_preview
+    vdo_cutting_list_preview.main(modo=modo)
 
-    # Exportar
-    print("\n💾 Generando CSV para OpenCutList...")
-    output_file = Path.home() / "Desktop" / "vdo_cutting_list.csv"
-
-    if generar_csv_opencutlist(piezas, output_file):
-        print("\n" + "=" * 70)
-        print("✅ EXPORTACIÓN COMPLETADA")
-        print("=" * 70)
-        print(f"\n📁 Archivo: {output_file}")
-        print("\n📌 Próximos pasos:")
-        print("   1. Abre OpenCutList web: https://www.opencutlist.org/")
-        print("   2. Importa el CSV generado")
-        print("   3. Optimiza disposición de tableros")
-        print("   4. Genera plano de corte")
-        return True
-    else:
-        print("\n❌ Error durante exportación")
-        return False
+    return True
 
 
 if __name__ == "__main__":
-    import sys
-    sys.exit(0 if main() else 1)
+    main(modo="todo")
