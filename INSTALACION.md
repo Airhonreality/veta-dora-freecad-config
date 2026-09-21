@@ -60,9 +60,25 @@ R: Reinicia FreeCAD después de ejecutar vdo_clone.py
 
 ---
 
-## Desarrollo (opcional)
+## Desarrollo: Publicar Cambios del SDK
 
-Para capturar cambios de toolbar:
+**El flujo normal:**
+
+1. En FreeCAD: Crea macros, modifica toolbar, ajusta configuración
+2. Ejecuta desde FreeCAD: `Macro → Ejecutar → vdo_publish.py`
+3. ¡Listo! Todo se sincroniza a GitHub automáticamente
+
+**Qué sincroniza vdo_publish.py:**
+- ✅ Macros nuevas/modificadas (*.py, *.FCMacro)
+- ✅ Iconos/assets (*.svg)
+- ✅ Configuración (toolbar, settings)
+- ✅ git add + commit + push automático
+
+---
+
+## Herramientas Avanzadas (opcional)
+
+**Capturar cambios de configuración manualmente:**
 
 ```bash
 # Snapshot ANTES
@@ -73,12 +89,16 @@ python3 Macro/vdo_detect_config.py
 # Snapshot DESPUÉS
 python3 Macro/vdo_detect_config.py
 
-# Ver diff
+# Ver exactamente qué cambió
 diff config/freecad_snapshots/snapshot_*/user.cfg
+```
 
-# Exportar cambios
+**Sincronizar manualmente (sin git):**
+
+```bash
+# Solo copiar config local → repo
 python3 Macro/vdo_sync_config.py export
-git add config/freecad/user.cfg
-git commit -m "Update toolbar configuration"
-git push
+
+# Solo restaurar config repo → local
+python3 Macro/vdo_sync_config.py import
 ```
