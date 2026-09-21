@@ -1,0 +1,31 @@
+# -*- coding: utf-8 -*-
+# =====================================================================
+# vdo_panel_fachada.FCMacro
+# Envoltorio ultraligero para Panel Fachada
+# Axioma 3: Capa UI - solo parámetros
+# =====================================================================
+
+import sys
+import FreeCAD as App
+
+# Bootstrap
+_vdo_macro_dir = App.getUserMacroDir(True)
+if _vdo_macro_dir not in sys.path:
+    sys.path.insert(0, _vdo_macro_dir)
+
+from vdo_panel_core import crear_pieza
+
+# Configuración de variante
+configuracion = {
+    "tipo": "fachada",
+    "nombre": "Fachada_Principal",
+    "cantos": {
+        "norte": True,
+        "sur": True,
+        "este": True,
+        "oeste": True,
+    },
+    "etiqueta": "Fachada"
+}
+
+crear_pieza(configuracion)

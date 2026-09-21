@@ -1,0 +1,40 @@
+# -*- coding: utf-8 -*-
+# =====================================================================
+# vdo_coco_4c.FCMacro
+# Envoltorio para COCO 4C con FeaturePython y Task Panel
+# =====================================================================
+
+import sys
+import FreeCAD as App
+import FreeCADGui as Gui
+
+_vdo_macro_dir = App.getUserMacroDir(True)
+if _vdo_macro_dir not in sys.path:
+    sys.path.insert(0, _vdo_macro_dir)
+
+from vdo_coco_core import make_coco
+from vdo_coco_task import CocoTaskPanel
+from vdo_coco_spaces_task import CocoSpacesTaskPanel
+
+configuracion = {
+    "nombre": "COCO_4C",
+    "alto": 720.0,
+    "ancho": 600.0,
+    "fondo_modulo": 580.0,
+    "espesor": 18,
+    "tiene_fondo": True,
+    "calibre_fondo": 6,
+    "profundidad_ranura": 3.0,
+    "distancia_borde": 18.0,
+    "tapa": "externo",
+    "base": "interno",
+    "espacios_x": "",
+    "espacios_y": "",
+}
+
+App.ActiveDocument.openTransaction("Create COCO 4C")
+obj = make_coco(configuracion)
+
+if obj and App.GuiUp:
+    panel = CocoTaskPanel(obj)
+    Gui.Control.showDialog(panel)

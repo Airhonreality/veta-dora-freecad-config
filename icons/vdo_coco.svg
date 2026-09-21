@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"
+     stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"
+     stroke-linejoin="round" shape-rendering="geometricPrecision">
+  <!-- VDO: Cofre COCO 4C (laterales, base, techo y entrempaño central) -->
+  <rect x="11" y="14" width="42" height="36" rx="3"/>
+  <line x1="32" y1="14" x2="32" y2="50"/>
+  <path d="M17 22 C 24 19, 29 25, 37 21"/>
+  <path d="M17 30 C 24 27, 29 33, 37 29"/>
+</svg>
