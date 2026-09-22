@@ -137,6 +137,12 @@
       "min": 100,
       "max": 1000,
       "descripcion": "Profundidad total del módulo"
+    },
+    "espesor": {
+      "valor": 18,
+      "unidad": "mm",
+      "min": 10,
+      "max": 50
     }
   }
 }

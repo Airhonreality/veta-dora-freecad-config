@@ -10,6 +10,9 @@ import FreeCAD as App
 
 import vdo_manifest as VM
 
+HOJA_GLOBAL = "Params_Melamina"
+HOJA_LOCAL = "Params"
+
 
 def _obtener_hoja(doc, nombre):
     hoja = doc.getObject(nombre)
@@ -48,7 +51,7 @@ def _asegurar_parametros(hoja, fila_inicio, fila_valor, fila_descripcion,
 
 def asegurar_hoja_global(doc):
     """Capa Global (Reglas de Taller): hoja Params_Melamina."""
-    nombre = VM.VDO_MANIFEST["capa_global"]["hoja"]
+    nombre = VM.VDO_MANIFEST.get("capa_global", {}).get("hoja", HOJA_GLOBAL)
     hoja = _obtener_hoja(doc, nombre)
 
     if not hoja.getContents("A1"):
@@ -61,14 +64,14 @@ def asegurar_hoja_global(doc):
         fila_inicio=2,
         fila_valor="B",
         fila_descripcion="C",
-        parametros=VM.VDO_MANIFEST["capa_global"]["parametros"],
+        parametros=VM.VDO_MANIFEST["parametros_globales"],
     )
     return hoja
 
 
 def asegurar_params_local(doc):
     """Capa Local (Contenedores y Módulos): hoja Params del módulo."""
-    nombre = VM.VDO_MANIFEST["capa_local"]["hoja"]
+    nombre = VM.VDO_MANIFEST.get("capa_local", {}).get("hoja", HOJA_LOCAL)
     hoja = _obtener_hoja(doc, nombre)
 
     _asegurar_parametros(
@@ -76,7 +79,7 @@ def asegurar_params_local(doc):
         fila_inicio=1,
         fila_valor="A",
         fila_descripcion="B",
-        parametros=VM.VDO_MANIFEST["capa_local"]["parametros"],
+        parametros=VM.VDO_MANIFEST["parametros_locales"],
     )
     return hoja
 
@@ -94,12 +97,11 @@ def vdo_guard(doc=None):
     if doc is None:
         doc = asegurar_documento()
 
-    asegurar_hoja_global(doc)
-    asegurar_params_local(doc)
+    hoja_global = asegurar_hoja_global(doc)
+    hoja_local = asegurar_params_local(doc)
 
     doc.recompute()
     version = VM.VDO_MANIFEST["version"]
     print(f"[VDO Guardian] Entorno asegurado v{version}: "
-          f"{VM.VDO_MANIFEST['capa_global']['hoja']} + "
-          f"{VM.VDO_MANIFEST['capa_local']['hoja']}")
+          f"{hoja_global.Name} + {hoja_local.Name}")
     return doc

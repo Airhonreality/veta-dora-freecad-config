@@ -55,7 +55,7 @@ def get_param(ruta, default=None):
 ALTO_DEFAULT = get_param("parametros_locales.alto.valor", 720)
 ANCHO_DEFAULT = get_param("parametros_locales.ancho.valor", 600)
 FONDO_DEFAULT = get_param("parametros_locales.fondo.valor", 580)
-ESPESOR_DEFAULT = get_param("parametros_locales.espesor.valor", 18) if "espesor" in _MANIFEST.get("parametros_locales", {}) else 18
+ESPESOR_DEFAULT = get_param("parametros_locales.espesor.valor", 18)
 
 # === DIMENSIONES GLOBALES (Params_Melamina) ===
 ESPESOR_MELAMINA_DEFAULT = get_param("parametros_globales.espesor_default.valor", 18)
