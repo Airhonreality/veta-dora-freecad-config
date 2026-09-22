@@ -151,12 +151,26 @@ class CuttingListPreviewPanel:
         # Restaurar colores
         self._restaurar_colores()
 
+        # Diálogo para elegir ubicación y nombre del archivo
+        from PySide2 import QtWidgets
+        file_dialog = QtWidgets.QFileDialog()
+        output_file, _ = file_dialog.getSaveFileName(
+            None,
+            "Guardar lista de corte CSV",
+            str(Path.home() / "Desktop" / "vdo_cutting_list.csv"),
+            "CSV Files (*.csv);;All Files (*)"
+        )
+
+        if not output_file:
+            print("❌ Exportación cancelada por el usuario")
+            Gui.Control.closeDialog()
+            return
+
         # Generar CSV
-        output_file = Path.home() / "Desktop" / "vdo_cutting_list.csv"
         vdo_export_cutting_list.generar_csv_opencutlist(self.piezas, output_file)
 
         print(f"✅ CSV generado: {output_file}")
-        print("\n📌 Próximo paso: Abre OpenCutList y importa el CSV")
+        print("\n📌 Próximo paso: Usa el archivo CSV con tu optimizador de corte")
 
         Gui.Control.closeDialog()
 

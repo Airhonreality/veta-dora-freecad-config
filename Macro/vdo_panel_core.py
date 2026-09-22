@@ -70,20 +70,51 @@ def crear_pieza(configuracion):
 
 def _inyectar_propiedades(panel, tipo, cantos, etiqueta):
     """Inyecta propiedades personalizadas al panel."""
-    
-    # Tipo de panel
+
+    # Tipo de panel (siempre "panel" para identificar que es una pieza exportable)
     if not hasattr(panel, "VDO_Tipo"):
         panel.addProperty("App::PropertyString", "VDO_Tipo", "VDO")
-    panel.VDO_Tipo = tipo
-    
+    panel.VDO_Tipo = "panel"
+
+    # Subtipo (estandar, fachada, etc.) - Enum
+    if not hasattr(panel, "VDO_Subtipo"):
+        panel.addProperty("App::PropertyEnumeration", "VDO_Subtipo", "VDO")
+        panel.VDO_Subtipo = ["estandar", "fachada"]
+    panel.VDO_Subtipo = tipo
+
     # Etiqueta
     if not hasattr(panel, "VDO_Etiqueta"):
         panel.addProperty("App::PropertyString", "VDO_Etiqueta", "VDO")
     panel.VDO_Etiqueta = etiqueta
-    
-    # Cantos (4 direcciones)
+
+    # === CANTOS (4 direcciones) - Enum: FX, RIG, SMRG ===
     for direccion in ["Norte", "Sur", "Este", "Oeste"]:
         prop_name = f"VDO_Canto_{direccion}"
         if not hasattr(panel, prop_name):
-            panel.addProperty("App::PropertyBool", prop_name, "VDO")
-        setattr(panel, prop_name, cantos.get(direccion.lower(), False))
+            panel.addProperty("App::PropertyEnumeration", prop_name, "Cantos")
+            setattr(panel, prop_name, ["FX", "RIG", "SMRG"])
+        canto_value = cantos.get(direccion.lower(), "FX")
+        setattr(panel, prop_name, canto_value)
+
+    # === PROPIEDADES ESPECÍFICAS PARA FACHADA ===
+    if tipo == "fachada":
+        # Tipo de fachada: parche, semi-parche, embebida
+        if not hasattr(panel, "VDO_TipoFachada"):
+            panel.addProperty("App::PropertyEnumeration", "VDO_TipoFachada", "Fachada")
+            panel.VDO_TipoFachada = ["parche", "semi-parche", "embebida"]
+        panel.VDO_TipoFachada = cantos.get("tipo_fachada", "parche")
+
+        # Holgura superior (mm)
+        if not hasattr(panel, "VDO_HolgoraSuperior"):
+            panel.addProperty("App::PropertyFloat", "VDO_HolgoraSuperior", "Fachada")
+        panel.VDO_HolgoraSuperior = cantos.get("holgura_superior", 0.0)
+
+        # Holgura inferior (mm)
+        if not hasattr(panel, "VDO_HolgoraInferior"):
+            panel.addProperty("App::PropertyFloat", "VDO_HolgoraInferior", "Fachada")
+        panel.VDO_HolgoraInferior = cantos.get("holgura_inferior", 0.0)
+
+        # Tolerancia (mm)
+        if not hasattr(panel, "VDO_Tolerancia"):
+            panel.addProperty("App::PropertyFloat", "VDO_Tolerancia", "Fachada")
+        panel.VDO_Tolerancia = cantos.get("tolerancia", 0.0)

@@ -14,6 +14,7 @@ if _vdo_macro_dir not in sys.path:
     sys.path.insert(0, _vdo_macro_dir)
 
 import vdo_guardian
+import vdo_defaults as VDO_D
 
 
 class CocoFeature:
@@ -21,21 +22,21 @@ class CocoFeature:
 
     def __init__(self, obj):
         obj.addProperty("App::PropertyLength", "Alto", "Dimensiones",
-                        "Alto total del módulo (mm)").Alto = 720.0
+                        "Alto total del módulo (mm)").Alto = VDO_D.ALTO_DEFAULT
         obj.addProperty("App::PropertyLength", "Ancho", "Dimensiones",
-                        "Ancho total del módulo (mm)").Ancho = 600.0
+                        "Ancho total del módulo (mm)").Ancho = VDO_D.ANCHO_DEFAULT
         obj.addProperty("App::PropertyLength", "FondoModulo", "Dimensiones",
-                        "Profundidad total del módulo (mm)").FondoModulo = 580.0
+                        "Profundidad total del módulo (mm)").FondoModulo = VDO_D.FONDO_DEFAULT
         obj.addProperty("App::PropertyInteger", "Espesor", "Dimensiones",
-                        "Espesor del tablero (mm)").Espesor = 18
+                        "Espesor del tablero (mm)").Espesor = VDO_D.ESPESOR_DEFAULT
         obj.addProperty("App::PropertyBool", "TieneFondo", "Estructura",
-                        "Habilitar fondo/respaldo").TieneFondo = True
+                        "Habilitar fondo/respaldo").TieneFondo = VDO_D.FONDO_HABILITADO
         obj.addProperty("App::PropertyInteger", "CalibreFondo", "Estructura",
-                        "Espesor del fondo (mm)").CalibreFondo = 6
+                        "Espesor del fondo (mm)").CalibreFondo = VDO_D.FONDO_CALIBRE
         obj.addProperty("App::PropertyFloat", "ProfundidadRanura", "Estructura",
-                        "Profundidad de ranura para fondo (mm)").ProfundidadRanura = 3.0
+                        "Profundidad de ranura para fondo (mm)").ProfundidadRanura = VDO_D.FONDO_PROFUNDIDAD_RANURA
         obj.addProperty("App::PropertyFloat", "DistanciaBorde", "Estructura",
-                        "Distancia del borde para fondo grueso (mm)").DistanciaBorde = 18.0
+                        "Distancia del borde para fondo grueso (mm)").DistanciaBorde = VDO_D.FONDO_DISTANCIA_BORDE
         obj.addProperty("App::PropertyEnumeration", "Tapa", "Estructura",
                         "Configuración de la tapa").Tapa = ["externo", "interno"]
         obj.addProperty("App::PropertyEnumeration", "Base", "Estructura",
@@ -46,6 +47,19 @@ class CocoFeature:
                         "Definición de espacios libres en eje Y/Z (JSON)").EspaciosY = ""
         obj.addProperty("App::PropertyString", "ResumenEspacios", "Divisiones",
                         "Resumen legible de espacios calculados (solo lectura)")
+
+        # === PROPIEDADES DE EXPORTACIÓN (para cutting list) ===
+        obj.addProperty("App::PropertyString", "VDO_Tipo", "VDO",
+                        "Tipo de objeto").VDO_Tipo = "contenedor"
+        obj.addProperty("App::PropertyString", "VDO_Subtipo", "VDO",
+                        "Subtipo (COCO, módulo, etc)").VDO_Subtipo = "COCO_4C"
+        obj.addProperty("App::PropertyString", "VDO_Material_Ref", "VDO",
+                        "Material de los paneles").VDO_Material_Ref = "melamina_standar"
+
+        # Paneles internos (propiedades de lectura para exportación)
+        obj.addProperty("App::PropertyString", "VDO_Paneles_JSON", "VDO",
+                        "Descripción JSON de los 5 paneles internos")
+
         obj.Proxy = self
 
     def execute(self, fp):
@@ -166,6 +180,63 @@ class CocoFeature:
 
                 fp.ResumenEspacios = "\n".join(resumen_parts)
 
+            # === GUARDAR DATOS DE LOS 5 PANELES PARA EXPORTACIÓN ===
+            import json
+            paneles_data = [
+                {
+                    "nombre": f"{fp.Label}_Lateral_Izq",
+                    "tipo": "panel",
+                    "largo": espesor,
+                    "ancho": fondo,
+                    "espesor": lat_height,
+                    "cantidad": 1,
+                    "material_ref": fp.VDO_Material_Ref
+                },
+                {
+                    "nombre": f"{fp.Label}_Lateral_Der",
+                    "tipo": "panel",
+                    "largo": espesor,
+                    "ancho": fondo,
+                    "espesor": lat_height,
+                    "cantidad": 1,
+                    "material_ref": fp.VDO_Material_Ref
+                },
+                {
+                    "nombre": f"{fp.Label}_Base",
+                    "tipo": "panel",
+                    "largo": base_length,
+                    "ancho": fondo,
+                    "espesor": espesor,
+                    "cantidad": 1,
+                    "material_ref": fp.VDO_Material_Ref
+                },
+                {
+                    "nombre": f"{fp.Label}_Techo",
+                    "tipo": "panel",
+                    "largo": techo_length,
+                    "ancho": fondo,
+                    "espesor": espesor,
+                    "cantidad": 1,
+                    "material_ref": fp.VDO_Material_Ref
+                }
+            ]
+
+            # Agregar fondo si está habilitado
+            if tiene_fondo:
+                f_len = ancho - (espesor * 2) + (prof_ranura * 2) if (calibre_fondo <= 8.0) else (ancho - (espesor * 2))
+                f_alt = alto - (espesor * 2) + (prof_ranura * 2) if (calibre_fondo <= 8.0) else (alto - (espesor * 2))
+                paneles_data.append({
+                    "nombre": f"{fp.Label}_Fondo",
+                    "tipo": "panel",
+                    "largo": f_len,
+                    "ancho": calibre_fondo,
+                    "espesor": f_alt,
+                    "cantidad": 1,
+                    "material_ref": fp.VDO_Material_Ref
+                })
+
+            fp.VDO_Paneles_JSON = json.dumps(paneles_data, ensure_ascii=False)
+
             fp.Shape = Part.makeCompound(boxes)
             
         except Exception as e:
@@ -244,17 +315,17 @@ def make_coco(configuracion):
     if App.GuiUp:
         ViewProviderCoco(obj.ViewObject)
 
-    # Aplicar configuración
-    obj.Alto = configuracion.get("alto", 720.0)
-    obj.Ancho = configuracion.get("ancho", 600.0)
-    obj.FondoModulo = configuracion.get("fondo_modulo", 580.0)
-    obj.Espesor = configuracion.get("espesor", 18)
-    obj.TieneFondo = configuracion.get("tiene_fondo", True)
-    obj.CalibreFondo = configuracion.get("calibre_fondo", 6)
-    obj.ProfundidadRanura = configuracion.get("profundidad_ranura", 3.0)
-    obj.DistanciaBorde = configuracion.get("distancia_borde", 18.0)
-    obj.Tapa = configuracion.get("tapa", "externo")
-    obj.Base = configuracion.get("base", "interno")
+    # Aplicar configuración (valores por defecto desde vdo_manifest.json)
+    obj.Alto = configuracion.get("alto", VDO_D.ALTO_DEFAULT)
+    obj.Ancho = configuracion.get("ancho", VDO_D.ANCHO_DEFAULT)
+    obj.FondoModulo = configuracion.get("fondo_modulo", VDO_D.FONDO_DEFAULT)
+    obj.Espesor = configuracion.get("espesor", VDO_D.ESPESOR_DEFAULT)
+    obj.TieneFondo = configuracion.get("tiene_fondo", VDO_D.FONDO_HABILITADO)
+    obj.CalibreFondo = configuracion.get("calibre_fondo", VDO_D.FONDO_CALIBRE)
+    obj.ProfundidadRanura = configuracion.get("profundidad_ranura", VDO_D.FONDO_PROFUNDIDAD_RANURA)
+    obj.DistanciaBorde = configuracion.get("distancia_borde", VDO_D.FONDO_DISTANCIA_BORDE)
+    obj.Tapa = configuracion.get("tapa", VDO_D.TAPA_POSICION)
+    obj.Base = configuracion.get("base", VDO_D.BASE_POSICION)
     obj.EspaciosX = configuracion.get("espacios_x", "")
     obj.EspaciosY = configuracion.get("espacios_y", "")
 

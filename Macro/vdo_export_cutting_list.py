@@ -46,9 +46,11 @@ def extraer_piezas_del_documento(modo="todo"):
     Extrae piezas de melamina del documento
 
     modo: "todo" | "seleccion" | "grupo"
-    Filtro: Solo paneles (VDO_Tipo == "panel")
+    Filtro: Paneles (VDO_Tipo == "panel") y Contenedores (VDO_Tipo == "contenedor")
     Excluye: muros, paneles BIM, otros objetos
     """
+    import json
+
     doc = App.ActiveDocument
     if not doc:
         print("❌ No hay documento activo")
@@ -61,22 +63,46 @@ def extraer_piezas_del_documento(modo="todo"):
         selected = Gui.Selection.getSelectionEx()
         for sel in selected:
             obj = sel.Object
-            # Filtrar: solo paneles de melamina
-            if hasattr(obj, "VDO_Tipo") and obj.VDO_Tipo == "panel":
-                piezas.append(extraer_pieza(obj))
+            if hasattr(obj, "VDO_Tipo"):
+                if obj.VDO_Tipo == "panel":
+                    piezas.append(extraer_pieza(obj))
+                elif obj.VDO_Tipo == "contenedor":
+                    # Extraer paneles del contenedor (ej: COCO_4C)
+                    if hasattr(obj, "VDO_Paneles_JSON") and obj.VDO_Paneles_JSON:
+                        try:
+                            paneles_json = json.loads(obj.VDO_Paneles_JSON)
+                            piezas.extend(paneles_json)
+                        except:
+                            pass
 
     elif modo == "grupo":
         # Solo el módulo activo
         modulo = doc.ActiveObject
         if modulo and hasattr(modulo, "VDO_Tipo"):
-            piezas.append(extraer_pieza(modulo))
+            if modulo.VDO_Tipo == "panel":
+                piezas.append(extraer_pieza(modulo))
+            elif modulo.VDO_Tipo == "contenedor":
+                if hasattr(modulo, "VDO_Paneles_JSON") and modulo.VDO_Paneles_JSON:
+                    try:
+                        paneles_json = json.loads(modulo.VDO_Paneles_JSON)
+                        piezas.extend(paneles_json)
+                    except:
+                        pass
 
     else:  # "todo"
         # Todas las piezas del documento
         for obj in doc.Objects:
-            # Filtrar: solo paneles de melamina
-            if hasattr(obj, "VDO_Tipo") and obj.VDO_Tipo == "panel":
-                piezas.append(extraer_pieza(obj))
+            if hasattr(obj, "VDO_Tipo"):
+                if obj.VDO_Tipo == "panel":
+                    piezas.append(extraer_pieza(obj))
+                elif obj.VDO_Tipo == "contenedor":
+                    # Extraer paneles del contenedor (ej: COCO_4C)
+                    if hasattr(obj, "VDO_Paneles_JSON") and obj.VDO_Paneles_JSON:
+                        try:
+                            paneles_json = json.loads(obj.VDO_Paneles_JSON)
+                            piezas.extend(paneles_json)
+                        except:
+                            pass
 
     return piezas
 

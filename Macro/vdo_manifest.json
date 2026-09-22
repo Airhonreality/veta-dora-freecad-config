@@ -131,7 +131,7 @@
       "max": 2440,
       "descripcion": "Ancho total del módulo"
     },
-    "fondo_modulo": {
+    "fondo": {
       "valor": 580,
       "unidad": "mm",
       "min": 100,
