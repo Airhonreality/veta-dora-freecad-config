@@ -40,7 +40,7 @@ echo ""
 
 # Obtener directorio del script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-INSTALL_SCRIPT="$SCRIPT_DIR/vdo_install.py"
+INSTALL_SCRIPT="$SCRIPT_DIR/Macro/vdo_install.py"
 
 if [ ! -f "$INSTALL_SCRIPT" ]; then
     echo "❌ No se encontró vdo_install.py en: $SCRIPT_DIR"

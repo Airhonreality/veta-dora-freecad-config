@@ -65,7 +65,7 @@ configuracion = {
 
 ```python
 # Función principal
-crear_coco(configuracion)
+make_coco(configuracion)
 
 # Parámetros soportados
 configuracion = {
@@ -131,7 +131,7 @@ configuracion = {
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  from vdo_coco_core import crear_coco                       │
+│  from vdo_coco_core import make_coco                        │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐

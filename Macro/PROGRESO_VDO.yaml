@@ -24,7 +24,7 @@ fase_actual:
 # ---------------------------------------------------------------------
 arquitectura:
   modelo: "100% generativo por código (sin .FCStd estáticos)"
-  capa_global: "Params_Melamina (reglas de taller: espesor, canto, ranura)"
+  capa_global: "Params_Melamina (parametros_globales: espesor_default, canto_grueso, ranura_fondo)"
   capa_local: "Params (dimensiones del módulo: alto, ancho, fondo, espesor)"
   capa_atomica: vdo_panel_melamina_base (ladrillo geométrico paramétrico)
   nucleo:
@@ -68,7 +68,7 @@ registro:
       - vdo_coco_generador.FCMacro
       - VDO_Crear_Hoja_Melamina.FCMacro
     detalles:
-      - panel base vincula Length=<<Params>>.ancho, Width=<<Params>>.fondo, Height=<<Params_Melamina>>.espesor
+      - panel base vincula Length=<<Params>>.ancho, Width=<<Params>>.fondo, Height=<<Params>>.espesor
       - coco generador autogenera el grupo COCO_4C si no existe
       - VDO_Crear_Hoja_Melamina delega en el Guardián (compatibilidad)
     validacion: TEST A (panel) y TEST B (COCO_4C) OK en documento en blanco aislado

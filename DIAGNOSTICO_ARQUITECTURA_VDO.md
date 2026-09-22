@@ -12,7 +12,7 @@
 VDO Kernel (Puro)
 ├── vdo_manifest.py
 │   └─ Diccionario Python con TODA la configuración
-│   └─ Estructura de datos (capa_global, capa_local, materiales, etc)
+│   └─ Estructura de datos (parametros_globales, parametros_locales, materiales, etc)
 │
 ├── vdo_guardian.py
 │   └─ Crea/valida hojas de cálculo en FreeCAD
@@ -85,7 +85,7 @@ panel.VDO_Canto_Norte = True
 ```python
 # vdo_manifest.py mezcla:
 # - Configuración de UI (modulos_ui)
-# - Parámetros de taller (capa_global)
+# - Parámetros de taller (parametros_globales)
 # - Material specs (materiales)
 # - Dependencias del sistema (dependencias)
 

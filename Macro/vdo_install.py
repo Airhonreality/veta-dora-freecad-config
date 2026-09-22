@@ -37,9 +37,21 @@ def obtener_ruta_macros():
 
 
 def obtener_ruta_repositorio():
-    """Obtiene la ruta del repositorio de desarrollo."""
-    # El instalador está en la raíz del repositorio
-    return os.path.dirname(os.path.abspath(__file__))
+    """Obtiene la raíz del repositorio (directorio que contiene Macro/)."""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Subir desde el directorio del script hasta encontrar un dir con Macro/
+    # (máx. 4 niveles). Cubre: script en Macro/ y script en la raíz del repo.
+    current = script_dir
+    for _ in range(4):
+        if os.path.isdir(os.path.join(current, "Macro")):
+            return current
+        parent = os.path.dirname(current)
+        if parent == current:
+            break
+        current = parent
+    # Fallback: el script vive dentro de Macro/ → la raíz es su padre
+    # (válido si el directorio del script contiene los .py de VDO)
+    return os.path.dirname(script_dir)
 
 
 # =====================================================================
@@ -49,10 +61,11 @@ def obtener_ruta_repositorio():
 def aplanar_archivos(ruta_origen, ruta_destino):
     """
     Copia archivos de Macro/ a FreeCAD Macro dir.
-    
+
+    ruta_origen es la raíz del repositorio (obtener_ruta_repositorio()).
     Estructura origen:
-      /Macro/*.py, *.FCMacro  →  raíz de macros
-      /Macro/icons/*.svg      →  raíz de macros
+      <repo>/Macro/*.py, *.FCMacro  →  raíz de macros
+      <repo>/Macro/icons/*.svg      →  raíz de macros
     """
     print("\n📦 Copiando archivos...")
     

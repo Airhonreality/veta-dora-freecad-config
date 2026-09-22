@@ -53,7 +53,7 @@ El sistema VDO (Veta de Oro) es un motor paramétrico para FreeCAD que genera mu
 ┌─────────────────────────────────────────────────────────────┐
 │                 CAPA MOTOR (Lógica Central)                 │
 │  vdo_panel_core.py  →  crear_pieza(configuracion)          │
-│  vdo_coco_core.py   →  crear_coco(configuracion)           │
+│  vdo_coco_core.py   →  make_coco(configuracion)            │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -97,7 +97,7 @@ panel = {
     "Type": "Part::Box",
     "Length": "<<Params>>.ancho",
     "Width": "<<Params>>.fondo",
-    "Height": "<<Params_Melamina>>.espesor",
+    "Height": "<<Params>>.espesor",
     "VDO_Tipo": str,
     "VDO_Etiqueta": str,
     "VDO_Canto Norte": bool,

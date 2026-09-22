@@ -56,7 +56,7 @@ def crear_pieza(configuracion):
     # 4. Inyectar dimensiones paramétricas
     panel.setExpression("Length", "<<Params>>.ancho")
     panel.setExpression("Width", "<<Params>>.fondo")
-    panel.setExpression("Height", "<<Params_Melamina>>.espesor")
+    panel.setExpression("Height", "<<Params>>.espesor")
     
     # 5. Inyectar metadatos
     _inyectar_propiedades(panel, tipo, cantos, etiqueta)
