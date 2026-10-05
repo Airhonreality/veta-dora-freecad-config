@@ -1,0 +1,49 @@
+================================================================
+VDO · SINCRONIZAR Y PUSHEAR A GITHUB
+================================================================
+
+En esta maquina FreeCAD es FLATPAK, asi que la carpeta de macros
+~no~ es un repo git. Todo el push se hace a traves del clon local.
+
+  REPO  = ~/veta-dora-freecad-config
+  MACRO = ~/.var/app/org.freecad.FreeCAD/data/FreeCAD/v1-1/Macro
+
+----------------------------------------------------------------
+SUBIR  (lo que editaste en la sandbox -> repo -> GitHub)
+----------------------------------------------------------------
+
+  cp "$MACRO"/*.py "$MACRO"/*.FCMacro "$MACRO"/*.svg "$REPO"/Macro/
+  cd "$REPO"
+  git add Macro/
+  git status                     <- revisa que solo van tus archivos
+  git commit -m "nuevos modulos VDO"
+  git push origin master
+
+----------------------------------------------------------------
+BAJAR  (GitHub -> sandbox)
+----------------------------------------------------------------
+
+  cd "$REPO"
+  git pull
+  cp "$REPO"/Macro/* "$MACRO"/
+
+  OJO: bajar PISA los archivos que editaste en la sandbox.
+  SIEMPRE subir antes de bajar.
+
+----------------------------------------------------------------
+NOTAS
+----------------------------------------------------------------
+
+- vdo_publish.py NO funciona con Flatpak: busca un .git desde la
+  carpeta de macros, no lo encuentra, y aborta. Usa los comandos
+  de arriba.
+
+- Si anades una carpeta nueva dentro de Macro/ (por ejemplo
+  helpers/), copiala con:  cp -r "$REPO"/Macro/helpers "$MACRO"/
+
+- No copies config/freecad/user.cfg tal cual: trae rutas
+  hardcodeadas de otra maquina (/home/javi/...). Ver INSTALACION.md
+  para el merge correcto.
+
+- La carpeta MACRO empieza con punto (oculta): en Dolphin pulsa
+  Ctrl+H para ver su contenido.
