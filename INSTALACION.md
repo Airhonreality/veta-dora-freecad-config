@@ -47,6 +47,21 @@ vdo_clone.py
 
 ---
 
+## FreeCAD Flatpak (Linux)
+
+Si FreeCAD es Flatpak, `vdo_clone.py` con `python3` NO funciona: sus rutas fallback son `~/.local/share/FreeCAD/Macro` y `~/.config/FreeCAD/v1-1`, que no son las del sandbox. Copia manual:
+
+```bash
+MACRO_DIR=~/.var/app/org.freecad.FreeCAD/data/FreeCAD/v1-1/Macro
+CFG_DIR=~/.var/app/org.freecad.FreeCAD/config/FreeCAD/v1-1
+cp Macro/* "$MACRO_DIR"/ && cp -r schemas ~/.var/app/org.freecad.FreeCAD/data/FreeCAD/v1-1/
+cp config/freecad/user.cfg "$CFG_DIR"/user.cfg   # ⚠️ pisa TODO tu user.cfg
+```
+
+**⚠️ `config/freecad/user.cfg` NO se copia tal cual**: trae `MacroPath` y `FileOpenSavePath` hardcodeados a `/home/javi/.local/share/FreeCAD/Macro/`, lo que deja FreeCAD apuntando a una ruta inexistente. Hay que hacer merge solo de los grupos VDO (`Macro/Macros/Std_Macro_0..2`, `Preferences/Shortcut`, `MainWindow/Toolbars`, `Workbench/Global/Toolbar/Custom_1`, `Tux/PersistentToolbars`) y fijar `Preferences/Bitmaps/CustomPath0` a tu carpeta de macros. Ojo: Flatpak tiene `/tmp` privado, clona el repo bajo `$HOME`.
+
+---
+
 ## Troubleshooting
 
 **P: "Repo no encontrado"**  
