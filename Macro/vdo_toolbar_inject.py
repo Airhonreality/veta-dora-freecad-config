@@ -4,10 +4,12 @@ vdo_toolbar_inject.py
 Inyecta toolbar VDO en user.cfg de FreeCAD SIN workbench.
 Aparece en BIMWorkbench (y opcionalmente en todos los workbenches).
 
-USO: python3 vdo_toolbar_inject.py
+USO: python3 vdo_toolbar_inject.py [ruta/user.cfg]
+     (sin argumento: detecta el user.cfg del FreeCAD local)
      o ejecutar dentro de FreeCAD: Macro → Ejecutar → vdo_toolbar_inject.py
 """
 import os
+import re
 import sys
 import shutil
 import xml.etree.ElementTree as ET
@@ -16,35 +18,63 @@ from datetime import datetime
 # ============================================================
 # CONFIGURACIÓN DE MACROS VDO
 # ============================================================
+# OJO: Qt (QKeySequence) admite máx. 4 pulsaciones por atajo:
+# "P, A, N, E, L" se guarda como "P, A, N, E". Por eso los
+# mnemotécnicos son de 4 letras: PANE, COCO, FACH, HOJA, CAJO.
+# El orden NO se reordena: los índices 0-2 están ligados a los
+# atajos existentes en BaseApp/Preferences/Shortcut.
+# ============================================================
 
 VDO_MACROS = [
     {
         "name": "Std_Macro_0",
-        "script": "VDO_Crear_Hoja_Melamina.FCMacro",
-        "menu": "Crear Hoja",
-        "tooltip": "Crear hoja de melamina con parámetros",
-        "pixmap": "vdo_workbench",
+        "script": "vdo_panel_estandar.FCMacro",
+        "menu": "Crear Panel de Melamina",
+        "tooltip": "Genera un tablero o entrepaño atómico vinculado al sistema VDO",
+        "whatsthis": "Inserta un tablero individual de melamina con control de dimensiones, espesor y posición para complementar el diseño del mobiliario.",
+        "statustip": "Crea un panel de melamina independiente con medidas y cantos personalizables",
+        "pixmap": "vdo_panel",
+        "accel": "P, A, N, E",
     },
     {
         "name": "Std_Macro_1",
-        "script": "vdo_panel_estandar.FCMacro",
-        "menu": "Panel Estándar",
-        "tooltip": "Panel estándar paramétrico con cantos selectivos",
-        "pixmap": "vdo_panel_estandar",
+        "script": "vdo_coco_4c.FCMacro",
+        "menu": "Crear COCO",
+        "tooltip": "Genera el contenedor volumétrico básico con Task Panel paramétrico",
+        "whatsthis": "Genera una caja estructural de 4 lados y fondo (laterales, tapa y base) con control de espesores, ranura inteligente para fondo y configuración de tapas/bases internas o externas.",
+        "statustip": "Crea un nuevo módulo COCO parametrizable en el documento activo",
+        "pixmap": "vdo_coco_2",
+        "accel": "C, O, C, O",
     },
     {
         "name": "Std_Macro_2",
         "script": "vdo_panel_fachada.FCMacro",
-        "menu": "Panel Fachada",
-        "tooltip": "Panel fachada con 4 cantos gruesos",
-        "pixmap": "vdo_panel_fachada",
+        "menu": "Crear Fachada",
+        "tooltip": "Genera un frente o puerta paramétrica para los módulos de mobiliario",
+        "whatsthis": "Inserta un panel frontal o puerta dimensionable para cerrar los compartimentos de los módulos COCO con control de luz y holguras perimetrales.",
+        "statustip": "Crea una fachada o puerta ajustable con holguras para el sistema VDO",
+        "pixmap": "vdo_panel",
+        "accel": "F, A, C, H",
     },
     {
         "name": "Std_Macro_3",
-        "script": "vdo_coco_4c.FCMacro",
-        "menu": "COCO 4C",
-        "tooltip": "Cajón 4 caras paramétrico",
-        "pixmap": "vdo_coco",
+        "script": "VDO_Crear_Hoja_Melamina.FCMacro",
+        "menu": "Crear Hoja",
+        "tooltip": "Crear hoja de melamina con parámetros",
+        "whatsthis": "Crear hoja de melamina con parámetros",
+        "statustip": "Crear Hoja",
+        "pixmap": "vdo_workbench",
+        "accel": "H, O, J, A",
+    },
+    {
+        "name": "Std_Macro_4",
+        "script": "vdo_cajon_oculta.FCMacro",
+        "menu": "Cajón Oculta",
+        "tooltip": "Cajón con corredera oculta (Blum Tandem) con despiece milimétrico",
+        "whatsthis": "Cajón con corredera oculta (Blum Tandem) con despiece milimétrico",
+        "statustip": "Cajón Oculta",
+        "pixmap": "vdo_cajon",
+        "accel": "C, A, J, O",
     },
 ]
 
@@ -95,7 +125,7 @@ def inject_toolbar(cfg_path):
     if macros_group is None:
         macros_group = ET.SubElement(macro_base, "FCParamGroup", Name="Macros")
 
-    # Eliminar macros VDO existentes (Std_Macro_0 a Std_Macro_3)
+    # Eliminar macros VDO existentes (todas las de VDO_MACROS)
     for macro in VDO_MACROS:
         existing = macros_group.find(f"FCParamGroup[@Name='{macro['name']}']")
         if existing is not None:
@@ -108,12 +138,31 @@ def inject_toolbar(cfg_path):
         ET.SubElement(grp, "FCText", Name="Script").text = macro["script"]
         ET.SubElement(grp, "FCText", Name="Menu").text = macro["menu"]
         ET.SubElement(grp, "FCText", Name="Tooltip").text = macro["tooltip"]
-        ET.SubElement(grp, "FCText", Name="WhatsThis").text = macro["tooltip"]
-        ET.SubElement(grp, "FCText", Name="Statustip").text = macro["menu"]
+        ET.SubElement(grp, "FCText", Name="WhatsThis").text = macro.get("whatsthis", macro["tooltip"])
+        ET.SubElement(grp, "FCText", Name="Statustip").text = macro.get("statustip", macro["menu"])
         ET.SubElement(grp, "FCText", Name="Pixmap").text = macro["pixmap"]
-        ET.SubElement(grp, "FCText", Name="Accel").text = ""
+        ET.SubElement(grp, "FCText", Name="Accel").text = macro.get("accel", "")
         ET.SubElement(grp, "FCBool", Name="System", Value="0")
-        print(f"[VDO] Macro definida: {macro['name']} → {macro['script']}")
+        print(f"[VDO] Macro definida: {macro['name']} → {macro['script']}"
+              + (f"  (atajo: {macro['accel']})" if macro.get("accel") else ""))
+
+    # ============================================================
+    # 1b. Sincronizar atajos en BaseApp/Preferences/Shortcut
+    # ============================================================
+    prefs = baseapp.find("FCParamGroup[@Name='Preferences']")
+    if prefs is not None:
+        shortcut_grp = prefs.find("FCParamGroup[@Name='Shortcut']")
+        if shortcut_grp is None:
+            shortcut_grp = ET.SubElement(prefs, "FCParamGroup", Name="Shortcut")
+        for macro in VDO_MACROS:
+            if not macro.get("accel"):
+                continue
+            entry = shortcut_grp.find(f"FCText[@Name='{macro['name']}']")
+            if entry is None:
+                entry = ET.SubElement(shortcut_grp, "FCText", Name=macro["name"])
+            if (entry.text or "") != macro["accel"]:
+                entry.text = macro["accel"]
+                print(f"[VDO] Atajo sincronizado: {macro['name']} = {macro['accel']}")
 
     # ============================================================
     # 2. Crear toolbar en BaseApp/Workbench/<target>/Toolbar
@@ -160,12 +209,32 @@ def inject_toolbar(cfg_path):
                 print(f"[VDO] Toolbar marcada como visible")
 
     # ============================================================
-    # 4. Guardar
+    # 4. Guardar (normalizando al formato que escribe FreeCAD,
+    #    para que el diff solo muestre los cambios reales)
     # ============================================================
     ET.indent(tree, space="  ")
     tree.write(cfg_path, encoding="UTF-8", xml_declaration=True)
-    print(f"[VDO] user.cfg actualizado: {cfg_path}")
 
+    with open(cfg_path, "r", encoding="utf-8") as f:
+        texto = f.read()
+
+    # Declaración XML como la escribe FreeCAD
+    texto = texto.replace("<?xml version='1.0' encoding='UTF-8'?>",
+                          '<?xml version="1.0" encoding="UTF-8" standalone="no" ?>')
+    # Self-closing sin espacio: <FCInt ... /> → <FCInt .../>
+    texto = texto.replace(" />", "/>")
+    # FCText vacío como par, como FreeCAD: <FCText ...></FCText>
+    texto = re.sub(r"<FCText([^>]*?)/>", r"<FCText\1></FCText>", texto)
+    # Final de archivo: línea en blanco antes de </FCParameters> + \n final
+    cuerpo = texto.rstrip("\n")
+    if cuerpo.endswith("</FCParameters>"):
+        cuerpo = cuerpo[:-len("</FCParameters>")].rstrip("\n")
+    texto = cuerpo + "\n\n</FCParameters>\n"
+
+    with open(cfg_path, "w", encoding="utf-8") as f:
+        f.write(texto)
+
+    print(f"[VDO] user.cfg actualizado: {cfg_path}")
     return True
 
 
@@ -174,11 +243,18 @@ def main():
     print("[VDO] Inyección de toolbar en user.cfg")
     print("=" * 60)
 
-    cfg = find_user_cfg()
-    if not cfg:
-        print("[VDO] ERROR: No se encontró user.cfg de FreeCAD")
-        print("       Buscando en: ~/.config/FreeCAD/v1-1/user.cfg")
-        return False
+    if len(sys.argv) > 1:
+        cfg = os.path.abspath(os.path.expanduser(sys.argv[1]))
+        if not os.path.isfile(cfg):
+            print(f"[VDO] ERROR: No existe el archivo: {cfg}")
+            return False
+    else:
+        cfg = find_user_cfg()
+        if not cfg:
+            print("[VDO] ERROR: No se encontró user.cfg de FreeCAD")
+            print("       Buscando en: ~/.config/FreeCAD/v1-1/user.cfg")
+            print("       (o pasa la ruta: python3 vdo_toolbar_inject.py <user.cfg>)")
+            return False
 
     print(f"[VDO] user.cfg: {cfg}")
     ok = inject_toolbar(cfg)
@@ -189,7 +265,8 @@ def main():
         print("[VDO] LISTO. Reinicia FreeCAD para ver la toolbar.")
         print(f"[VDO] Toolbar '{TOOLBAR_NAME}' aparecerá en:")
         print(f"       - {WORKBENCH_TARGET}" if WORKBENCH_TARGET != "Global" else "       - TODOS los workbenches")
-        print(f"       - {len(VDO_MACROS)} botones: Crear Hoja, Panel Estándar, Panel Fachada, COCO 4C")
+        print(f"       - {len(VDO_MACROS)} botones: Crear Panel, COCO, Fachada, Crear Hoja, Cajón Oculta")
+        print(f"       - Atajos (máx. 4 teclas Qt): PANE, COCO, FACH, HOJA, CAJO")
         print("=" * 60)
 
     return ok

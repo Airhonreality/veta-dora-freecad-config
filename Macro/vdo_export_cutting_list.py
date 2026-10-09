@@ -153,7 +153,14 @@ def generar_csv_opencutlist(piezas, output_path):
                     continue
 
                 # Construir string de material (sin hardcode)
-                espesor = material["espesores"][0] if material["espesores"] else 18
+                # Prioriza el espesor real de la pieza (multi-espesor:
+                # cajón caja=16, fondo=6, fachada=18); fallback al
+                # primer espesor del material.
+                espesor_pieza = pieza.get("espesor") or 0
+                if espesor_pieza:
+                    espesor = espesor_pieza
+                else:
+                    espesor = material["espesores"][0] if material["espesores"] else 18
                 material_str = f"{espesor}mm_{material['referencia']}_{material['tipo']}"
 
                 # Calcular costo

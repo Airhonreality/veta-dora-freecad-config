@@ -313,7 +313,13 @@ def make_coco(configuracion):
     CocoFeature(obj)
 
     if App.GuiUp:
-        ViewProviderCoco(obj.ViewObject)
+        try:
+            from vdo_drag_handles import DragableViewProvider
+            DragableViewProvider(obj.ViewObject)
+        except ImportError:
+            App.Console.PrintWarning(
+                "[VDO] vdo_drag_handles no disponible, usando ViewProvider básico.\n")
+            ViewProviderCoco(obj.ViewObject)
 
     # Aplicar configuración (valores por defecto desde vdo_manifest.json)
     obj.Alto = configuracion.get("alto", VDO_D.ALTO_DEFAULT)

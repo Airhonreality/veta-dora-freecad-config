@@ -71,3 +71,14 @@ FONDO_DISTANCIA_BORDE = 18.0
 # === ESTRUCTURA (Tapa y Base) ===
 TAPA_POSICION = "externo"
 BASE_POSICION = "interno"
+
+# === CAJÓN CON CORREDERA OCULTA (params de parametros_cajon) ===
+CAJON_ALTO_DEFAULT = get_param("parametros_cajon.alto_caja.valor", 120)
+CAJON_GROSOR_DEFAULT = get_param("parametros_cajon.grosor_caja.valor", 16)
+CAJON_FONDO_DEFAULT = get_param("parametros_cajon.grosor_fondo.valor", 6)
+CAJON_FACHADA_DEFAULT = get_param("parametros_cajon.grosor_fachada.valor", 18)
+CAJON_HOLGURA_LAT_FACHADA = get_param("parametros_cajon.holgura_lateral_fachada.valor", 2)
+CAJON_HOLGURA_SUP_FACHADA = get_param("parametros_cajon.holgura_superior_fachada.valor", 2)
+CAJON_HOLGURA_INF_FACHADA = get_param("parametros_cajon.holgura_inferior_fachada.valor", 2)
+CAJON_PENETRACION_RANURA = get_param("parametros_cajon.penetracion_ranura_piso.valor", 10)
+CAJON_EJE_RANURA = get_param("parametros_cajon.eje_ranura_piso.valor", 11.5)

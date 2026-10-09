@@ -118,6 +118,60 @@
     "parametros_locales": {
       "type": "object",
       "description": "Parámetros locales de módulos"
+    },
+
+    "parametros_cajon": {
+      "type": "object",
+      "description": "Parámetros por defecto del módulo de cajón con corredera oculta",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["valor", "unidad"],
+        "properties": {
+          "valor": {"type": "number"},
+          "unidad": {"type": "string"},
+          "min": {"type": "number"},
+          "max": {"type": "number"},
+          "descripcion": {"type": "string"}
+        }
+      }
+    },
+
+    "correderas_ocultas": {
+      "type": "object",
+      "description": "Catálogo de correderas ocultas: delta de ancho, longitudes comerciales y cotas de mecanizado",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["nombre", "delta_ancho", "longitudes_comerciales"],
+        "properties": {
+          "nombre": {"type": "string"},
+          "delta_ancho": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Reducción al ancho interior del mueble para el ancho exterior de la caja (mm)"
+          },
+          "unidad_delta": {"type": "string"},
+          "descripcion": {"type": "string"},
+          "longitudes_comerciales": {
+            "type": "array",
+            "items": {"type": "number", "minimum": 1},
+            "minItems": 1,
+            "description": "Longitudes nominales de guía (mm), de menor a mayor"
+          },
+          "mecanizado": {
+            "type": "object",
+            "description": "Cotas de mecanizado bajo especificación del fabricante",
+            "properties": {
+              "diam_taladro": {"type": "number", "minimum": 0},
+              "prof_taladro": {"type": "number", "minimum": 0},
+              "dist_taladro_borde_trasero": {"type": "number", "minimum": 0},
+              "dist_taladro_sobre_ranura": {"type": "number", "minimum": 0},
+              "prof_ranura_lateral": {"type": "number", "minimum": 0},
+              "notch_ancho": {"type": "number", "minimum": 0},
+              "notch_alto": {"type": "number", "minimum": 0}
+            }
+          }
+        }
+      }
     }
   }
 }

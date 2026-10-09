@@ -4,8 +4,59 @@
 # =====================================================================
 
 proyecto: "VDO - Motor Paramétrico de Muebles de Melamina"
-version_actual: "1.7.0"
+version_actual: "1.8.0"
 fecha_actualización: "2026-09-21"
+
+# =====================================================================
+# SESIÓN 2026-09-21 - MÓDULO CAJÓN CON CORREDERA OCULTA (v1.8.0)
+# =====================================================================
+
+sesion_2026_09_21_cajon_oculta:
+  duración: "~2 horas"
+  participantes: ["Usuario (desarrollo carpintería)", "Claude (arquitectura)"]
+
+  objetivo: "Nuevo módulo paramétrico: despiece de cajón con correderas ocultas (Blum Tandem, Hafele, Ducasse, genéricas) con precisión milimétrica"
+
+  decisiones_clave:
+    - "Entradas: LI/ProfInt directos (interior libre) + AnchoModulo/AltoFrente para fachada"
+    - "Alcance 3D: solo madera (5 piezas de caja + fachada) con mecanizados modelados; raíles = datos del manifest"
+    - "Fórmulas puras separadas en vdo_cajon_despiece.py (sin FreeCAD, self-test con python3)"
+    - "Constantes de herraje (Delta, longitudes, cotas de mecanizado) centralizadas en vdo_manifest.json"
+    - "Montaje de trasera configurable: entre_laterales (default) | testa"
+
+  fórmulas_implementadas:
+    guia: "LG = max(longitudes_comerciales ≤ ProfInt), override manual"
+    ancho_caja: "LI − Delta (Blum Tandem 16mm → 49 mm)"
+    laterales: "Largo = LG, Alto = AltoCaja (85/120/150), G = 15/16"
+    contra_frente: "Ancho = ancho_caja − 2·G (entre laterales); Alto = AltoCaja − (eje_ranura + Gfondo)"
+    piso: "Ancho = ancho_contra + 2·penetración (8-10/lado); Largo = LG"
+    fachada: "Ancho = AnchoModulo − 2·holg_lat; Alto = AltoFrente − holg_sup − holg_inf"
+    mecanizados: "Ranura inferior (eje 11.5, ancho=Gfondo), taladros Ø6 desde inferior, notch inferior en contra-frente"
+
+  archivos_creados:
+    - "Macro/vdo_cajon_despiece.py (fórmulas puras + self-test)"
+    - "Macro/vdo_cajon_core.py (FeaturePython CajonFeature + make_cajon)"
+    - "Macro/vdo_cajon_task.py (CajonTaskPanel PySide)"
+    - "Macro/vdo_cajon_oculta.FCMacro (envoltorio)"
+    - "Macro/vdo_cajon.svg (icono)"
+
+  archivos_modificados:
+    - "Macro/vdo_manifest.json (v1.8.0: correderas_ocultas, parametros_cajon, espesores melamina 6/12/15/16, herrajes corredera)"
+    - "schemas/vdo_manifest_schema.json (tipado de correderas_ocultas y parametros_cajon)"
+    - "Macro/vdo_defaults.py (constantes CAJON_*_DEFAULT)"
+    - "Macro/vdo_export_cutting_list.py (fix: usar pieza.espesor, no material[0] — multi-espesor)"
+    - "Macro/vdo_toolbar_inject.py (Std_Macro_4 → vdo_cajon_oculta.FCMacro)"
+
+  validacion:
+    - "python3 Macro/vdo_cajon_despiece.py → ✅ self-test (LI=600, Prof=580 → LG=550, ancho_ext=551, contra=519, piso=539)"
+    - "jsonschema sobre manifest actualizado"
+    - "Smoke test freecadcmd: make_cajon → 6 piezas + VDO_Paneles_JSON"
+
+  contrato_export:
+    VDO_Tipo: "contenedor"
+    VDO_Subtipo: "cajon_oculta"
+    VDO_Herraje_Ref: "blum_tandem | generica | hafele | ducasse"
+    VDO_Paneles_JSON: "6 piezas (2 laterales, contra-frente, frente interior, piso, fachada) con mecanizados por pieza"
 
 # =====================================================================
 # SESIÓN 2026-09-21 - JSON SCHEMA + EXPORT CUTTING LIST

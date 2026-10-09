@@ -1,0 +1,42 @@
+# -*- coding: utf-8 -*-
+# =====================================================================
+# vdo_cajon_oculta.FCMacro
+# Envoltorio del cajón con corredera oculta (Blum Tandem etc)
+# Axioma 3: Capa UI - solo parámetros de configuración
+# =====================================================================
+
+import sys
+import FreeCAD as App
+import FreeCADGui as Gui
+
+_vdo_macro_dir = App.getUserMacroDir(True)
+if _vdo_macro_dir not in sys.path:
+    sys.path.insert(0, _vdo_macro_dir)
+
+from vdo_cajon_core import make_cajon
+from vdo_cajon_task import CajonTaskPanel
+
+configuracion = {
+    "nombre": "Cajon_Oculta",
+    # Datos de partida
+    "ancho_libre": 564.0,      # LI: pared interior a pared interior
+    "prof_libre": 560.0,       # profundidad libre → guía auto (550)
+    "ancho_modulo": 600.0,     # ancho total (fachada)
+    "alto_frente": 225.0,      # alto asignado a la fachada
+    # Caja
+    "alto_caja": 120.0,        # comercial: 85 / 120 / 150
+    "grosor_caja": 16,         # ideal 15-16 para corredera oculta
+    "grosor_fondo": 6,
+    "grosor_fachada": 18,
+    # Herraje
+    "marca": "blum_tandem",    # blum_tandem | generica | hafele | ducasse
+    "longitud_guia": 0.0,      # 0 = auto (≤ prof_libre)
+    "montaje_trasera": "entre_laterales",
+}
+
+App.ActiveDocument.openTransaction("Create Cajón Oculta")
+obj = make_cajon(configuracion)
+
+if obj and App.GuiUp:
+    panel = CajonTaskPanel(obj)
+    Gui.Control.showDialog(panel)
