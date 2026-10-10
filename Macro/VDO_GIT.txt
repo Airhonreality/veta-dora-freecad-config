@@ -1,49 +1,55 @@
 ================================================================
-VDO · SINCRONIZAR Y PUSHEAR A GITHUB
+VDO · SINCRONIZAR CON GITHUB (AGNÓSTICO AL SO)
 ================================================================
 
-En esta maquina FreeCAD es FLATPAK, asi que la carpeta de macros
-~no~ es un repo git. Todo el push se hace a traves del clon local.
+El repo es agnóstico: guarda contenido relativo, no rutas. Las rutas
+(macros, user.cfg, repo) se detectan con vdo_paths.py, así funciona
+igual en FreeCAD nativo, flatpak, snap, Windows o macOS.
 
-  REPO  = ~/veta-dora-freecad-config
-  MACRO = ~/.var/app/org.freecad.FreeCAD/data/FreeCAD/v1-1/Macro
-
-----------------------------------------------------------------
-SUBIR  (lo que editaste en la sandbox -> repo -> GitHub)
-----------------------------------------------------------------
-
-  cp "$MACRO"/*.py "$MACRO"/*.FCMacro "$MACRO"/*.svg "$REPO"/Macro/
-  cd "$REPO"
-  git add Macro/
-  git status                     <- revisa que solo van tus archivos
-  git commit -m "nuevos modulos VDO"
-  git push origin master
+Herramienta única:  vdo_sync.py
+  (dentro de FreeCAD:  Macro → Ejecutar → vdo_sync.py)
 
 ----------------------------------------------------------------
-BAJAR  (GitHub -> sandbox)
+RUTAS
 ----------------------------------------------------------------
+  python3 vdo_sync.py paths        # muestra qué detecta
 
-  cd "$REPO"
+Si no encuentra el repo, guardalo una vez:
+  python3 vdo_sync.py init --repo /ruta/a/veta-dora-freecad-config
+  (o exportá la variable de entorno:  VDO_REPO=/ruta/...)
+
+----------------------------------------------------------------
+SUBIR  (macros locales -> repo -> GitHub)
+----------------------------------------------------------------
+  python3 vdo_sync.py publish
+    = push (macros->repo) + inject (toolbar) + git add/commit/push
+
+Solo copiar macros al repo (sin git):
+  python3 vdo_sync.py push
+
+----------------------------------------------------------------
+BAJAR  (GitHub -> macros locales)
+----------------------------------------------------------------
+  cd /ruta/al/repo
   git pull
-  cp "$REPO"/Macro/* "$MACRO"/
+  python3 /ruta/al/repo/Macro/vdo_sync.py pull
 
-  OJO: bajar PISA los archivos que editaste en la sandbox.
-  SIEMPRE subir antes de bajar.
+  OJO: bajar PISA los archivos locales. Subir antes de bajar.
+
+----------------------------------------------------------------
+TOOLBAR / CONFIG
+----------------------------------------------------------------
+  python3 vdo_sync.py inject
+
+  La toolbar es CÓDIGO portable (vdo_toolbar_inject.VDO_MACROS). Se
+  inyecta en el user.cfg LOCAL. NO se versiona user.cfg (antes traía
+  rutas absolutas de otra máquina: /home/javi/...).
 
 ----------------------------------------------------------------
 NOTAS
 ----------------------------------------------------------------
-
-- vdo_publish.py NO funciona con Flatpak: busca un .git desde la
-  carpeta de macros, no lo encuentra, y aborta. Usa los comandos
-  de arriba.
-
-- Si anades una carpeta nueva dentro de Macro/ (por ejemplo
-  helpers/), copiala con:  cp -r "$REPO"/Macro/helpers "$MACRO"/
-
-- No copies config/freecad/user.cfg tal cual: trae rutas
-  hardcodeadas de otra maquina (/home/javi/...). Ver INSTALACION.md
-  para el merge correcto.
-
-- La carpeta MACRO empieza con punto (oculta): en Dolphin pulsa
-  Ctrl+H para ver su contenido.
+- vdo_publish.py (dentro de FreeCAD) hace lo mismo que 'publish'.
+- Rutas detectadas: native  ~/.local/share/FreeCAD/...
+                    flatpak ~/.var/app/org.freecad.FreeCAD/data/FreeCAD/...
+- Si agregás subcarpetas dentro de Macro/, incluí también su copia en
+  el patrón de vdo_sync (hoy copia archivos sueltos).

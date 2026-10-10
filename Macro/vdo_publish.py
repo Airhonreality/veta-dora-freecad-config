@@ -28,44 +28,45 @@ except ImportError:
 
 
 def find_repo_root():
-    """Encuentra la raíz del repositorio VDO."""
+    """Encuentra la raíz del repositorio VDO (agnóstico al SO)."""
+    try:
+        import vdo_paths as vp
+        repo = vp.get_repo_root()
+        if repo:
+            return repo
+    except Exception:
+        pass
+    # Fallback: si el script vive dentro del repo
     script_dir = Path(__file__).parent
-    repo_root = script_dir.parent
-
-    if (repo_root / "Macro").exists() and (repo_root / "config").exists():
-        return repo_root
-
-    for parent in script_dir.parents:
+    for parent in [script_dir, *script_dir.parents]:
         if (parent / ".git").exists() and (parent / "Macro").exists():
             return parent
-
-    return repo_root
+    return None
 
 
 def get_freecad_macro_dir():
-    """Obtiene la carpeta de macros de FreeCAD."""
+    """Obtiene la carpeta de macros de FreeCAD (agnóstico al SO)."""
+    try:
+        import vdo_paths as vp
+        d = vp.get_macro_dir()
+        if d:
+            return d
+    except Exception:
+        pass
     if FREECAD_AVAILABLE:
         return App.getUserMacroDir(True)
-
-    candidates = [
-        Path.home() / ".local" / "share" / "FreeCAD" / "Macro",
-        Path.home() / ".config" / "FreeCAD" / "Macro",
-    ]
-    for p in candidates:
-        if p.exists():
-            return str(p)
     return None
 
 
 def get_freecad_config_dir():
-    """Obtiene la carpeta de configuración de FreeCAD."""
-    candidates = [
-        Path.home() / ".config" / "FreeCAD" / "v1-1",
-        Path.home() / ".config" / "FreeCAD",
-    ]
-    for p in candidates:
-        if (p / "user.cfg").exists():
-            return p
+    """Obtiene la carpeta de configuración de FreeCAD (agnóstico al SO)."""
+    try:
+        import vdo_paths as vp
+        d = vp.get_config_dir()
+        if d:
+            return d
+    except Exception:
+        pass
     return None
 
 
@@ -101,31 +102,31 @@ def sync_macros(freecad_macro_dir, repo_root):
     return count
 
 
-def sync_config(freecad_config_dir, repo_root):
-    """Sincroniza configuración (user.cfg) al repo."""
-    print("⚙️  Sincronizando configuración...")
+def sync_config(freecad_config_dir, repo_root=None):
+    """(Re)inyecta la toolbar VDO en el user.cfg LOCAL.
+
+    Ya NO se versiona user.cfg (traía rutas absolutas de una máquina).
+    La config portable vive como código en vdo_toolbar_inject.VDO_MACROS
+    y se aplica sobre el user.cfg local.
+    """
+    print("⚙️  Inyectando toolbar en user.cfg local...")
 
     if not freecad_config_dir:
         print("  ⚠️  Config dir no encontrado")
         return 0
 
-    src = freecad_config_dir / "user.cfg"
-    if not src.exists():
+    cfg = Path(freecad_config_dir) / "user.cfg"
+    if not cfg.exists():
         print("  ⚠️  user.cfg no encontrado")
         return 0
 
-    dst = repo_root / "config" / "freecad" / "user.cfg"
-    dst.parent.mkdir(parents=True, exist_ok=True)
-
-    # Verificar si cambió
-    if dst.exists():
-        if src.read_bytes() == dst.read_bytes():
-            print("  ℹ️  Sin cambios")
-            return 0
-
-    shutil.copy2(src, dst)
-    print(f"  ✅ user.cfg actualizado")
-    return 1
+    try:
+        import vdo_toolbar_inject as ti
+        ok = ti.inject_toolbar(str(cfg))
+        return 1 if ok else 0
+    except Exception as e:
+        print(f"  ❌ Error inyectando toolbar: {e}")
+        return 0
 
 
 def git_add_all(repo_root):
@@ -203,11 +204,9 @@ def main():
     print("=" * 70)
 
     if not FREECAD_AVAILABLE:
-        print("\n❌ Este script debe ejecutarse DENTRO de FreeCAD")
-        print("   FreeCAD → Macro → Ejecutar → vdo_publish.py")
-        return 1
+        print("\n⚠️  FreeCAD no disponible; usando detección de rutas.")
 
-    # 1. Detectar rutas
+    # 1. Detectar rutas (agnóstico al SO)
     print("\n🔍 Detectando rutas...")
     repo_root = find_repo_root()
     freecad_macro_dir = get_freecad_macro_dir()
@@ -217,8 +216,10 @@ def main():
     print(f"  📁 Macros FreeCAD: {freecad_macro_dir}")
     print(f"  📁 Config FreeCAD: {freecad_config_dir}")
 
-    if not (repo_root / ".git").exists():
-        print(f"\n❌ No es un repositorio git: {repo_root}")
+    if not repo_root or not (repo_root / ".git").exists():
+        print(f"\n❌ No se detectó un repositorio git válido: {repo_root}")
+        print("   Definí la ruta con:  vdo_sync.py init --repo RUTA"
+              "   (o export VDO_REPO=RUTA)")
         return 1
 
     # 2. Sincronizar

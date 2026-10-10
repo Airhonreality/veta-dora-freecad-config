@@ -3,3 +3,8 @@ __pycache__/
 *.pyo
 *.bak
 *.bak_*
+
+# Config local de FreeCAD: específica de cada máquina (rutas absolutas).
+# La toolbar es código portable (vdo_toolbar_inject.VDO_MACROS).
+config/freecad/user.cfg
+config/freecad/*.bak*

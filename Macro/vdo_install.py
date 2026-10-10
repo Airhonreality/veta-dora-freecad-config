@@ -298,50 +298,37 @@ def instalar_vdo():
 # BLOQUE 7: RESTAURACIÓN DE CONFIGURACIÓN
 # =====================================================================
 
-def restaurar_configuracion(ruta_repo):
-    """Restaura configuración de usuario (user.cfg) desde el repo."""
-    config_source = os.path.join(ruta_repo, "config", "freecad", "user.cfg")
+def restaurar_configuracion(ruta_repo=None):
+    """(Re)inyecta la toolbar VDO en el user.cfg LOCAL.
 
-    if not os.path.exists(config_source):
-        print("\n⚠️ Configuración personalizada no encontrada (config/freecad/user.cfg)")
-        print("   Esto es normal si es la primera instalación.")
-        return True
-
-    freecad_config_dir = None
-    candidates = [
-        os.path.expanduser("~/.config/FreeCAD/v1-1"),
-        os.path.expanduser("~/.config/FreeCAD"),
-    ]
-    for candidate in candidates:
-        if os.path.exists(candidate):
-            freecad_config_dir = candidate
-            break
-
-    if not freecad_config_dir:
-        print("\n⚠️ No se encontró directorio de configuración de FreeCAD")
-        print("   Se ignorará la restauración de toolbar")
-        return True
-
-    config_dest = os.path.join(freecad_config_dir, "user.cfg")
-
-    # Hacer backup del actual
-    if os.path.exists(config_dest):
-        backup = config_dest + ".bak_before_vdo"
-        try:
-            shutil.copy2(config_dest, backup)
-            print(f"\n🔒 Backup local guardado: user.cfg.bak_before_vdo")
-        except Exception as e:
-            print(f"\n⚠️ No se pudo hacer backup: {e}")
-
-    # Restaurar
+    Ya NO se sobrescribe user.cfg con uno versionado (traía rutas
+    absolutas de otra máquina). La config portable es código
+    (vdo_toolbar_inject.VDO_MACROS) y se aplica sobre el user.cfg local.
+    """
+    print("\n⚙️  Configurando toolbar VDO en user.cfg local...")
     try:
-        shutil.copy2(config_source, config_dest)
-        print(f"\n✅ Configuración restaurada (toolbar, botones)")
-        print(f"   ⚠️ IMPORTANTE: Reinicia FreeCAD para ver los cambios")
-        return True
+        import vdo_paths as vp
+        import vdo_toolbar_inject as ti
     except Exception as e:
-        print(f"\n❌ Error restaurando configuración: {e}")
-        return False
+        print(f"⚠️  Módulos de config no disponibles: {e}")
+        return True
+
+    cfg = vp.get_user_cfg()
+    if not cfg:
+        print("⚠️  No se encontró user.cfg de FreeCAD; se omite la toolbar")
+        return True
+
+    # Backup del actual
+    try:
+        shutil.copy2(str(cfg), str(cfg) + ".bak_before_vdo")
+        print(f"🔒 Backup local: {cfg}.bak_before_vdo")
+    except Exception as e:
+        print(f"⚠️  No se pudo hacer backup: {e}")
+
+    ok = ti.inject_toolbar(str(cfg))
+    if ok:
+        print("✅ Toolbar configurada. Reiniciá FreeCAD para verla.")
+    return True
 
 
 # =====================================================================

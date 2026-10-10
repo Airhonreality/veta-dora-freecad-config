@@ -137,10 +137,20 @@ WORKBENCH_TARGET = "Global"
 
 
 def find_user_cfg():
-    """Encuentra user.cfg de FreeCAD."""
+    """Encuentra user.cfg de FreeCAD (agnóstico: native/flatpak/snap/win/mac)."""
+    try:
+        import vdo_paths as vp
+        cfg = vp.get_user_cfg()
+        if cfg:
+            return str(cfg)
+    except Exception:
+        pass
+    # Fallback mínimo si vdo_paths no está disponible
     candidates = [
         os.path.expanduser("~/.config/FreeCAD/v1-1/user.cfg"),
         os.path.expanduser("~/.config/FreeCAD/user.cfg"),
+        os.path.expanduser(
+            "~/.var/app/org.freecad.FreeCAD/config/FreeCAD/v1-1/user.cfg"),
     ]
     for p in candidates:
         if os.path.exists(p):
