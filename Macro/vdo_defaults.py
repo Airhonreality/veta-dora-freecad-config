@@ -72,6 +72,39 @@ FONDO_DISTANCIA_BORDE = 18.0
 TAPA_POSICION = "externo"
 BASE_POSICION = "interno"
 
+# === ORIENTACIÓN (vocabulario del manifiesto) ===
+ORIENTACIONES = get_param("orientaciones", {})
+ORIENTACIONES_VALIDAS = list(ORIENTACIONES.keys())
+ORIENTACION_DEFAULT = (
+    "horizontal" if "horizontal" in ORIENTACIONES_VALIDAS
+    else (ORIENTACIONES_VALIDAS[0] if ORIENTACIONES_VALIDAS else "horizontal")
+)
+
+
+def listar_orientaciones():
+    """Lista las claves de orientaciones válidas desde el manifest."""
+    return ORIENTACIONES_VALIDAS
+
+
+def obtener_mapeo_orientacion(orientacion):
+    """Devuelve el mapeo de ejes de una orientación desde el manifest.
+
+    Args:
+        orientacion (str): clave en manifest["orientaciones"].
+
+    Returns:
+        dict: {"X": parametro, "Y": parametro, "Z": parametro}
+
+    Raises:
+        ValueError: si la orientación no existe en el vocabulario.
+    """
+    info = ORIENTACIONES.get(orientacion)
+    if info is None:
+        raise ValueError(
+            f"Orientación desconocida: '{orientacion}'. "
+            f"Disponibles: {', '.join(ORIENTACIONES_VALIDAS)}")
+    return info["ejes"]
+
 # === CAJÓN CON CORREDERA OCULTA (params de parametros_cajon) ===
 CAJON_ALTO_DEFAULT = get_param("parametros_cajon.alto_caja.valor", 120)
 CAJON_GROSOR_DEFAULT = get_param("parametros_cajon.grosor_caja.valor", 16)

@@ -16,9 +16,12 @@ sys.path.insert(0, str(macro_dir))
 try:
     import FreeCAD as App
     import FreeCADGui as Gui
-    from PySide2 import QtWidgets
-except:
-    print("❌ Este script requiere FreeCAD + PySide2")
+    try:
+        from PySide2 import QtWidgets
+    except ImportError:
+        from PySide import QtWidgets
+except Exception:
+    print("❌ Este script requiere FreeCAD + PySide (Qt)")
     sys.exit(1)
 
 import vdo_cutting_list_preview
@@ -45,7 +48,11 @@ def mostrar_menu():
     radio_seleccion = QtWidgets.QRadioButton("✋ EXPORTAR SELECCIÓN (objetos marcados)")
     radio_grupo = QtWidgets.QRadioButton("📦 EXPORTAR MÓDULO actual")
 
-    radio_todo.setChecked(True)
+    # Preseleccionar SELECCIÓN si hay objetos marcados en el árbol/3D
+    if Gui.Selection.getSelection():
+        radio_seleccion.setChecked(True)
+    else:
+        radio_todo.setChecked(True)
 
     layout.addWidget(radio_todo)
     layout.addWidget(radio_seleccion)

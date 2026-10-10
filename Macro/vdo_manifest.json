@@ -289,5 +289,18 @@
         "notch_alto": 20
       }
     }
+  },
+
+  "orientaciones": {
+    "horizontal": {
+      "nombre": "Horizontal (acostado)",
+      "normal": "Z",
+      "ejes": {"X": "ancho", "Y": "fondo", "Z": "espesor"}
+    },
+    "vertical": {
+      "nombre": "Vertical (de pie, división/lateral)",
+      "normal": "X",
+      "ejes": {"X": "espesor", "Y": "fondo", "Z": "alto"}
+    }
   }
 }

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 # =====================================================================
 # vdo_panel_fachada.FCMacro
-# Envoltorio ultraligero para Panel Fachada
-# Axioma 3: Capa UI - solo parámetros
+# Envoltorio ultraligero para Panel Fachada (canto rígido x4)
+# Axioma 3: Capa UI - solo parámetros (sin acoplar semántica)
+# Nota: la orientación es un atributo físico libre, no una regla de fachada.
 # =====================================================================
 
 import sys
@@ -15,17 +16,18 @@ if _vdo_macro_dir not in sys.path:
 
 from vdo_panel_core import crear_pieza
 
-# Configuración de variante
+# Configuración física (orientación libre, sin semántica de mobiliario)
 configuracion = {
-    "tipo": "fachada",
     "nombre": "Fachada_Principal",
+    "etiqueta": "Fachada",
+    "orientacion": "vertical",
     "cantos": {
-        "norte": True,
-        "sur": True,
-        "este": True,
-        "oeste": True,
+        "norte": "RIG",
+        "sur": "RIG",
+        "este": "RIG",
+        "oeste": "RIG",
     },
-    "etiqueta": "Fachada"
+    "material_ref": "melamina_standar",
 }
 
 crear_pieza(configuracion)

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # =====================================================================
 # vdo_panel_estandar.FCMacro
-# Envoltorio ultraligero para Panel Estándar
-# Axioma 3: Capa UI - solo parámetros
+# Envoltorio ultraligero para Panel Estándar (panel básico, tag libre)
+# Axioma 3: Capa UI - solo parámetros (sin acoplar semántica)
 # =====================================================================
 
 import sys
@@ -15,17 +15,18 @@ if _vdo_macro_dir not in sys.path:
 
 from vdo_panel_core import crear_pieza
 
-# Configuración de variante
+# Configuración física (orientación libre, sin semántica de mobiliario)
 configuracion = {
-    "tipo": "estandar",
     "nombre": "Panel_Base",
+    "etiqueta": "Panel Estándar",
+    "orientacion": "horizontal",
     "cantos": {
-        "norte": False,
-        "sur": False,
-        "este": True,
-        "oeste": False,
+        "norte": "FX",
+        "sur": "FX",
+        "este": "RIG",
+        "oeste": "FX",
     },
-    "etiqueta": "Panel Estándar"
+    "material_ref": "melamina_standar",
 }
 
 crear_pieza(configuracion)

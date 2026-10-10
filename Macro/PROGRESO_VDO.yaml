@@ -162,6 +162,40 @@ registro:
       - Backup automático de user.cfg con timestamp
     validacion: 4 macros definidas + toolbar CARPINTERIA - VDO con 4 botones inyectada y visible
 
+  - fecha: 2026-10-10
+    checkpoint: Refactor axiomático - Separación Semántica/Física
+    area: Motor de paneles agnóstico + diccionario semántico (Task 6)
+    descripcion: >
+      Se detectó un fallo axiomático: el motor de paneles acoplaba la semántica
+      de mobiliario (estandar/fachada) a reglas físicas (cantos, holguras, tipo
+      de fachada) y a la orientación, que en realidad es libre e independiente.
+      Se adoptó el Axioma 5 de Separación Semántica/Física: el motor modela solo
+      piezas físicas (orientación, cantos, material, espesor); la semántica de
+      mobiliario vivirá en un diccionario semántico (datos puros) que hoy no
+      existe, por lo que hoy no se acopla nada.
+    decisiones:
+      - "A1: orientacion es un atributo fisico libre (vocabulario del manifiesto), no una regla de subtipo"
+      - "A2: 'fachada' = canto rigido x4 + material 'fachadas' es un mapeo del futuro diccionario, no una rama del motor"
+      - "A3: 'division' = panel orientado verticalmente; las divisiones del COCO deben ser piezas VDO exportables"
+    archivos_modificados:
+      - vdo_panel_core.py (motor agnostico: validacion orientacion + mapeo de ejes + VDO_Orientacion)
+      - vdo_manifest.json (vocabulario orientaciones)
+      - vdo_defaults.py (ORIENTACIONES_VALIDAS / mapeo de ejes)
+      - vdo_panel_estandar.FCMacro / vdo_panel_fachada.FCMacro (contrato agnostico)
+      - vdo_coco_core.py / vdo_coco_spaces.py (divisiones al despiece)
+      - vdo_export_cutting_list.py (extraccion consciente de orientacion)
+    archivos_creados:
+      - vdo_panel_division.FCMacro
+      - vdo_diccionario_semantico.md (esqueleto de la tabla de piezas)
+    detalles:
+      - orientacion obligatoria (horizontal/vertical); ValueError si falta o es invalida
+      - horizontal: Length=ancho, Width=fondo, Height=espesor (normal Z)
+      - vertical: Length=espesor, Width=fondo, Height=alto (normal X, division/lateral)
+      - Placement queda libre (identidad) para que el mueble/espacio posicione la pieza
+      - se elimino la rama if tipo == fachada que inyectaba holguras/tipo-fachada
+      - VDO_Subtipo deja de dirigir geometria; solo tag libre (VDO_Etiqueta)
+    validacion: pendiente prueba en FreeCAD GUI + self-tests de despiece
+
 # ---------------------------------------------------------------------
 # Siguientes pasos propuestos
 # ---------------------------------------------------------------------
@@ -172,3 +206,9 @@ siguientes_pasos:
   - Verificar que las macros se ejecutan correctamente con los parámetros automáticos
   - Añadir parámetro de material y estructura del COCO con Variantes
   - Exportar manifiesto a JSON/CSV para el ERP VETA
+  - Comenzar a llenar vdo_diccionario_semantico.md (definir semantica e inmutables de cada pieza)
+  - Promover el diccionario semantico a datos puros (vdo_manifest.json -> seccion semantica) cuando este definido
+  - "PIPELINE UNIFICADO (NO hacer aun): integrar vdo_cutting_list -> vdo_optimizer en un solo flujo. La lista de corte no se escribe a disco: se pasa un CSV VIRTUAL (en memoria) al optimizador. Boton 'Exportar CSV' en el optimizador con vista previa de filas/columnas; el CSV real solo se guarda cuando el usuario confirma."
+  - "OPTIMIZADOR DE CORTE: exportar SVG/DXF reutilizando vdo_optimizer_preview.py (hoy solo hay preview embebido en pantalla)"
+  - "OPTIMIZADOR DE CORTE: biblioteca de retales reutilizables (sobrantes) y respeto de veta por material"
+  - "NESTING WORKBENCH: corregir import PySide2 -> PySide (mismo bug que tenian las macros de corte)"

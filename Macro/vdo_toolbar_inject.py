@@ -76,7 +76,58 @@ VDO_MACROS = [
         "pixmap": "vdo_cajon",
         "accel": "C, A, J, O",
     },
+    {
+        "name": "Std_Macro_5",
+        "script": "vdo_panel_division.FCMacro",
+        "menu": "Crear División",
+        "tooltip": "Panel divisor (orientado verticalmente) vinculado al sistema VDO",
+        "whatsthis": "Inserta un panel divisor vertical para separar los compartimentos internos de un módulo.",
+        "statustip": "Crea una división vertical independiente",
+        "pixmap": "vdo_panel",
+        "accel": "D, I, V, I",
+    },
 ]
+
+# Toolbars VDO antiguas a limpiar (evita restos de 3 botones)
+NOMBRES_VDO_OBSOLETOS = {
+    "CARPINTERIA VDO",
+    "CARPINTERIA - VDO",
+    "CARPINTERIA TEST",
+    "VDO",
+    "VDO - Muebles Paramétricos",
+}
+
+
+def _ruta_macro_abs(nombre):
+    """Devuelve la ruta ABSOLUTA de una macro (evita ambigüedad de rutas relativas)."""
+    try:
+        import FreeCAD as _App
+        base = _App.getUserMacroDir(True)
+    except Exception:
+        base = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base, nombre)
+
+
+def _limpiar_toolbars_obsoletas(baseapp):
+    """Elimina toolbars VDO antiguas de TODOS los workbenches."""
+    wb_base = baseapp.find("FCParamGroup[@Name='Workbench']")
+    if wb_base is None:
+        return
+    for wb in list(wb_base):
+        if wb.tag != "FCParamGroup":
+            continue
+        tb = wb.find("FCParamGroup[@Name='Toolbar']")
+        if tb is None:
+            continue
+        for grp in list(tb):
+            if grp.tag != "FCParamGroup":
+                continue
+            name_el = grp.find("FCText[@Name='Name']")
+            disp = (name_el.text or "") if name_el is not None else ""
+            if disp in NOMBRES_VDO_OBSOLETOS:
+                tb.remove(grp)
+                print(f"[VDO] Toolbar obsoleta eliminada: '{disp}' "
+                      f"(workbench: {wb.get('Name')})")
 
 TOOLBAR_NAME = "CARPINTERIA - VDO"
 TOOLBAR_GROUP = "Custom_1"
@@ -114,6 +165,9 @@ def inject_toolbar(cfg_path):
         print("[VDO] ERROR: No se encontró BaseApp en user.cfg")
         return False
 
+    # Limpiar toolbars VDO antiguas (restos de 3 botones, etc.)
+    _limpiar_toolbars_obsoletas(baseapp)
+
     # ============================================================
     # 1. Definir macros en BaseApp/Macro/Macros
     # ============================================================
@@ -135,7 +189,7 @@ def inject_toolbar(cfg_path):
     # Crear macros VDO
     for macro in VDO_MACROS:
         grp = ET.SubElement(macros_group, "FCParamGroup", Name=macro["name"])
-        ET.SubElement(grp, "FCText", Name="Script").text = macro["script"]
+        ET.SubElement(grp, "FCText", Name="Script").text = _ruta_macro_abs(macro["script"])
         ET.SubElement(grp, "FCText", Name="Menu").text = macro["menu"]
         ET.SubElement(grp, "FCText", Name="Tooltip").text = macro["tooltip"]
         ET.SubElement(grp, "FCText", Name="WhatsThis").text = macro.get("whatsthis", macro["tooltip"])
@@ -202,11 +256,21 @@ def inject_toolbar(cfg_path):
     if main_window is not None:
         toolbars_vis = main_window.find("FCParamGroup[@Name='Toolbars']")
         if toolbars_vis is not None:
-            # Verificar si ya existe
+            # Desactivar flags de toolbars VDO obsoletas
+            for flag_name in NOMBRES_VDO_OBSOLETOS:
+                if flag_name == TOOLBAR_NAME:
+                    continue
+                old = toolbars_vis.find(f"FCBool[@Name='{flag_name}']")
+                if old is not None:
+                    old.set("Value", "0")
+            # Asegurar la canónica visible
             existing = toolbars_vis.find(f"FCBool[@Name='{TOOLBAR_NAME}']")
             if existing is None:
-                ET.SubElement(toolbars_vis, "FCBool", Name=TOOLBAR_NAME, Value="1")
-                print(f"[VDO] Toolbar marcada como visible")
+                existing = ET.SubElement(toolbars_vis, "FCBool",
+                                         Name=TOOLBAR_NAME, Value="1")
+            else:
+                existing.set("Value", "1")
+            print(f"[VDO] Toolbar '{TOOLBAR_NAME}' marcada como visible")
 
     # ============================================================
     # 4. Guardar (normalizando al formato que escribe FreeCAD,
@@ -265,8 +329,8 @@ def main():
         print("[VDO] LISTO. Reinicia FreeCAD para ver la toolbar.")
         print(f"[VDO] Toolbar '{TOOLBAR_NAME}' aparecerá en:")
         print(f"       - {WORKBENCH_TARGET}" if WORKBENCH_TARGET != "Global" else "       - TODOS los workbenches")
-        print(f"       - {len(VDO_MACROS)} botones: Crear Panel, COCO, Fachada, Crear Hoja, Cajón Oculta")
-        print(f"       - Atajos (máx. 4 teclas Qt): PANE, COCO, FACH, HOJA, CAJO")
+        print(f"       - {len(VDO_MACROS)} botones: Panel, COCO, Fachada, Hoja, Cajón, División")
+        print(f"       - Atajos (máx. 4 teclas Qt): PANE, COCO, FACH, HOJA, CAJO, DIVI")
         print("=" * 60)
 
     return ok

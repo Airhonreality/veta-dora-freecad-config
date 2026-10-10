@@ -26,13 +26,26 @@ import vdo_loader
 
 
 def extraer_pieza(obj):
-    """Extrae información de una pieza individual"""
+    """Extrae información de una pieza individual (consciente de orientación)."""
+    orientacion = getattr(obj, "VDO_Orientacion", "horizontal")
+    length = obj.Length if hasattr(obj, "Length") else 0
+    width = obj.Width if hasattr(obj, "Width") else 0
+    height = obj.Height if hasattr(obj, "Height") else 0
+
+    if orientacion == "vertical":
+        # Vertical (normal X): caras = alto(Z) x fondo(Y); espesor = X
+        largo, ancho, espesor = height, width, length
+    else:
+        # Horizontal (normal Z): caras = ancho(X) x fondo(Y); espesor = Z
+        largo, ancho, espesor = length, width, height
+
     pieza = {
         "nombre": obj.Label,
         "tipo": getattr(obj, "VDO_Tipo", "desconocido"),
-        "largo": obj.Length if hasattr(obj, "Length") else 0,
-        "ancho": obj.Width if hasattr(obj, "Width") else 0,
-        "espesor": obj.Height if hasattr(obj, "Height") else 0,
+        "largo": largo,
+        "ancho": ancho,
+        "espesor": espesor,
+        "orientacion": orientacion,
         "cantidad": 1,
         "material_ref": getattr(obj, "VDO_Material_Ref", "melamina_standar"),
         "herrajes": getattr(obj, "VDO_Hardware", ""),

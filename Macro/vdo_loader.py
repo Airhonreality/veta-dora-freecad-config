@@ -15,8 +15,10 @@ from pathlib import Path
 try:
     import jsonschema
 except ImportError:
-    print("❌ Instala jsonschema: pip install jsonschema")
-    sys.exit(1)
+    # jsonschema es OPCIONAL: solo se usa para validar el manifiesto.
+    # El Python embebido de FreeCAD normalmente NO lo trae, y hacer
+    # sys.exit(1) aquí mataba cualquier macro que importara vdo_loader.
+    jsonschema = None
 
 
 class VDOManifestLoader:
@@ -29,9 +31,15 @@ class VDOManifestLoader:
             manifest_path = script_dir / "vdo_manifest.json"
 
         if schema_path is None:
-            # Buscar en schemas/
+            # Buscar el schema en ubicaciones candidatas (puede no existir:
+            # la validación es opcional).
             script_dir = Path(__file__).parent
-            schema_path = script_dir.parent / "schemas" / "vdo_manifest_schema.json"
+            candidatos = [
+                script_dir / "schemas" / "vdo_manifest_schema.json",
+                script_dir.parent / "schemas" / "vdo_manifest_schema.json",
+            ]
+            schema_path = next(
+                (c for c in candidatos if c.exists()), candidatos[0])
 
         self.manifest_path = Path(manifest_path)
         self.schema_path = Path(schema_path)
@@ -39,34 +47,45 @@ class VDOManifestLoader:
         self.schema = None
 
     def cargar(self):
-        """Carga y valida el manifest"""
-        # Cargar JSON
+        """Carga y valida el manifest.
+
+        El manifest es obligatorio; el schema y la validación son
+        opcionales (jsonschema puede no estar instalado en FreeCAD).
+        """
+        # Cargar manifest (obligatorio)
         if not self.manifest_path.exists():
             print(f"❌ Archivo no encontrado: {self.manifest_path}")
-            return False
-
-        if not self.schema_path.exists():
-            print(f"❌ Schema no encontrado: {self.schema_path}")
             return False
 
         try:
             with open(self.manifest_path) as f:
                 self.manifest = json.load(f)
-
-            with open(self.schema_path) as f:
-                self.schema = json.load(f)
-
             print(f"✅ Manifest cargado: {self.manifest_path}")
-            print(f"✅ Schema cargado: {self.schema_path}")
-
         except json.JSONDecodeError as e:
             print(f"❌ Error JSON: {e}")
             return False
 
+        # Sin schema o sin jsonschema → se omite la validación, pero el
+        # manifest sigue siendo utilizable.
+        if not self.schema_path.exists():
+            print(f"⚠️  Schema no encontrado ({self.schema_path}); validación omitida")
+            return True
+
+        if jsonschema is None:
+            print("⚠️  jsonschema no instalado; validación omitida")
+            return True
+
         # Validar
         try:
+            with open(self.schema_path) as f:
+                self.schema = json.load(f)
+            print(f"✅ Schema cargado: {self.schema_path}")
+
             jsonschema.validate(self.manifest, self.schema)
             print("✅ Manifest válido según schema")
+            return True
+        except json.JSONDecodeError as e:
+            print(f"⚠️  Schema inválido: {e}; validación omitida")
             return True
         except jsonschema.ValidationError as e:
             print(f"❌ Error de validación: {e.message}")

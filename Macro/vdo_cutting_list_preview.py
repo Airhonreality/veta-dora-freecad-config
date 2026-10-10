@@ -18,10 +18,14 @@ from pathlib import Path
 try:
     import FreeCAD as App
     import FreeCADGui as Gui
-    from PySide2 import QtWidgets, QtCore
 except ImportError:
     print("❌ Esto debe ejecutarse dentro de FreeCAD")
     sys.exit(1)
+
+try:
+    from PySide2 import QtWidgets, QtCore
+except ImportError:
+    from PySide import QtWidgets, QtCore
 
 _macro_dir = Path(__file__).parent
 sys.path.insert(0, str(_macro_dir))
@@ -130,15 +134,24 @@ class CuttingListPreviewPanel:
         """Colorea en rojo las piezas que se van a exportar"""
         doc = App.ActiveDocument
 
-        # Obtener IDs de piezas a exportar
-        piezas_ids = {pieza.get("nombre") for pieza in self.piezas}
+        # Nombres de las piezas a exportar. Un panel exportable comparte
+        # Label con el objeto; un contenedor COCO exporta piezas cuyo
+        # nombre es "<Label>_<sufijo>".
+        piezas_ids = {pieza.get("nombre") for pieza in self.piezas if pieza.get("nombre")}
 
         for obj in doc.Objects:
-            if hasattr(obj, "VDO_Tipo") and obj.Label in piezas_ids:
+            if not hasattr(obj, "VDO_Tipo"):
+                continue
+
+            etiqueta = obj.Label
+            exportar = etiqueta in piezas_ids or any(
+                nombre.startswith(etiqueta + "_") for nombre in piezas_ids)
+
+            if exportar:
                 # ROJO: se va a exportar
                 obj.ViewObject.ShapeColor = (1.0, 0.0, 0.0, 0.8)
                 self.piezas_coloreadas.append(obj)
-            elif hasattr(obj, "VDO_Tipo"):
+            else:
                 # GRIS: no se exporta
                 obj.ViewObject.ShapeColor = (0.7, 0.7, 0.7, 0.5)
 
@@ -151,26 +164,46 @@ class CuttingListPreviewPanel:
         # Restaurar colores
         self._restaurar_colores()
 
-        # Diálogo para elegir ubicación y nombre del archivo
-        from PySide2 import QtWidgets
-        file_dialog = QtWidgets.QFileDialog()
-        output_file, _ = file_dialog.getSaveFileName(
-            None,
-            "Guardar lista de corte CSV",
-            str(Path.home() / "Desktop" / "vdo_cutting_list.csv"),
-            "CSV Files (*.csv);;All Files (*)"
-        )
+        # Diálogo para elegir ubicación (con padre = ventana principal de FreeCAD)
+        try:
+            parent = Gui.getMainWindow()
+        except Exception:
+            parent = None
+
+        # Ruta sugerida en el HOME (siempre existe); NO usar ~/Desktop
+        ruta_sugerida = str(Path.home() / "vdo_cutting_list.csv")
+
+        try:
+            output_file, _ = QtWidgets.QFileDialog.getSaveFileName(
+                parent,
+                "Guardar lista de corte CSV",
+                ruta_sugerida,
+                "CSV Files (*.csv);;All Files (*)"
+            )
+        except Exception as e:
+            print(f"❌ Error abriendo el diálogo de archivo: {e}")
+            App.Console.PrintError(f"[VDO] Error abriendo diálogo: {e}\n")
+            return
 
         if not output_file:
-            print("❌ Exportación cancelada por el usuario")
+            print("❌ Exportación cancelada (o el diálogo se cerró sin elegir archivo)")
+            App.Console.PrintWarning("[VDO] Exportación cancelada\n")
             Gui.Control.closeDialog()
             return
 
         # Generar CSV
-        vdo_export_cutting_list.generar_csv_opencutlist(self.piezas, output_file)
+        try:
+            ok = vdo_export_cutting_list.generar_csv_opencutlist(
+                self.piezas, output_file)
+        except Exception as e:
+            print(f"❌ Error generando CSV: {e}")
+            App.Console.PrintError(f"[VDO] Error generando CSV: {e}\n")
+            return
 
-        print(f"✅ CSV generado: {output_file}")
-        print("\n📌 Próximo paso: Usa el archivo CSV con tu optimizador de corte")
+        if ok:
+            print(f"✅ CSV generado: {output_file}")
+            print("\n📌 Próximo paso: Usa el archivo CSV con tu optimizador de corte")
+            App.Console.PrintMessage(f"[VDO] Lista de corte exportada: {output_file}\n")
 
         Gui.Control.closeDialog()
 
@@ -208,29 +241,9 @@ def main(modo="todo"):
         print("❌ No hay documento activo")
         return False
 
-    # Extraer piezas según modo
-    piezas = []
-
-    if modo == "seleccion":
-        print("\n📦 Extrayendo piezas SELECCIONADAS...")
-        selected = Gui.Selection.getSelectionEx()
-        for sel in selected:
-            obj = sel.Object
-            if hasattr(obj, "VDO_Tipo") and obj.VDO_Tipo == "panel":
-                piezas.append(vdo_export_cutting_list.extraer_pieza(obj))
-
-    elif modo == "grupo":
-        print("\n📦 Extrayendo piezas del GRUPO/MÓDULO seleccionado...")
-        modulo_activo = doc.ActiveObject
-        if modulo_activo and hasattr(modulo_activo, "VDO_Tipo"):
-            # Extraer todas las piezas del módulo
-            piezas.append(vdo_export_cutting_list.extraer_pieza(modulo_activo))
-
-    elif modo == "todo":
-        print("\n📦 Extrayendo TODAS las piezas del documento...")
-        for obj in doc.Objects:
-            if hasattr(obj, "VDO_Tipo") and obj.VDO_Tipo == "panel":
-                piezas.append(vdo_export_cutting_list.extraer_pieza(obj))
+    # Extraer piezas según modo (lógica unificada: paneles + contenedores)
+    print(f"\n📦 Extrayendo piezas (modo: {modo})...")
+    piezas = vdo_export_cutting_list.extraer_piezas_del_documento(modo)
 
     if not piezas:
         print("❌ No se encontraron piezas de melamina para exportar")

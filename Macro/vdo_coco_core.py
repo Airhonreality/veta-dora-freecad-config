@@ -154,6 +154,7 @@ class CocoFeature:
             espacios_x = getattr(fp, "EspaciosX", "")
             espacios_y = getattr(fp, "EspaciosY", "")
             resumen_parts = []
+            divisiones_piezas = []
 
             if espacios_x or espacios_y:
                 from vdo_coco_spaces import (
@@ -163,41 +164,46 @@ class CocoFeature:
                 altura_util = lat_height
 
                 if espacios_x:
-                    divs_x, resumen_x = generar_divisiones_x(
+                    divs_x, resumen_x, piezas_x = generar_divisiones_x(
                         espacios_x, ancho_util, fondo, espesor,
                         lat_pos_z, altura_util)
                     boxes.extend(divs_x)
+                    divisiones_piezas.extend(piezas_x)
                     if resumen_x:
                         resumen_parts.append(resumen_x)
 
                 if espacios_y:
-                    divs_y, resumen_y = generar_divisiones_y(
+                    divs_y, resumen_y, piezas_y = generar_divisiones_y(
                         espacios_y, ancho_util, fondo, espesor,
                         lat_pos_z, altura_util)
                     boxes.extend(divs_y)
+                    divisiones_piezas.extend(piezas_y)
                     if resumen_y:
                         resumen_parts.append(resumen_y)
 
                 fp.ResumenEspacios = "\n".join(resumen_parts)
 
-            # === GUARDAR DATOS DE LOS 5 PANELES PARA EXPORTACIÓN ===
+            # === GUARDAR DATOS DE LOS PANELES PARA EXPORTACIÓN ===
+            # Convención: largo/ancho = caras del tablero, espesor = grosor.
             import json
             paneles_data = [
                 {
                     "nombre": f"{fp.Label}_Lateral_Izq",
                     "tipo": "panel",
-                    "largo": espesor,
-                    "ancho": fondo,
-                    "espesor": lat_height,
+                    "largo": fondo,
+                    "ancho": lat_height,
+                    "espesor": espesor,
+                    "orientacion": "vertical",
                     "cantidad": 1,
                     "material_ref": fp.VDO_Material_Ref
                 },
                 {
                     "nombre": f"{fp.Label}_Lateral_Der",
                     "tipo": "panel",
-                    "largo": espesor,
-                    "ancho": fondo,
-                    "espesor": lat_height,
+                    "largo": fondo,
+                    "ancho": lat_height,
+                    "espesor": espesor,
+                    "orientacion": "vertical",
                     "cantidad": 1,
                     "material_ref": fp.VDO_Material_Ref
                 },
@@ -207,6 +213,7 @@ class CocoFeature:
                     "largo": base_length,
                     "ancho": fondo,
                     "espesor": espesor,
+                    "orientacion": "horizontal",
                     "cantidad": 1,
                     "material_ref": fp.VDO_Material_Ref
                 },
@@ -216,6 +223,7 @@ class CocoFeature:
                     "largo": techo_length,
                     "ancho": fondo,
                     "espesor": espesor,
+                    "orientacion": "horizontal",
                     "cantidad": 1,
                     "material_ref": fp.VDO_Material_Ref
                 }
@@ -229,11 +237,18 @@ class CocoFeature:
                     "nombre": f"{fp.Label}_Fondo",
                     "tipo": "panel",
                     "largo": f_len,
-                    "ancho": calibre_fondo,
-                    "espesor": f_alt,
+                    "ancho": f_alt,
+                    "espesor": calibre_fondo,
+                    "orientacion": "vertical",
                     "cantidad": 1,
                     "material_ref": fp.VDO_Material_Ref
                 })
+
+            # Agregar divisiones internas (piezas VDO exportables)
+            for pz in divisiones_piezas:
+                pz["nombre"] = f"{fp.Label}_{pz['nombre']}"
+                pz["material_ref"] = fp.VDO_Material_Ref
+                paneles_data.append(pz)
 
             fp.VDO_Paneles_JSON = json.dumps(paneles_data, ensure_ascii=False)
 
