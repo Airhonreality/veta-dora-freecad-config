@@ -1,0 +1,64 @@
+Marco local único
+Propongo fijar un contrato único, sin excepciones por módulo:
+X+ = derecha
+Y+ = fondo
+Z+ = arriba
+Frente funcional = Y−
+- Las técnicas de capa 2 se construyen siempre en ese marco.
+- La capa 3 compone módulos en ese marco.
+- La capa de contexto sólo aplica pose global (rotación/traslación) y exposición.
+- El preview 2D siempre muestra el frente local, con una etiqueta FRENTE (Y−) y ejes X→, Y↑.
+- Si el mueble está rotado 180° en el espacio, el preview sigue siendo local; la orientación global se ve en el contexto/3D, no se mezcla con la edición.
+Esto evita tener que reinterpretar “frente” en cada capa.
+Arquitectura: dos ejes, no una sola escalera
+No pondría el espacio ni en capa 0 ni en capa 4. Es otro eje ortogonal:
+COMPOSICIÓN                         CONTEXTO
+L1  Pieza física                    C0  Espacio
+L2  Técnica constructiva            C1  Instancia colocada
+L3  Módulo funcional                C2  Exposición / acabados
+L1 — Pieza
+Contrato físico puro: largo, ancho, espesor, material, veta, cantos por lado. No sabe si es “fachada”, “lateral” ni si está vista.
+L2 — Técnica
+Ensamblaje local: coco, pacha, entamborado, cajon_ext, puerta_parche, etc. Conoce sus piezas, uniones, herrajes y su frente local. No conoce muros ni orientación global.
+L3 — Módulo funcional
+Composición de técnicas: escritorio, archivador, alacena. Define el frente funcional y las fachadas, pero no los lados vistos.
+C0 — Espacio
+Muros, piso, aberturas, circulación y puntos de vista. No tiene un único “frente”: una isla o un divisor pueden tener dos. El espacio define direcciones de uso, no geometría de piezas.
+C1 — Instancia
+Módulo + pose. Transforma el frente local al frente global. Aquí se resuelve “este mueble mira hacia el pasillo”.
+C2 — Exposición
+Calcula lados_vistos y lados_apoyados. No modifica geometría: emite un plan de acabados que dice qué cantos/fachadas corresponden.
+La clave axiomática: L1/L2/L3 no conocen “visto”; C0/C1/C2 no escriben geometría. Sólo se cruzan en una política de acabados. Así no complejizamos las capas inferiores.
+Vistos, frentes y cantos
+Hay que separar tres conceptos que hoy se mezclan:
+1. Frente funcional: lado por el que se abre/usa el mueble. Es intrínseco al módulo.
+2. Lados vistos: caras exteriores visibles desde el espacio. Es contextual.
+3. Fachada: puerta/panel funcional. No es lo mismo que “lado visto”: un divisor puede tener el fondo visto y no llevar fachada.
+Propongo modelar 6 lados de módulo: frente, fondo, izquierda, derecha, superior, inferior.
+- Caso 98%: vistos = [frente], apoyados = [fondo] o [fondo, izquierda].
+- Divisor de ambientes: vistos = [frente, fondo], sin fachada al fondo pero con cantos vistos en ambos frentes.
+- Mueble contra muro con lateral derecho expuesto: vistos = [frente, derecha].
+Los cantos se resuelven a nivel de borde de pieza, no de “cara completa”. La política debe saber qué bordes de cada pieza dan al exterior y cuáles quedan en unión con otra pieza. Ahí sí conviene un plan_cantos probado con casos concretos.
+
+ESTADO 2026-10-26
+- Etapa A implementada: marco local, fondo delgado en Y+ con ranuras, preview con FRENTE (Y−).
+- Etapa B implementada: VDO_Lados_Vistos/Apoyados, UI de exposición y vdo_finish (lados vistos -> cantos por borde).
+- C0/C1/C2 siguen pendientes; la exposición es manual por ahora.
+- Deuda conocida: acabado de caras (no sólo cantos), extensión a cajones/paneles y tests permanentes.
+
+FASE 1 IMPLEMENTADA 2026-10-26
+- vdo_reengrose.py: DTO, geometria local, cantos, colision, vano neto y mocheo.
+- Panel L1: propiedades VDO_Reengrose_*, compound base+tira/pacha y despiece.
+- Pacha parcial/total: dos subpiezas, grupo_pacha y canto de bloque unificado.
+- UI L1 y tooltips de taller en Panel, COCO, Divisiones y Cajon.
+- Tests: tests/test_vdo_reengrose.py y tests/test_reengrose_l1.py.
+- Pendiente Fase 2: integrar en COCO/vanos, separadores variables y repisas.
+
+FASES 2 Y 3 IMPLEMENTADAS 2026-10-26
+- COCO guarda VDO_Reengrose_JSON por pieza estable.
+- resolve_layout distingue luz clara y geometria nominal; laterales/base/techo/divisiones reducen el vano afectado.
+- Repisas: retroceso automatico por colision y mocheo opcional.
+- Despiece: subpiezas con grupo_pacha, cantos_bloque y CSV Group/Operation.
+- UI: grupo Elementos/refuerzos en el arbol + inspector contextual Reengrose/Refuerzo.
+- Tests: 15 puros (reengrose + layout) y 14 FreeCAD (L1 + COCO).
+- Pendiente: preview de tiras, metadatos segmentados de carcasa, reengrose horizontal por fila, perimetro.

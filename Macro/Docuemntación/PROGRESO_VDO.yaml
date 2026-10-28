@@ -1,0 +1,482 @@
+# =====================================================================
+# PROGRESO_VDO.yaml
+# Registro de progreso del sistema paramétrico Veta de Oro (VDO).
+# Cada entrada se añade bajo `registro:` (la más reciente al final).
+# =====================================================================
+
+proyecto: Veta de Oro (VDO)
+raiz_biblioteca: biblioteca_veta_dorada
+unidades: mm
+version_manifest_actual: 1.1.0
+estado_global: Sistema 100% generativo + Interfaz VDO - Muebles Paramétricos operativa
+
+# ---------------------------------------------------------------------
+# Fase actual
+# ---------------------------------------------------------------------
+fase_actual:
+  nombre: Decisión 3 - Interfaz VDO - Muebles Paramétricos (Workbench genérico)
+  estado: completado
+  fecha_cierre: 2026-09-18
+  validado_en: FreeCAD 1.1.3 (flatpak org.freecad.FreeCAD, freecadcmd)
+
+# ---------------------------------------------------------------------
+# Arquitectura en vigor
+# ---------------------------------------------------------------------
+arquitectura:
+  modelo: "100% generativo por código (sin .FCStd estáticos)"
+  capa_global: "Params_Melamina (parametros_globales: espesor_default, canto_grueso, ranura_fondo)"
+  capa_local: "Params (dimensiones del módulo: alto, ancho, fondo, espesor)"
+  capa_atomica: vdo_panel_melamina_base (ladrillo geométrico paramétrico)
+  nucleo:
+    - vdo_manifest.py
+    - vdo_guardian.py
+  interfaz: Mod/VDO_Workbench (barra "VDO - Muebles Paramétricos" generada desde vdo_manifest)
+  convencion_parametros: alto / ancho / fondo / espesor (unificada)
+  legacy: _archivo/ (plantillas .FCStd deprecadas, conservadas por trazabilidad)
+
+# ---------------------------------------------------------------------
+# Registro de progreso (append: añadir nuevas entradas al final)
+# ---------------------------------------------------------------------
+registro:
+  - fecha: 2026-09-18
+    checkpoint: Check point_1_arquitectura de macros geometrias y atributos.txt
+    area: Núcleo del sistema (Task 1)
+    descripcion: >
+      Se implementó el Manifiesto de Dependencias (contrato de datos) y el
+      Guardián de Dependencias (validador e inyector automático de entorno).
+      Cualquier macro que ejecute vdo_guardian.vdo_guard() queda
+      autoconfigurada sin depender del orden manual de ejecución.
+    archivos_creados:
+      - vdo_manifest.py
+      - vdo_guardian.py
+    detalles:
+      - manifest contiene version, capa_global, capa_local, materiales y dependencias
+      - guardian crea/recicla Params_Melamina y Params con alias y valores
+      - solo inyecta celdas sin alias (respeta valores editados por el usuario)
+      - auto-crea documento activo si no existe
+    validacion: TEST C idempotencia OK (segundo pase respeta espesor=25 editado)
+
+  - fecha: 2026-09-18
+    checkpoint: Check point_1_arquitectura de macros geometrias y atributos.txt
+    area: Refactor de macros (Task 2)
+    descripcion: >
+      Las tres macros se refactorizaron para incorporar la llamada inicial
+      al Guardián y se unificó la nomenclatura a alto/ancho/fondo/espesor,
+      eliminando las referencias rotas Largo/Ancho.
+    archivos_modificados:
+      - vdo_panel_melamina_base.FCMacro
+      - vdo_coco_generador.FCMacro
+      - VDO_Crear_Hoja_Melamina.FCMacro
+    detalles:
+      - panel base vincula Length=<<Params>>.ancho, Width=<<Params>>.fondo, Height=<<Params>>.espesor
+      - coco generador autogenera el grupo COCO_4C si no existe
+      - VDO_Crear_Hoja_Melamina delega en el Guardián (compatibilidad)
+    validacion: TEST A (panel) y TEST B (COCO_4C) OK en documento en blanco aislado
+
+  - fecha: 2026-09-18
+    checkpoint: Check point_1_arquitectura de macros geometrias y atributos.txt
+    area: Validación MVP end-to-end (Task 3)
+    descripcion: >
+      Script de validación (freecadcmd 1.1.3) en entorno headless que ejecuta
+      el flujo aislado sobre documento completamente en blanco.
+    detalles:
+      - TEST A: panel base crea Params + Params_Melamina con alias correctos y resuelve 600 x 580 x 18
+      - TEST B: coco generador monta COCO_4C completo sin errores
+      - TEST C: idempotencia del Guardián
+    resultado: 3/3 tests pass
+    observaciones:
+      - API FreeCAD 1.1: getContents(cell) recibe celda; no existe hasAlias, usar getAlias
+    pendiente:
+      - Probar ejecución en GUI de FreeCAD (no headless)
+
+  - fecha: 2026-09-18
+    registro_decisiones: Registro de Decisiones de Arquitectura VDO (2º log)
+    area: Decisiones de Arquitectura 1, 2 y 3
+    descripcion: >
+      Se adoptan decisiones de arquitectura y se desarrolla la interfaz visual
+      nativa: eliminación de .FCStd estáticos, autonomía total Manifiesto+Guardián
+      y barra de herramientas VDO - Muebles Paramétricos construida de forma
+      dinámica (cero hardcoding) leyendo vdo_manifest.py.
+    decisiones:
+      - D1: eliminación de plantillas y .FCStd base; modelo 100% generativo por código
+      - D2: Manifiesto + Guardián como único mecanismo de configuración (sin bootstrap manual)
+      - D3: Workbench VDO - Muebles Paramétricos con botones funcionales (panel y COCO 4C)
+    archivos_creados:
+      - "Mod/VDO_Workbench/InitGui.py (motor genérico de UI)"
+      - "Mod/VDO_Workbench/Init.py"
+      - "Mod/VDO_Workbench/package.xml"
+      - "Macro/vdo_panel.svg (token dorado #AE955F)"
+      - "Macro/vdo_coco.svg"
+      - "Macro/vdo_workbench.svg"
+    archivos_modificados:
+      - vdo_manifest.py (version 1.1.0 + bloque modulos_ui)
+    acciones_archivo:
+      - Trasladados .FCStd/.FCBak legacy de Macro/ y 01_Modulos_Base/ a _archivo/
+    detalles:
+      - modulos_ui declara VDO_CrearPanel y VDO_CrearCoco con icono + macro asociada
+      - InitGui lee el manifest, registra comandos con Gui.addCommand y monta barra/menú con appendToolbar/appendMenu
+      - cada botón ejecuta su .FCMacro vía exec; la macro arranca con el Guardián (autoconfigurable)
+    validacion: syntax-check + test headless del motor genérico (manifest + rutas de macro e iconos) OK; verificación visual pendiente en GUI
+
+  - fecha: 2026-09-19
+    checkpoint: Arreglo y consolidación del Workbench (Task 4)
+    area: Integración final - Registro del Workbench
+    descripcion: >
+      Se identificó y corrigió el problema raíz: Init.py estaba vacío, impidiendo que FreeCAD
+      registrara el workbench en modo no-GUI. Se completó Init.py con la llamada a
+      App.addWorkbenchClass(), que es lo que FreeCAD requiere durante el escaneo inicial.
+      Se consolidó todo el código: eliminada la copia de VETA_ERP y centralizado en /Mod/VDO_Workbench/.
+    archivos_modificados:
+      - Init.py (completado con lógica de registro en App core)
+    acciones_archivo:
+      - Eliminada copia completa de /home/javi/hgarciagonzalezsas_gmail/VETA_ERP/SDK mobiliario/biblioteca_veta_dorada/VDO_Workbench/
+    detalles:
+      - Init.py ahora importa VDO_Workbench desde InitGui.py
+      - Init.py llama a App.addWorkbenchClass("VDO_Workbench", "VDO_Workbench") para registrar en sistema core
+      - InitGui.py registra con Gui.addWorkbench() para construir la interfaz gráfica
+      - Ambos se ejecutan coordinadamente: primero Init.py (no-GUI), luego InitGui.py (GUI)
+    validacion: Sintaxis Python válida, estructura completa verificada, lista para prueba en GUI de FreeCAD
+    observaciones: El workbench debe aparecer en View -> Workbenches -> dropdown selector al reiniciar FreeCAD
+
+  - fecha: 2026-09-21
+    checkpoint: Toolar VDO inyección XML
+    area: Toolbar persistente sin workbench (Task 5)
+    descripcion: >
+      El workbench no aparecía en el selector. En lugar de seguir depurando el
+      registro Python de workbenches, se adoptó un enfoque radicalmente más simple:
+      FreeCAD almacena TODA la configuración de toolbars en user.cfg (XML).
+      Se reverse-engineered el formato y se creó vdo_toolbar_inject.py que inyecta
+      directamente las definiciones de macros y la toolbar en user.cfg, sin
+      workbench, sin Gui.addCommand, sin InitGui.py. El toolbar "CARPINTERIA - VDO"
+      aparece en Global/Toolbar/ (visible en todos los workbenches) tras reiniciar.
+    archivos_creados:
+      - "Macro/vdo_toolbar_inject.py (inyecta XML en ~/.config/FreeCAD/v1-1/user.cfg)"
+      - "TOOLBAR_SOLUTION.md (documentación del enfoque XML)"
+    decisiones:
+      - "D4: usar configuración XML de user.cfg en lugar de workbench Python; el formato es el mismo que FreeCAD usa al personalizar toolbars manualmente, lo que garantiza 100% de compatibilidad y confiabilidad"
+    detalles:
+      - Macro definitions en BaseApp/Macro/Macros/Std_Macro_N/
+      - Toolbar definition en BaseApp/Workbench/Global/Toolbar/Custom_1/
+      - Visibility flag en BaseApp/MainWindow/Toolbars/
+      - Cada FCText en Custom_1: Name=comando_id, Value="FreeCAD"
+      - Backup automático de user.cfg con timestamp
+    validacion: 4 macros definidas + toolbar CARPINTERIA - VDO con 4 botones inyectada y visible
+
+  - fecha: 2026-10-10
+    checkpoint: Refactor axiomático - Separación Semántica/Física
+    area: Motor de paneles agnóstico + diccionario semántico (Task 6)
+    descripcion: >
+      Se detectó un fallo axiomático: el motor de paneles acoplaba la semántica
+      de mobiliario (estandar/fachada) a reglas físicas (cantos, holguras, tipo
+      de fachada) y a la orientación, que en realidad es libre e independiente.
+      Se adoptó el Axioma 5 de Separación Semántica/Física: el motor modela solo
+      piezas físicas (orientación, cantos, material, espesor); la semántica de
+      mobiliario vivirá en un diccionario semántico (datos puros) que hoy no
+      existe, por lo que hoy no se acopla nada.
+    decisiones:
+      - "A1: orientacion es un atributo fisico libre (vocabulario del manifiesto), no una regla de subtipo"
+      - "A2: 'fachada' = canto rigido x4 + material 'fachadas' es un mapeo del futuro diccionario, no una rama del motor"
+      - "A3: 'division' = panel orientado verticalmente; las divisiones del COCO deben ser piezas VDO exportables"
+    archivos_modificados:
+      - vdo_panel_core.py (motor agnostico: validacion orientacion + mapeo de ejes + VDO_Orientacion)
+      - vdo_manifest.json (vocabulario orientaciones)
+      - vdo_defaults.py (ORIENTACIONES_VALIDAS / mapeo de ejes)
+      - vdo_panel_estandar.FCMacro / vdo_panel_fachada.FCMacro (contrato agnostico)
+      - vdo_coco_core.py / vdo_coco_spaces.py (divisiones al despiece)
+      - vdo_export_cutting_list.py (extraccion consciente de orientacion)
+    archivos_creados:
+      - vdo_panel_division.FCMacro
+      - vdo_diccionario_semantico.md (esqueleto de la tabla de piezas)
+    detalles:
+      - orientacion obligatoria (horizontal/vertical); ValueError si falta o es invalida
+      - horizontal: Length=ancho, Width=fondo, Height=espesor (normal Z)
+      - vertical: Length=espesor, Width=fondo, Height=alto (normal X, division/lateral)
+      - Placement queda libre (identidad) para que el mueble/espacio posicione la pieza
+      - se elimino la rama if tipo == fachada que inyectaba holguras/tipo-fachada
+      - VDO_Subtipo deja de dirigir geometria; solo tag libre (VDO_Etiqueta)
+    validacion: pendiente prueba en FreeCAD GUI + self-tests de despiece
+
+  - fecha: 2026-10-20
+    checkpoint: Estabilización anidación divisiones COCO (Task 7)
+    area: Motor de espacios libres vdo_coco_spaces.py / vdo_spaces.py
+    descripcion: >
+      Se corrigieron los dos principales bugs del sistema de divisiones anidadas:
+      DT-1: Posición de divisores verticales (creaban en inicio de vano, no en hueco entre vanos).
+      DT-2: Recursión de sub-espacios anidados sin validar (propagación de regiones X↔Y).
+      Ahora los divisores se crean EN LOS HUECOS entre vanos consecutivos (i > 0 → divider en espacios[i-1]["fin"]).
+      Los hijos de nodos IGUALES (partes iguales) se procesan en MISMO eje (flatten).
+      Solo sub-divisiones explícitas del usuario (FIJO/RESTANTE con children) alternan eje X↔Y.
+      Validado con tests standalone: módulo 1000mm, fijo 400 + iguales 2 → 3 verticales en 400 y 700.
+      Anidación X→Y (columna con repisas) y Y→X (banda con verticales) confirmada.
+    decisiones:
+      - "D5: divisores = huecos entre vanos, no uno por vano; i=0 no crea divisor"
+      - "D6: IGUALES children = mismo eje (son vanos hermanos); solo user children alternan eje"
+      - "D7: tracking de región unificado: X→Y pasa ancho_repisa=libre, Y→X pasa altura_divisor=libre"
+    archivos_modificados:
+      - vdo_coco_spaces.py (_generar_shapes_recursivo reescrito, nuevas _crear_division_*_en)
+      - DEUDA_TECNICA_VDO.md (DT-1, DT-2 marcados como resueltos)
+    validacion: tests standalone passing (ver sesión 2026-10-20)
+
+  - fecha: 2026-10-20
+    checkpoint: Registro Panel División en UI (Task 8 - DT-3)
+    area: Interfaz / Workbench VDO
+    descripcion: >
+      Se registró el comando `Panel División` (`vdo_panel_division.FCMacro`) en los tres
+      puntos de registro de la UI para que sea descubrible y usable:
+      - `InitGui.py`: Clase `CmdPanelDivision` + `Gui.addCommand("VDO_PanelDivision")` + toolbar
+      - `vdo_install.py`: Clase `VDO_Cmd_PanelDivision` + registro + workbench cmdList
+      - `vdo_toolbar_inject.py`: Ya existía en `VDO_MACROS` (Std_Macro_5) con icono `vdo_panel`, atajo `D,I,V,I`
+      El envoltorio usa orientación `vertical` y cantos `FX` en los 4 lados (panel divisor estándar).
+    decisiones:
+      - "D8: Panel División = panel vertical 4 cantos FX, expuesto en UI"
+      - "D9: Reutilizar icono vdo_panel.svg (no crear nuevo archivo)"
+    archivos_modificados:
+      - InitGui.py (CmdPanelDivision + VDO_PanelDivision + toolbar)
+      - vdo_install.py (VDO_Cmd_PanelDivision + VDO_PanelDivision + cmdList)
+      - DEUDA_TECNICA_VDO.md (DT-3 marcado como resuelto)
+    validacion: pendiente prueba en FreeCAD GUI
+
+  - fecha: 2026-10-20
+    checkpoint: Editor Unificado COCO - Todo en pestaña Datos (Task 9 - DT-6)
+    area: Interfaz / COCO FeaturePython
+    descripcion: >
+      Se eliminaron los dos Task Panels separados (medidas + espacios) y el auto-diálogo
+      al crear. Ahora todo se gestiona desde la pestaña "Datos" (Property Panel):
+      - Propiedades básicas (Alto, Ancho, Fondo, Espesor, Tapa, Base, Fondo) → editables
+        directamente en pestaña "Datos" como propiedades estándar de FreeCAD
+      - Espacios X/Y → JSON en propiedades `EspaciosX`/`EspaciosY`; editor visual unificado
+        se abre con **doble-click en el objeto COCO_4C** en el árbol
+      - Nuevo `vdo_coco_unified_task.py`: Editor con 4 pestañas (Medidas, Estructura,
+        Espacios X, Espacios Y) + resumen combinado + sub-configuración anidada
+      - `vdo_coco_4c.FCMacro`: Crea el objeto y recompute, SIN abrir diálogo
+      - `ViewProviderCoco.setEdit()`: Abre editor unificado al doble-click (mode=0)
+    decisiones:
+      - "D10: Un solo editor para todo (básico + espacios), 4 pestañas"
+      - "D11: Sin auto-diálogo al crear; doble-click = editar; Data tab = propiedades directas"
+      - "D12: Resumen combinado X+Y visible en editor"
+    archivos_modificados:
+      - vdo_coco_core.py (ViewProviderCoco.setEdit → editor unificado)
+      - vdo_coco_4c.FCMacro (sin auto-TaskPanel, solo create + recompute)
+    archivos_creados:
+      - vdo_coco_unified_task.py (Editor unificado 4 pestañas)
+    validacion: syntax OK, pendiente prueba en FreeCAD GUI
+
+  - fecha: 2026-10-20
+    checkpoint: Panel Propiedades COCO via Click Derecho - Nuevo Estándar VDO (Task 10 - DT-7)
+    area: Interfaz / COCO FeaturePython / Estándar VDO
+    descripcion: >
+      Se establece el **nuevo estándar para todos los módulos VDO**: click derecho en objeto
+      → "Propiedades del COCO" → Panel unificado modal (Task Panel). NO doble-click, NO pestaña
+      Datos, NO auto-diálogo al crear.
+      - `vdo_coco_core.py`: `ViewProviderCoco.getContextMenuItems()` → "Propiedades del COCO"
+      - `vdo_coco_unified_task.py`: Panel unificado 4 pestañas (Medidas, Estructura,
+        Divisiones Verticales, Divisiones Horizontales) + resumen
+      - Mejoras UX: "Dividir en N" (SpinBox 2-20), "Añadir/Eliminar vano", "Sub-dividir",
+        pestañas con nombres carpinteros, anidación recursiva X→Y→X ilimitada
+      - JSON en Data tab queda como fallback visible/editable a mano
+    decisiones:
+      - "D13: Estándar VDO = click derecho → Propiedades del [Módulo] → Panel especializado modal"
+      - "D14: 'Dividir en N' parámetro libre (SpinBox), no botones fijos"
+      - "D15: Nombres carpinteros: vano, columna, repisa, sub-dividir"
+      - "D16: No Data tab editor (imposible en Python), no tiempo real modal (frágil)"
+    archivos_modificados:
+      - vdo_coco_core.py (getContextMenuItems + _abrir_editor_propiedades)
+      - vdo_coco_unified_task.py (UX completa: botones, labels, tabs, sub-panel)
+    archivos_creados: (ya existía vdo_coco_unified_task.py de Task 9)
+    validacion: syntax OK, pendiente prueba en FreeCAD GUI
+
+  - fecha: 2026-10-21
+    checkpoint: Marco común de módulos + triple acceso + flujo de creación (D17-D21)
+    area: Interfaz / Arquitectura de módulos VDO / Colocación
+    descripcion: >
+      Se crea un marco reutilizable para todos los módulos VDO (COCO, cajón, paneles
+      y futuros) con un único flujo de creación y edición.
+      - Nuevo `vdo_module_specs.py`: registro declarativo (fábrica, panel, icono,
+        menú, configuración por defecto).
+      - Nuevo `vdo_view_base.py`: `VDOViewProviderBase` con clic derecho
+        (`setupContextMenu`) y doble clic (`doubleClicked`).
+      - Nuevo `vdo_task_base.py`: `VDOTransactionMixin` (`auto_transaction`).
+      - Nuevo `vdo_module_props.py`: `VDO_RotacionZ` + `VDO_Anclaje` (pose, no geometría).
+      - Nuevo `vdo_creation_flow.py`: crear oculto → panel → colocar → commit;
+        cancelar borra el objeto.
+      - Nuevo `vdo_placement.py`: `Gui.Snapper.getPoint` con fallback Coin3D;
+        objeto oculto hasta el primer movimiento; Esc cancela.
+      - Nuevo `vdo_panel_task.py` y `PanelFeature` (DT-4 resuelto).
+      - Macros actualizados para usar `crear_modulo_interactivo()`.
+      - `vdo_export_cutting_list.py` soporta `Largo/Ancho/Espesor`.
+    decisiones:
+      - "D17: triple acceso (clic derecho + doble clic + creación) al mismo panel"
+      - "D18: crear sin posicionar → panel → depositar con clic; cancelar borra"
+      - "D19: colocación libre con snap (Draft) y origen en esquina de anclaje"
+      - "D20: rotación/anclaje son pose (`Placement`), nunca geometría (`execute`)"
+      - "D21: marco común para COCO/Cajón/Panel y módulos futuros"
+    archivos_modificados:
+      - vdo_coco_core.py (props comunes + ViewProvider base)
+      - vdo_drag_handles.py (DragableViewProvider sobre el base)
+      - vdo_cajon_core.py (props comunes + ViewProvider base)
+      - vdo_cajon_task.py (mixin de transacciones + colocación)
+      - vdo_coco_unified_task.py (editor reescrito sobre el mixin)
+      - vdo_spaces.py (serialización vacía + parent_id)
+      - vdo_export_cutting_list.py (panel FeaturePython)
+      - vdo_coco_4c.FCMacro, vdo_cajon_oculta.FCMacro, vdo_panel_*.FCMacro
+    archivos_creados:
+      - vdo_task_base.py, vdo_module_props.py, vdo_view_base.py
+      - vdo_module_specs.py, vdo_creation_flow.py, vdo_placement.py
+      - vdo_panel_core.py (reescrito), vdo_panel_task.py
+    validacion: >
+      `py_compile` OK en todos los archivos; tests headless con FreeCADCmd
+      (creación, FeaturePython, expresiones, pose, COCO anidado, exportación).
+      Pendiente prueba visual en GUI (entorno sin display).
+
+  - fecha: 2026-10-22
+    checkpoint: Corrección de parámetros que se reseteaban y panel que no reabría
+    area: GUI / Task Panels
+    descripcion: >
+      Se añadieron botones explícitos Crear/Aplicar/Cancelar, interpretText()
+      antes de aceptar, entrada decimal independiente del locale (punto/coma),
+      rangos mínimos permisivos, reparación del ViewProvider y comando
+      "Propiedades VDO" para abrir el panel desde árbol o vista 3D.
+    archivos_creados:
+      - vdo_qt.py
+      - vdo_editar_vdo.FCMacro
+    archivos_modificados:
+      - vdo_view_base.py (abrir_panel_objeto, reparar/diagnóstico, mensaje de error)
+      - vdo_coco_unified_task.py, vdo_panel_task.py, vdo_cajon_task.py
+      - vdo_creation_flow.py (diagnóstico del proxy al crear)
+      - InitGui.py (comando VDO_Editar)
+    validacion: >
+      py_compile OK y tests headless: interpretText con punto/coma, aceptar
+      conserva medidas, botones presentes en los 3 paneles y callbacks
+      on_accept/on_cancel sin doble disparo.
+
+  - fecha: 2026-10-22
+    checkpoint: Divisiones COCO v2 - matriz de vanos, preview 2D y arbol
+    area: Divisiones / Geometria / UI
+    descripcion: >
+      Se reemplazo el editor de dos tablas de espacios por una matriz de vanos
+      con origen inferior izquierdo, arbol agrupado por filas Y, preview 2D
+      seleccionable e inspector. La geometria usa cavidad interior real y evita
+      cruces entre verticales continuas y repisas segmentadas.
+    archivos_creados:
+      - vdo_layout.py
+      - vdo_coco_divisions_task.py
+      - vdo_coco_preview2d.py
+    archivos_modificados:
+      - vdo_coco_core.py (VDO_Divisiones + cavidad interior)
+      - vdo_coco_spaces.py (generar_divisiones_matriz)
+      - vdo_coco_unified_task.py (pestana unica Divisiones)
+      - CONTEXTO_TECNICO_VDO.md, DEUDA_TECNICA_VDO.md, PROGRESO_VDO.md
+    validacion: >
+      py_compile OK; tests headless de layout, overflow, anidacion, editor Qt
+      offscreen, COCO con VDO_Paneles_JSON y common().Volume == 0 entre piezas.
+      Pendiente prueba visual en GUI y Fase 1 (transaccion/debounce en vivo).
+
+  - fecha: 2026-10-26
+    checkpoint: Marco local, fondo en Y+ y exposicion/cantos
+    area: Orientacion / Geometria / Acabados / UI
+    descripcion: >
+      Se fijo el marco local unico (X+ derecha, Y+ fondo, Z+ arriba, frente Y-).
+      El fondo delgado dejo de crearse en el frente: ahora va en Y+ con ranuras
+      reales y las divisiones terminan en su cara frontal. El preview 2D declara
+      FRENTE (Y-) y ejes X/Y. Se anadieron VDO_Lados_Vistos/Apoyados y la politica
+      vdo_finish que traduce lados vistos a cantos por borde.
+    archivos_creados:
+      - vdo_frames.py
+      - vdo_finish.py
+    archivos_modificados:
+      - vdo_coco_core.py (fondo Y+, ranuras, roles, cantos)
+      - vdo_coco_spaces.py (rol division_x/division_y)
+      - vdo_coco_preview2d.py (etiqueta y ejes)
+      - vdo_coco_unified_task.py (UI de exposicion)
+      - vdo_module_props.py (propiedades de exposicion)
+      - vdo_export_cutting_list.py (Edge N/S/E/W)
+      - vdo_module_specs.py (defaults de exposicion)
+      - CONTEXTO_TECNICO_VDO.md, DEUDA_TECNICA_VDO.md, PROGRESO_VDO.md
+    validacion: >
+      py_compile OK; freecadcmd con fondos 6/18 mm y 300/580 mm, ranuras 3/6 mm,
+      Shape valido y common().Volume == 0; divisiones 3x2 sin solapes; preview
+      offscreen con FRENTE (Y-) y X/Y; panel Qt con 6 combos y accept() OK; CSV
+      con cantos. Tests v2 de regresion OK.
+    pendiente: >
+      Validacion visual en GUI, acabado de caras, exposicion en cajon/paneles,
+      tests permanentes y C0/C1/C2.
+
+  - fecha: 2026-10-26
+    checkpoint: Fase 1 - Motor de reengroses/pachas y panel L1
+    area: L1 / Reengrose / Pacha / Despiece
+    descripcion: >
+      Se creo el motor puro vdo_reengrose.py con DTO, geometria local,
+      politica de cantos, deteccion de colision, vano neto y mocheo. Se
+      integraron propiedades nativas y compound base+refuerzo en el panel L1,
+      UI de Reengrose/Pacha y despiece con subpiezas y grupo_pacha. Se
+      agregaron tooltips a los controles clave de Panel, COCO, Divisiones y
+      Cajon.
+    archivos_creados:
+      - vdo_reengrose.py
+      - tests/test_vdo_reengrose.py
+      - tests/test_reengrose_l1.py
+    archivos_modificados:
+      - vdo_panel_core.py
+      - vdo_panel_task.py
+      - vdo_export_cutting_list.py
+      - vdo_coco_unified_task.py
+      - vdo_coco_divisions_task.py
+      - vdo_cajon_task.py
+      - CONTEXTO_TECNICO_VDO.md, DEUDA_TECNICA_VDO.md, PROGRESO_VDO.md
+    validacion: >
+      9 tests puros OK; 6 tests FreeCAD OK; caras A/B, paralela/transversal,
+      independiente/pacha parcial/pacha total sin solapes; UI offscreen y
+      tooltips OK; CSV con Group/Operation OK.
+    pendiente: >
+      Fase 2: integrar reengrose en COCO, vanos y repisas; agregar borde para
+      tiras perimetrales y mostrar grupo en preview de corte.
+
+  - fecha: 2026-10-26
+    checkpoint: Fases 2 y 3 - Reengroses en COCO, layout y UI contextual
+    area: COCO / Layout / Repisas / UI
+    descripcion: >
+      Se integro VDO_Reengrose_JSON en el COCO, se extendio resolve_layout
+      con luz clara y geometria nominal por caras, y se conecto la colision
+      repisa/reengrose con retroceso por defecto y mocheo opcional. Se
+      agregaron subpiezas de pacha/reengrose al despiece y una seccion
+      contextual de reengrose en el inspector con grupo de elementos en el
+      arbol.
+    archivos_creados:
+      - tests/test_layout_reengrose.py
+      - tests/test_coco_reengrose.py
+    archivos_modificados:
+      - vdo_layout.py
+      - vdo_reengrose.py
+      - vdo_coco_spaces.py
+      - vdo_coco_core.py
+      - vdo_coco_divisions_task.py
+      - vdo_coco_unified_task.py
+      - CONTEXTO_TECNICO_VDO.md, DEUDA_TECNICA_VDO.md, PROGRESO_VDO.md
+    validacion: >
+      9 tests puros de reengrose + 6 de layout OK; 6 tests L1 + 8 tests COCO
+      OK; vano neto 255/273, retroceso 521, mocheo 18x50, common == 0; CSV
+      con Group/Operation; COCO estandar sin regresion.
+    pendiente: >
+      Preview de tiras, metadatos segmentados de carcasa, reengrose horizontal
+      por fila y perimetro de cuatro tiras.
+
+# ---------------------------------------------------------------------
+# Siguientes pasos propuestos
+# ---------------------------------------------------------------------
+siguientes_pasos:
+  - Verificar visualmente el Workbench VDO - Muebles Paramétricos en GUI de FreeCAD (selector de workbenches debe mostrar la opción)
+  - Activar el workbench y verificar que aparezcan los 3 botones de panel + COCO en la barra
+  - Probar COCO 4C: crear → click derecho → "Propiedades del COCO" → Editor Unificado (Medidas, Estructura, Divisiones)
+  - Verificar matriz de vanos: +X/+Y, árbol por filas, preview 2D e inspector; anidación X→Y→X
+  - Probar en GUI el fondo en Y+, las ranuras y la etiqueta FRENTE (Y−)
+  - Probar exposición: contra muro, divisor visto por ambos lados y lateral derecho expuesto
+  - Verificar que propiedades básicas se editan directo en pestaña "Datos"
+  - Añadir parámetro de material y estructura del COCO con Variantes
+  - Exportar manifiesto a JSON/CSV para el ERP VETA
+  - Comenzar a llenar vdo_diccionario_semantico.md (definir semantica e inmutables de cada pieza)
+  - Promover el diccionario semantico a datos puros (vdo_manifest.json -> seccion semantica) cuando este definido
+  - Convertir `vdo_panel_core.py` a FeaturePython para re-mapeo vivo de orientación (DT-4)
+  - "PIPELINE UNIFICADO (NO hacer aun): integrar vdo_cutting_list -> vdo_optimizer en un solo flujo. La lista de corte no se escribe a disco: se pasa un CSV VIRTUAL (en memoria) al optimizador. Boton 'Exportar CSV' en el optimizador con vista previa de filas/columnas; el CSV real solo se guarda cuando el usuario confirma."
+  - "OPTIMIZADOR DE CORTE: exportar SVG/DXF reutilizando vdo_optimizer_preview.py (hoy solo hay preview embebido en pantalla)"
+  - "OPTIMIZADOR DE CORTE: biblioteca de retales reutilizables (sobrantes) y respeto de veta por material"
+  - "NESTING WORKBENCH: corregir import PySide2 -> PySide (mismo bug que tenian las macros de corte)"

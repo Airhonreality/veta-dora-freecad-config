@@ -1,0 +1,33 @@
+# -*- coding: utf-8 -*-
+# =====================================================================
+# vdo_panel_fachada.FCMacro
+# Envoltorio ultraligero para Panel Fachada (canto rígido x4)
+# Axioma 3: Capa UI - solo parámetros (sin acoplar semántica)
+# Nota: la orientación es un atributo físico libre, no una regla de fachada.
+# =====================================================================
+
+import sys
+import FreeCAD as App
+
+# Bootstrap
+_vdo_macro_dir = App.getUserMacroDir(True)
+if _vdo_macro_dir not in sys.path:
+    sys.path.insert(0, _vdo_macro_dir)
+
+from vdo_creation_flow import crear_modulo_interactivo
+
+# Configuración física (orientación libre, sin semántica de mobiliario)
+configuracion = {
+    "nombre": "Fachada_Principal",
+    "etiqueta": "Fachada",
+    "orientacion": "vertical",
+    "cantos": {
+        "norte": "RIG",
+        "sur": "RIG",
+        "este": "RIG",
+        "oeste": "RIG",
+    },
+    "material_ref": "melamina_standar",
+}
+
+crear_modulo_interactivo("panel_fachada", configuracion)

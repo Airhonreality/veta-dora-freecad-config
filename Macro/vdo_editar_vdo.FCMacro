@@ -1,0 +1,18 @@
+# -*- coding: utf-8 -*-
+# Abre el panel de propiedades del módulo VDO seleccionado.
+# Funciona desde el árbol o desde la vista 3D, y repara el ViewProvider
+# si el objeto quedó sin proxy.
+
+import FreeCAD as App
+import FreeCADGui as Gui
+
+from vdo_view_base import abrir_panel_objeto, diagnostico_viewprovider
+
+seleccion = Gui.Selection.getSelection()
+if not seleccion:
+    App.Console.PrintWarning(
+        "[VDO] Selecciona un módulo VDO en el árbol o en la vista 3D.\n")
+else:
+    for obj in seleccion:
+        App.Console.PrintMessage(diagnostico_viewprovider(obj) + "\n")
+    abrir_panel_objeto(seleccion[0])
