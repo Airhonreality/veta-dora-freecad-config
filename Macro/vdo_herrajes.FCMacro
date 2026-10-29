@@ -1,0 +1,9 @@
+# vdo_herrajes.FCMacro
+# Lanzador del Gestor Visual de Herrajes VDO (Capa H).
+# Accesible desde la barra de herramientas de FreeCAD.
+
+import FreeCADGui as Gui
+from vdo_hardware_manager import VDOHardwareManagerDialog
+
+dlg = VDOHardwareManagerDialog(Gui.getMainWindow())
+dlg.exec_()

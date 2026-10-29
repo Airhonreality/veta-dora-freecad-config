@@ -13,6 +13,7 @@ app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
 
 import vdo_coco_core as C
 import vdo_coco_spaces as S
+import vdo_reengrose as R
 from vdo_coco_unified_task import CocoUnifiedTaskPanel
 from vdo_layout import Layout
 
@@ -112,14 +113,149 @@ class CocoReengroseAvanzadoTests(unittest.TestCase):
         data = json.loads(obj.VDO_Paneles_JSON)
         divisiones = [
             p for p in data
-            if p.get("rol") == "division_x" and p.get("mocheos")]
+            if p.get("rol") == "division_x"]
         self.assertTrue(divisiones)
+        caja = divisiones[0]["caja_geometrica"]
+        self.assertAlmostEqual(caja["y"], 0.0)
+        self.assertGreater(caja["h"], 560.0)
+        self.assertTrue(divisiones[0].get("mocheos"))
         moche = divisiones[0]["mocheos"][0]
         self.assertAlmostEqual(moche["w"], 19.0)
+        self.assertAlmostEqual(moche["h"], 50.0)
         self.assertAlmostEqual(moche["d"], 18.0)
         tiras = self._tiras_en_banda(obj.Shape, 684.0, 702.0)
         self.assertEqual(len(tiras), 1)
         self.assertGreater(tiras[0].BoundBox.XLength, 500.0)
+
+    def test_techo_retroceso_contiene_repisas(self):
+        obj = self._coco({
+            "techo": mod(comportamiento_choque_nucleo="retroceso"),
+        }, "C_TechoRetroCont")
+        self.assertTrue(obj.Shape.isValid())
+        self.assertAlmostEqual(max_common(obj.Shape), 0.0)
+        data = json.loads(obj.VDO_Paneles_JSON)
+        divisiones = [
+            p for p in data if p.get("rol") == "division_x"]
+        self.assertTrue(divisiones)
+        self.assertAlmostEqual(
+            divisiones[0]["caja_geometrica"]["y"], 50.0)
+        repisas = [
+            p for p in data if p.get("rol") == "division_y"]
+        self.assertTrue(repisas)
+        for repisa in repisas:
+            caja = repisa["caja_geometrica"]
+            self.assertGreaterEqual(caja["y"], 50.0)
+            self.assertGreater(caja["h"], 500.0)
+
+    def test_division_reengrose_no_colapsa_repisa(self):
+        obj = self._coco({
+            "techo": mod(comportamiento_choque_nucleo="retroceso"),
+            "division_x:x2": mod(cara="cara_b"),
+        }, "C_DivTiraCont")
+        self.assertTrue(obj.Shape.isValid())
+        self.assertAlmostEqual(max_common(obj.Shape), 0.0)
+        data = json.loads(obj.VDO_Paneles_JSON)
+        repisas = [
+            p for p in data
+            if p.get("rol") == "division_y"
+            and p.get("nombre", "").endswith("col_001")]
+        self.assertTrue(repisas)
+        caja = repisas[0]["caja_geometrica"]
+        self.assertAlmostEqual(caja["y"], 100.0)
+        self.assertAlmostEqual(caja["h"], 471.0)
+
+    def test_marco_perimetral_4_bordes_inglete(self):
+        bordes = {
+            b: {"activo": True, "ancho": 70, "offset_borde": 10}
+            for b in R.BORDES_2D
+        }
+        reengrose = {
+            "activo": True, "bordes": bordes,
+            "esquinas": "inglete_45", "fabricacion": "pacha",
+            "choque_nucleo": "retroceso", "cara": "cara_b",
+            "usa_bordes": True,
+        }
+        obj = self._coco({"techo": reengrose}, "C_Marco4")
+        self.assertTrue(obj.Shape.isValid())
+        self.assertAlmostEqual(max_common(obj.Shape), 0.0)
+        data = json.loads(obj.VDO_Paneles_JSON)
+        tiras = [
+            p for p in data
+            if p.get("rol_reengrose") == "refuerzo"
+            and p.get("grupo_pacha") == "Pacha_C_Marco4_Techo"]
+        self.assertEqual(len(tiras), 4)
+        nombres = " ".join(p["nombre"] for p in tiras)
+        for sufijo in ("Frente", "Fondo", "Izq", "Der"):
+            self.assertIn(sufijo, nombres)
+
+        caja = {
+            "nombre": "Techo", "x": 0, "y": 0, "z": 684,
+            "w": 600, "h": 580, "d": 18,
+        }
+        mod = R.ReengroseModifier(reengrose)
+        geo = R.calcular_geometria_caja(
+            caja, mod, {"largo": "x", "ancho": "y", "espesor": "z"})
+        self.assertEqual(len(geo["refuerzos"]), 4)
+        for ref in geo["refuerzos"]:
+            self.assertEqual(len(ref.get("poligono") or []), 4)
+
+    def test_zocalo_u_tres_bordes(self):
+        bordes = {
+            "frente": {"activo": True, "ancho": 70, "offset_borde": 20},
+            "izquierda": {"activo": True, "ancho": 70,
+                          "offset_borde": 20},
+            "derecha": {"activo": True, "ancho": 70, "offset_borde": 20},
+            "fondo": {"activo": False, "ancho": 70, "offset_borde": 20},
+        }
+        reengrose = {
+            "activo": True, "bordes": bordes,
+            "esquinas": "horizontal_domina", "fabricacion": "pacha",
+            "choque_nucleo": "retroceso", "cara": "cara_a",
+            "usa_bordes": True,
+        }
+        obj = self._coco({"base": reengrose}, "C_ZocaloU")
+        self.assertTrue(obj.Shape.isValid())
+        self.assertAlmostEqual(max_common(obj.Shape), 0.0)
+        data = json.loads(obj.VDO_Paneles_JSON)
+        tiras = [
+            p for p in data
+            if p.get("rol_reengrose") == "refuerzo"
+            and p.get("grupo_pacha") == "Pacha_C_ZocaloU_Base"]
+        self.assertEqual(len(tiras), 3)
+        self.assertFalse(any("Fondo" in p["nombre"] for p in tiras))
+
+    def test_borde_unico_retrocompatible(self):
+        panel = {
+            "nombre": "P", "largo": 600.0, "ancho": 400.0,
+            "espesor": 18.0,
+        }
+        legacy = R.ReengroseModifier({
+            "activo": True, "ancho": 70, "cara": "cara_a",
+            "alineacion_profundidad": "frente",
+            "modo_fabricacion": "independiente",
+        })
+        borde = R.ReengroseModifier({
+            "activo": True, "cara": "cara_a",
+            "fabricacion": "independiente",
+            "choque_nucleo": "retroceso",
+            "usa_bordes": True,
+            "bordes": {
+                "frente": {"activo": True, "ancho": 70,
+                           "offset_borde": 0},
+                "fondo": {"activo": False},
+                "izquierda": {"activo": False},
+                "derecha": {"activo": False},
+            },
+        })
+        ref_a = R.calcular_geometria_reengrose(panel, legacy)["refuerzos"][0]
+        ref_b = R.calcular_geometria_reengrose(panel, borde)["refuerzos"][0]
+        for clave in ("x", "y", "z", "largo", "ancho", "espesor"):
+            self.assertAlmostEqual(ref_a[clave], ref_b[clave])
+        piezas_a = R.despiece_panel("P", 600, 400, 18, legacy, cantos={})
+        piezas_b = R.despiece_panel("P", 600, 400, 18, borde, cantos={})
+        self.assertEqual(len(piezas_a), len(piezas_b))
+        for clave in ("largo", "ancho", "espesor"):
+            self.assertAlmostEqual(piezas_a[1][clave], piezas_b[1][clave])
 
     def test_esquina_techo_lateral_vertical_domina(self):
         obj = self._coco({
@@ -204,6 +340,56 @@ class CocoReengroseAvanzadoTests(unittest.TestCase):
         self.assertEqual(
             data["division_x:x2"]["prioridad_encuentro_tiras"],
             "inglete_45")
+        self.assertAlmostEqual(max_common(obj.Shape), 0.0)
+
+    def test_esquinas_independientes_ui(self):
+        obj = self._coco({}, "C_EsqIndep")
+        panel = CocoUnifiedTaskPanel(obj=obj, auto_transaction=False)
+        editor = panel.editor_divisiones
+        idx = editor.combo_elemento_reengrose.findData("techo")
+        editor.combo_elemento_reengrose.setCurrentIndex(idx)
+        editor.chk_reengrose.setChecked(True)
+        for borde in R.BORDES_2D:
+            editor.btn_borde[borde].setChecked(True)
+        editor.chk_sync_esquinas.setChecked(False)
+        mezcla = {
+            "frente_izquierda": "inglete_45",
+            "frente_derecha": "horizontal_domina",
+            "fondo_izquierda": "vertical_domina",
+            "fondo_derecha": "marco_interior",
+        }
+        for esquina, tipo in mezcla.items():
+            editor._set_combo_data(
+                editor.combo_esquina[esquina], tipo)
+        editor._on_reengrose_changed()
+        self.assertTrue(panel.accept())
+        self.doc.recompute()
+        data = json.loads(obj.VDO_Reengrose_JSON)
+        self.assertEqual(data["techo"]["esquinas"], mezcla)
+        self.assertTrue(obj.Shape.isValid())
+        self.assertAlmostEqual(max_common(obj.Shape), 0.0)
+
+    def test_sync_esquinas_ui(self):
+        obj = self._coco({}, "C_EsqSync")
+        panel = CocoUnifiedTaskPanel(obj=obj, auto_transaction=False)
+        editor = panel.editor_divisiones
+        idx = editor.combo_elemento_reengrose.findData("techo")
+        editor.combo_elemento_reengrose.setCurrentIndex(idx)
+        editor.chk_reengrose.setChecked(True)
+        for borde in R.BORDES_2D:
+            editor.btn_borde[borde].setChecked(True)
+        self.assertTrue(editor.chk_sync_esquinas.isChecked())
+        editor._set_combo_data(
+            editor.combo_esquina["fondo_derecha"], "inglete_45")
+        for esquina in R.ESQUINAS_2D:
+            self.assertEqual(
+                editor.combo_esquina[esquina].currentData(), "inglete_45")
+        editor._on_reengrose_changed()
+        self.assertTrue(panel.accept())
+        self.doc.recompute()
+        data = json.loads(obj.VDO_Reengrose_JSON)
+        self.assertEqual(
+            set(data["techo"]["esquinas"].values()), {"inglete_45"})
         self.assertAlmostEqual(max_common(obj.Shape), 0.0)
 
     def test_inglete_45_sin_solapes(self):

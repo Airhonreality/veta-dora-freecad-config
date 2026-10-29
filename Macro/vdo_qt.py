@@ -5,10 +5,18 @@
 # Acepta tanto "850.5" como "850,5" aunque el sistema use coma.
 # =====================================================================
 
-from PySide import QtCore, QtGui
+try:
+    from PySide import QtCore, QtGui, QtWidgets
+except ImportError:
+    try:
+        from PySide6 import QtCore, QtGui, QtWidgets
+    except ImportError:
+        from PySide2 import QtCore, QtGui, QtWidgets
+
+_QDoubleSpinBox = getattr(QtWidgets, "QDoubleSpinBox", getattr(QtGui, "QDoubleSpinBox", None))
 
 
-class VDO_DoubleSpinBox(QtGui.QDoubleSpinBox):
+class VDO_DoubleSpinBox(_QDoubleSpinBox):
     """QDoubleSpinBox que acepta punto/coma y cualquier nº de decimales."""
 
     def __init__(self, parent=None):

@@ -14,6 +14,7 @@ import FreeCAD as App
 import Part
 
 import vdo_reengrose as VDO_RE
+from vdo_reengrose_solids import forma_ref
 
 
 def _clave_pieza(pieza):
@@ -96,6 +97,35 @@ def _corte_expandido(corte, es_vertical):
     return corte
 
 
+def _huella_caja(caja):
+    return tuple(round(float(caja.get(clave, 0.0)), 4)
+                 for clave in ("x", "y", "z", "w", "h", "d"))
+
+
+def _agregar_interrupcion(obstaculo, caja):
+    interrupciones = obstaculo.setdefault("_interrupciones", [])
+    huella = _huella_caja(caja)
+    for existente in interrupciones:
+        if _huella_caja(existente) == huella:
+            return
+    interrupciones.append(_caja_dict(caja))
+
+
+def _modo_efectivo(obstaculo, es_vertical):
+    """Modo de choque contextual.
+
+    En montantes verticales, una tira horizontal (techo/base/repisa) debe
+    mochear localmente la esquina por defecto, no retranquear toda la
+    division. Si el taller eligio explicitamente ``retroceso``, se respeta.
+    """
+    modo = _modo_obstaculo(obstaculo)
+    if (es_vertical and modo == "retroceso"
+            and obstaculo.get("orientacion_tira") == "horizontal"
+            and not obstaculo.get("modo_explicito", False)):
+        return "mocheo"
+    return modo
+
+
 def _aplicar_choques(caja, obstaculos, es_vertical):
     """Ajusta el núcleo de un panel contra tiras perpendiculares.
 
@@ -108,14 +138,13 @@ def _aplicar_choques(caja, obstaculos, es_vertical):
     for obstaculo in obstaculos:
         if clave_host and obstaculo.get("host") == clave_host:
             continue
-        modo = _modo_obstaculo(obstaculo)
+        modo = _modo_efectivo(obstaculo, es_vertical)
         plan = VDO_RE.resolver_choque_tira_panel(
             obstaculo, ajustada, modo)
         if not plan:
             continue
         if plan["modo"] == "interrumpir_tira":
-            obstaculo.setdefault("_interrupciones", []).append(
-                _caja_dict(ajustada))
+            _agregar_interrupcion(obstaculo, ajustada)
             continue
         if plan.get("panel"):
             ajustada = _fusionar_caja(ajustada, plan["panel"])
@@ -134,11 +163,16 @@ def _preparar_tira(refuerzo, entry, indice):
         "vertical" if pieza.axis == "X" else "horizontal")
     mod = entry["mod"]
     tira["modo_choque"] = mod.comportamiento_choque_nucleo
+    tira["modo_explicito"] = entry.get("modo_explicito", False)
     prioridad = getattr(mod, "prioridad_encuentro_tiras", None)
     tira["prioridad"] = (
         None if prioridad == VDO_RE.DEFAULTS["prioridad_encuentro_tiras"]
         else prioridad)
-    tira["segmentos"] = [_caja_dict(tira)]
+    segmento = _caja_dict(tira)
+    if tira.get("poligono"):
+        segmento["poligono"] = list(tira["poligono"])
+        segmento["eje_extrusion"] = tira.get("eje_extrusion", "z")
+    tira["segmentos"] = [segmento]
     return tira
 
 
@@ -293,7 +327,7 @@ def _prisma_inglete(inglete):
 def _shape_tira(tira):
     piezas = []
     for segmento in tira.get("segmentos") or []:
-        shape = _shape_caja(segmento)
+        shape = forma_ref(segmento)
         if shape is not None:
             piezas.append(shape)
     for inglete in tira.get("ingletes") or []:
@@ -348,60 +382,118 @@ def generar_divisiones_matriz(divisiones_json, ancho_cavidad, alto_cavidad,
 
     entries = []
     for pieza in resuelto.pieces:
+        caja = _caja_pieza(pieza, fondo, espesor, x0, z0)
+        clave = _clave_pieza(pieza)
+        caja["clave"] = clave
+        crudo = reengroses.get(clave) or {}
         entries.append({
             "pieza": pieza,
-            "clave": _clave_pieza(pieza),
-            "caja": _caja_pieza(pieza, fondo, espesor, x0, z0),
+            "clave": clave,
+            "caja": dict(caja),
+            "caja_base": dict(caja),
             "ejes": _ejes_pieza(pieza),
             "mod": _modificador(reengroses, pieza),
+            "modo_explicito": (
+                "comportamiento_choque_nucleo" in crudo),
             "refuerzos": [],
             "tiras": [],
             "cortes": [],
         })
-        entries[-1]["caja"]["clave"] = entries[-1]["clave"]
 
-    tiras = []
-
-    # 1) Los montantes verticales aportan sus tiras primero: son las que
-    #    definen el retranqueo de repisas.
-    for entry in entries:
-        if entry["pieza"].axis != "X" or not entry["mod"].activo:
-            continue
+    def _regenerar_tiras(entry):
+        """Recalcula refuerzos y anclaje desde la caja real de la pieza."""
         entry["refuerzos"] = _crear_refuerzos(entry)
-        for i, ref in enumerate(entry["refuerzos"]):
-            tira = _preparar_tira(ref, entry, i)
-            entry["tiras"].append(tira)
-            tiras.append(tira)
-
-    # 2) Repisas: se ajustan contra tiras verticales y obstáculos externos.
-    #    Después se recalculan sus tiras desde la caja real ya retranqueada.
-    for entry in entries:
-        if entry["pieza"].axis != "Y":
-            continue
-        ajustada, cortes = _aplicar_choques(
-            entry["caja"], obstaculos + tiras, es_vertical=False)
-        entry["caja"] = ajustada
-        entry["cortes"].extend(cortes)
-        entry["refuerzos"] = _crear_refuerzos(entry)
-        entry["tiras"] = []
+        nuevas = []
         for i, ref in enumerate(entry["refuerzos"]):
             tira = _preparar_tira(ref, entry, i)
             tira["anclaje_y"] = VDO_RE.vector_anclaje_y(entry["caja"])
-            entry["tiras"].append(tira)
-            tiras.append(tira)
+            nuevas.append(tira)
+        entry["tiras"] = nuevas
+        return nuevas
 
-    # 3) Montantes: choque simétrico contra tiras horizontales (techo,
-    #    base, repisas). El techo ya no parte la tira: el montante cajea.
+    def _tiras_de(axis):
+        return [
+            tira for entry in entries if entry["pieza"].axis == axis
+            for tira in entry.get("tiras", [])]
+
+    def _frente_soportes(entry):
+        """Frente maximo de los montantes que tocan los extremos de la repisa."""
+        caja_base = entry["caja_base"]
+        x0 = caja_base["x"]
+        x1 = x0 + caja_base["w"]
+        frente = caja_base["y"]
+        for otro in entries:
+            if otro["pieza"].axis != "X":
+                continue
+            vx0 = otro["caja"]["x"]
+            vx1 = vx0 + otro["caja"]["w"]
+            toca = any(
+                abs(vertice - extremo) <= 1e-6
+                for vertice in (vx0, vx1)
+                for extremo in (x0, x1))
+            if toca:
+                frente = max(frente, otro["caja"]["y"])
+        return frente
+
+    # Los montantes verticales aportan sus tiras primero: son las que
+    # definen el retranqueo inicial de repisas.
     for entry in entries:
-        if entry["pieza"].axis != "X":
-            continue
-        ajustada, cortes = _aplicar_choques(
-            entry["caja"], obstaculos + tiras, es_vertical=True)
-        entry["caja"] = ajustada
-        entry["cortes"].extend(cortes)
+        if entry["pieza"].axis == "X":
+            _regenerar_tiras(entry)
 
+    # Punto fijo: las repisas se retranquean contra las tiras verticales y
+    # los montantes contra las horizontales (techo/base/repisas). Al mover
+    # una pieza se regeneran sus tiras para que nunca queden flotando en
+    # Y=0; se itera hasta estabilizar las cajas.
+    for _ in range(4):
+        antes = [_huella_caja(entry["caja"]) for entry in entries]
+
+        verticales = _tiras_de("X")
+        for entry in entries:
+            if entry["pieza"].axis != "Y":
+                continue
+            ajustada, cortes = _aplicar_choques(
+                entry["caja_base"], obstaculos + verticales,
+                es_vertical=False)
+            entry["caja"] = ajustada
+            entry["cortes"] = list(cortes)
+            _regenerar_tiras(entry)
+
+        horizontales = _tiras_de("Y")
+        for entry in entries:
+            if entry["pieza"].axis != "X":
+                continue
+            ajustada, cortes = _aplicar_choques(
+                entry["caja_base"], obstaculos + horizontales,
+                es_vertical=True)
+            entry["caja"] = ajustada
+            entry["cortes"] = list(cortes)
+            _regenerar_tiras(entry)
+
+        # Contencion de limites: una repisa nunca puede nacer mas adelante
+        # que los montantes que la sostienen. Conserva su cota hasta el fondo.
+        for entry in entries:
+            if entry["pieza"].axis != "Y":
+                continue
+            frente = _frente_soportes(entry)
+            if frente <= entry["caja"]["y"] + 1e-6:
+                continue
+            caja_base = entry["caja_base"]
+            fondo_caja = caja_base["y"] + caja_base["h"]
+            entry["caja"]["y"] = frente
+            entry["caja"]["h"] = max(0.0, fondo_caja - frente)
+            _regenerar_tiras(entry)
+
+        despues = [_huella_caja(entry["caja"]) for entry in entries]
+        if antes == despues:
+            break
+
+    tiras = [tira for entry in entries for tira in entry["tiras"]]
     for tira in tiras:
         _aplicar_interrupciones(tira)
+    for obstaculo in obstaculos:
+        if isinstance(obstaculo, dict) and "_interrupciones" in obstaculo:
+            _aplicar_interrupciones(obstaculo)
     _resolver_tiras_entre_si(tiras)
 
     shapes = []

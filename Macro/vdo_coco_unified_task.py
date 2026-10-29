@@ -5,6 +5,7 @@
 # Se abre por clic derecho, doble clic o flujo de creación.
 # =====================================================================
 
+import json
 from PySide import QtGui, QtCore
 
 from vdo_qt import VDO_DoubleSpinBox
@@ -21,6 +22,12 @@ from vdo_coco_divisions_task import DivisionesEditor
 from vdo_module_props import (
     ANCLAJES, ANCLAJE_DEFAULT, ANCLAJE_LABELS,
     add_common_props, aplicar_rotacion
+)
+from vdo_puerta_core import make_puerta
+from vdo_cajon_core import make_cajon
+from vdo_facade_contract import (
+    APERTURA_TIRADOR, APERTURA_GOLA, APERTURA_45_GRADOS, APERTURA_PUSH_OPEN,
+    CALLE_ENTRE_FRENTES_DEFAULT,
 )
 import vdo_frames as VDO_FR
 
@@ -163,6 +170,12 @@ class CocoUnifiedTaskPanel(VDOTransactionMixin):
                     "Reengrose",
                     "Modificadores de reengrose por pieza (JSON)"
                 ).VDO_Reengrose_JSON = "{}"
+            if not hasattr(obj, "VDO_Contenido_JSON"):
+                obj.addProperty(
+                    "App::PropertyString", "VDO_Contenido_JSON",
+                    "Contenido",
+                    "Contenido de vanos (puertas, cajones) (JSON)"
+                ).VDO_Contenido_JSON = "{}"
             self._cargar_valores(obj)
 
     # =================================================================
@@ -965,6 +978,190 @@ class CocoUnifiedTaskPanel(VDOTransactionMixin):
         self.reject()
         cerrar_dialogo()
 
+    # =================================================================
+    # Construcción de insertos (solo al aceptar - ciclo transaccional)
+    # =================================================================
+    def _construir_insertos(self, coco_obj):
+        """Crea o actualiza los objetos hijos (puertas, cajones) del COCO.
+
+        Se llama solo al presionar "Aceptar". No muta el documento antes.
+        Gestiona huérfanos: elimina hijos cuyo vano ya no tenga contenido.
+        """
+        doc = App.ActiveDocument
+        if doc is None:
+            return
+
+        # Leer contenido persistido
+        texto = getattr(coco_obj, "VDO_Contenido_JSON", "") or "{}"
+        try:
+            contenido = json.loads(texto) if isinstance(texto, str) else {}
+        except (ValueError, TypeError):
+            contenido = {}
+        # Convertir claves "i,j" a tuplas (col, row)
+        contenido_tuplas = {}
+        for k, v in contenido.items():
+            try:
+                col, row = map(int, str(k).split(","))
+                contenido_tuplas[(col, row)] = v
+            except (ValueError, TypeError):
+                continue
+
+        # Resolved map para obtener cotas de celdas
+        editor = self.editor_divisiones
+        resolved_map = getattr(editor, "_resolved_map", {})
+        layout = getattr(editor, "layout", None)
+
+        hijos_nuevos = []
+        celdas_procesadas = set()
+
+        for (col, row), datos in contenido_tuplas.items():
+            celdas_procesadas.add((col, row))
+            tipo = datos.get("tipo", "vacio")
+            cfg = datos.get("config", {})
+
+            if layout is None:
+                continue
+            cell = layout.get_cell(col, row)
+            if cell is None:
+                continue
+            resuelto = resolved_map.get(cell.label)
+            if resuelto is None:
+                continue
+
+            x = float(getattr(resuelto, "nominal_x", 0.0))
+            z = float(getattr(resuelto, "nominal_z", 0.0))
+            w = float(resuelto.w)
+            h = float(resuelto.h)
+
+            if tipo == "puerta":
+                self._construir_puerta(
+                    doc, coco_obj, cfg, x, z, w, h, hijos_nuevos)
+            elif tipo == "cajon" or tipo == "cajon_torre":
+                self._construir_cajones(
+                    doc, coco_obj, cfg, x, z, w, h, hijos_nuevos)
+
+        # --- Gestión de huérfanos ---
+        hijos_actuales = list(coco_obj.Hijos or [])
+        claves_activas = set()
+        for hijo in hijos_nuevos:
+            claves_activas.add(hijo.Name)
+        for hijo in hijos_actuales:
+            if hijo.Name not in claves_activas:
+                try:
+                    doc.removeObject(hijo.Name)
+                except Exception:
+                    pass
+
+        coco_obj.Hijos = hijos_nuevos
+
+    def _construir_puerta(self, doc, coco_obj, cfg, x, z, w, h, hijos_nuevos):
+        """Crea o actualiza una puerta como hijo del COCO."""
+        nombre = cfg.get("nombre", f"Puerta_{coco_obj.Name}")
+        # Buscar si ya existe
+        existente = None
+        for hijo in list(coco_obj.Hijos or []):
+            if hijo.Name == nombre:
+                existente = hijo
+                break
+
+        if existente is None:
+            existente = doc.addObject("Part::FeaturePython", nombre)
+            from vdo_puerta_core import PuertaFeature
+            PuertaFeature(existente)
+            if App.GuiUp:
+                from vdo_puerta_core import ViewProviderPuerta
+                ViewProviderPuerta(existente.ViewObject)
+
+        # Propiedades de la puerta
+        existente.TipoSistema = cfg.get("tipo_sistema", "Batiente Vertical")
+        existente.TipoMontaje = cfg.get("tipo_montaje", "Parche")
+        existente.SentidoApertura = cfg.get("sentido_apertura", "Izquierda")
+        existente.SistemaApertura = cfg.get(
+            "sistema_apertura", APERTURA_TIRADOR)
+        existente.HardwareSKU = cfg.get("hardware_sku", "")
+        existente.VDO_Vano_ID = cfg.get("vdo_vano_id", "")
+        existente.Ancho = float(cfg.get("ancho", w))
+        existente.Alto = float(cfg.get("alto", h))
+        existente.Espesor = int(cfg.get("espesor", 18))
+        existente.PosX = float(cfg.get("pos_x", x))
+        existente.PosY = float(cfg.get("pos_y", 0.0))
+        existente.PosZ = float(cfg.get("pos_z", z))
+        existente.VDO_Anclaje = cfg.get("anclaje", "inferior_izquierda_frente")
+
+        # Vínculo padre-hijo
+        existente.ParentCOCO = coco_obj
+        existente.LocalPlacement = App.Placement(
+            App.Vector(
+                float(cfg.get("pos_x", x)),
+                float(cfg.get("pos_y", 0.0)),
+                float(cfg.get("pos_z", z)),
+            ), App.Rotation())
+
+        hijos_nuevos.append(existente)
+
+    def _construir_cajones(self, doc, coco_obj, cfg, x, z, w, h, hijos_nuevos):
+        """Crea o actualiza cajones (1 o más, torre apilada) como hijos del COCO."""
+        cantidad = int(cfg.get("cantidad", 1))
+        corredera = cfg.get("corredera", "Oculta")
+        apertura = cfg.get("apertura", "Tirador")
+        nombre_base = cfg.get("nombre", f"Cajon_{coco_obj.Name}")
+
+        # Calcular altura individual de frente para torre N cajones
+        h_frente = (h - (cantidad - 1) * CALLE_ENTRE_FRENTES_DEFAULT) / cantidad
+        if h_frente <= 0:
+            h_frente = max(10.0, h / max(cantidad, 1))
+
+        from vdo_cajon_despiece import CORREDERA_OCULTA, CORREDERA_TELESCOPICA
+        tipo_corredera = CORREDERA_OCULTA if corredera == "Oculta" else CORREDERA_TELESCOPICA
+
+        apertura_map = {
+            "Tirador": APERTURA_TIRADOR,
+            "Gola": APERTURA_GOLA,
+            "45°": APERTURA_45_GRADOS,
+            "Push": APERTURA_PUSH_OPEN,
+        }
+        sistema_apertura = apertura_map.get(apertura, APERTURA_TIRADOR)
+
+        for i in range(cantidad):
+            nombre = f"{nombre_base}_{i + 1:02d}"
+            # Buscar si ya existe
+            existente = None
+            for hijo in list(coco_obj.Hijos or []):
+                if hijo.Name == nombre:
+                    existente = hijo
+                    break
+
+            if existente is None:
+                existente = doc.addObject("Part::FeaturePython", nombre)
+                from vdo_cajon_core import CajonFeature
+                CajonFeature(existente)
+                if App.GuiUp:
+                    from vdo_cajon_core import ViewProviderCajon
+                    ViewProviderCajon(existente.ViewObject)
+
+            # Propiedades del cajón
+            existente.AnchoLibre = w
+            existente.ProfLibre = float(getattr(coco_obj, "FondoModulo", 580.0))
+            existente.AnchoModulo = w
+            existente.AltoFrente = h_frente
+            existente.AltoCaja = float(getattr(coco_obj, "Espesor", 18)) * 5  # default 90mm
+            existente.GrosorCaja = 16.0
+            existente.GrosorFondo = 6.0
+            existente.GrosorFachada = 18.0
+            existente.MarcaCorredera = "blum_tandem"
+            existente.LongitudGuia = 0.0
+            existente.MontajeTrasera = "entre_laterales"
+            existente.TipoCorredera = tipo_corredera
+            existente.SistemaApertura = sistema_apertura
+
+            # Vínculo padre-hijo con z escalonado
+            z_local = z + i * (h_frente + CALLE_ENTRE_FRENTES_DEFAULT)
+            existente.ParentCOCO = coco_obj
+            existente.LocalPlacement = App.Placement(
+                App.Vector(x, 0.0, z_local), App.Rotation())
+
+            hijos_nuevos.append(existente)
+
     def accept(self):
         if not self.obj:
             return True
@@ -1019,6 +1216,11 @@ class CocoUnifiedTaskPanel(VDOTransactionMixin):
             self.obj.VDO_Divisiones = self.editor_divisiones.dumps()
             self.obj.VDO_Reengrose_JSON = (
                 self.editor_divisiones.dumps_reengroses())
+            self.obj.VDO_Contenido_JSON = (
+                self.editor_divisiones.dumps_contenido())
+
+            # --- Construir insertos solo al aceptar (ciclo transaccional) ---
+            self._construir_insertos(self.obj)
 
             App.ActiveDocument.recompute()
             self._vdo_commit()

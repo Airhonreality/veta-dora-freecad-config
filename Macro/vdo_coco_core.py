@@ -20,6 +20,7 @@ import vdo_module_props as VDO_MOD
 import vdo_frames as VDO_FR
 import vdo_finish as VDO_FINISH
 import vdo_reengrose as VDO_RE
+from vdo_reengrose_solids import forma_ref
 
 
 def _cargar_reengroses(obj):
@@ -141,6 +142,10 @@ class CocoFeature:
         # Paneles internos (propiedades de lectura para exportación)
         obj.addProperty("App::PropertyString", "VDO_Paneles_JSON", "VDO",
                         "Descripción JSON de los paneles internos")
+
+        # Lista de insertos contenidos (puertas, cajones) para DAG limpio.
+        obj.addProperty("App::PropertyLinkList", "Hijos", "VDO",
+                        "Insertos contenidos (puertas, cajones)").Hijos = []
 
         # Pose común VDO (rotación + anclaje). No altera la geometría.
         VDO_MOD.add_common_props(obj)
@@ -289,9 +294,9 @@ class CocoFeature:
                         f"[VDO] Reengrose {clave} ignorado: {exc}\n")
                     return
                 for i, ref in enumerate(geo["refuerzos"]):
-                    forma = Part.makeBox(
-                        ref["w"], ref["h"], ref["d"],
-                        App.Vector(ref["x"], ref["y"], ref["z"]))
+                    forma = forma_ref(ref)
+                    if forma is None:
+                        continue
                     indice = len(boxes)
                     boxes.append(forma)
                     tira = dict(ref)
@@ -302,17 +307,25 @@ class CocoFeature:
                         else "horizontal")
                     tira["modo_choque"] = (
                         mod.comportamiento_choque_nucleo)
+                    crudo = reengroses.get(clave) or {}
+                    tira["modo_explicito"] = (
+                        "comportamiento_choque_nucleo" in crudo)
                     prioridad = getattr(
                         mod, "prioridad_encuentro_tiras", None)
                     tira["prioridad"] = (
                         None if prioridad
                         == VDO_RE.DEFAULTS["prioridad_encuentro_tiras"]
                         else prioridad)
-                    tira["segmentos"] = [{
+                    segmento = {
                         "x": float(ref["x"]), "y": float(ref["y"]),
                         "z": float(ref["z"]), "w": float(ref["w"]),
                         "h": float(ref["h"]), "d": float(ref["d"]),
-                    }]
+                    }
+                    if ref.get("poligono"):
+                        segmento["poligono"] = list(ref["poligono"])
+                        segmento["eje_extrusion"] = ref.get(
+                            "eje_extrusion", "z")
+                    tira["segmentos"] = [segmento]
                     tira["shape"] = forma
                     shell_refs.append({
                         "indice": indice,
@@ -552,6 +565,18 @@ class CocoFeature:
                 elif forma.Volume > 1e-9:
                     solidos.append(forma)
             fp.Shape = Part.makeCompound(solidos)
+
+            # --- Propagación de Placement a insertos (hijos) ---
+            # Cuando el COCO se mueve o rota (su Placement cambia),
+            # todos sus hijos se mueven rígidamente con él.
+            hijos = list(fp.Hijos or [])
+            for hijo in hijos:
+                try:
+                    if hijo is not None and hasattr(hijo, "LocalPlacement"):
+                        hijo.Placement = fp.Placement.multiply(
+                            hijo.LocalPlacement)
+                except Exception:
+                    pass
 
         except Exception as e:
             App.Console.PrintError(f"[VDO] Error en execute(): {e}\n")

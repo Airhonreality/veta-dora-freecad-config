@@ -1,0 +1,204 @@
+{
+  "bisagra_cazoleta": {
+    "GEN-CAZ-35-PARCHE": {
+      "nombre": "Bisagra Cazoleta 35mm Cierre Suave - Recta (Parche)",
+      "proveedor": "Genérico / Taller",
+      "precio_unitario": 1.20,
+      "moneda": "USD",
+      "parametros_tecnicos": {
+        "tipo_montaje": "parche",
+        "brazo": "recta",
+        "diametro_cazoleta": 35.0,
+        "profundidad_cazoleta": 11.5,
+        "cota_k_default": 4.0,
+        "distancia_base_frente": 37.0,
+        "separacion_tornillos_base": 32.0,
+        "solape_nominal": 16.0,
+        "holgura_luz": 2.0
+      }
+    },
+    "GEN-CAZ-35-SEMIPARCHE": {
+      "nombre": "Bisagra Cazoleta 35mm Cierre Suave - Acodada (Semiparche)",
+      "proveedor": "Genérico / Taller",
+      "precio_unitario": 1.30,
+      "moneda": "USD",
+      "parametros_tecnicos": {
+        "tipo_montaje": "semiparche",
+        "brazo": "acodada",
+        "diametro_cazoleta": 35.0,
+        "profundidad_cazoleta": 11.5,
+        "cota_k_default": 4.0,
+        "solape_nominal": 8.0,
+        "holgura_luz": 2.0
+      }
+    },
+    "GEN-CAZ-35-EMBEBIDA": {
+      "nombre": "Bisagra Cazoleta 35mm Cierre Suave - Súper Acodada (Embebida)",
+      "proveedor": "Genérico / Taller",
+      "precio_unitario": 1.40,
+      "moneda": "USD",
+      "parametros_tecnicos": {
+        "tipo_montaje": "embebida",
+        "brazo": "super_acodada",
+        "diametro_cazoleta": 35.0,
+        "profundidad_cazoleta": 11.5,
+        "cota_k_default": 4.0,
+        "holgura_perimetral_min": 2.0
+      }
+    }
+  },
+  "sistema_corredizo": {
+    "DUC-KIT-D52": {
+      "nombre": "Kit Corredizo Ducasse D-52 (Closet / Placard al Piso)",
+      "proveedor": "Ducasse Industrial",
+      "precio_unitario": 18.50,
+      "moneda": "USD",
+      "parametros_tecnicos": {
+        "aplicacion": "closet_placard",
+        "capacidad_peso_kg": 50.0,
+        "montaje": "al_piso_dentro_vano",
+        "ancho_minimo_hoja": 650.0,
+        "descuento_altura_hoja": 33.0,
+        "traslape_minimo": 35.0,
+        "ancho_piso_riel_doble": 60.0,
+        "espesor_hoja_min": 15.0
+      }
+    },
+    "DUC-AL-1535-MAD": {
+      "nombre": "Sistema Corredizo Ducasse AL 1535 Madera (Muebles / Alacenas)",
+      "proveedor": "Ducasse Industrial",
+      "precio_unitario": 9.80,
+      "moneda": "USD",
+      "parametros_tecnicos": {
+        "aplicacion": "muebles_alacenas",
+        "capacidad_peso_kg": 15.0,
+        "montaje": "al_piso_dentro_vano",
+        "descuento_altura_hoja": 10.0,
+        "traslape_minimo": 25.0,
+        "ancho_piso_riel_doble": 26.0,
+        "espesor_hoja_min": 15.0,
+        "luz_cerrada_sin_cenefa": true
+      }
+    },
+    "DUC-AL-1535-VID": {
+      "nombre": "Sistema Corredizo Ducasse AL 1535 Vidrio (4-6mm)",
+      "proveedor": "Ducasse Industrial",
+      "precio_unitario": 12.50,
+      "moneda": "USD",
+      "parametros_tecnicos": {
+        "aplicacion": "muebles_vidrio",
+        "capacidad_peso_kg": 15.0,
+        "descuento_altura_hoja": 10.0,
+        "traslape_minimo": 25.0,
+        "espesor_vidrio_max": 6.0
+      }
+    }
+  },
+  "corredera_oculta": {
+    "BLUM-TANDEM": {
+      "nombre": "Corredera Oculta Blum Tandem",
+      "proveedor": "Blum",
+      "precio_unitario": 12.50,
+      "moneda": "USD",
+      "parametros_tecnicos": {
+        "tipo_corredera": "oculta",
+        "aplicacion": "cajon",
+        "delta_ancho": 49.0,
+        "longitudes_comerciales": [300.0, 350.0, 400.0, 450.0, 500.0, 550.0],
+        "longitud_default": 550.0,
+        "cota_ranura_z": 10.0,
+        "diametro_pin_trasero": 6.0,
+        "profundidad_pin_trasero": 12.0,
+        "distancia_pin_borde_trasero": 8.0,
+        "prof_ranura_lateral": 4.0,
+        "notch_ancho": 35.0,
+        "notch_alto": 12.0,
+        "grosor_caja_ideal": 16.0,
+        "capacidad_peso_kg": 30.0
+      }
+    },
+    "GEN-OCULTA": {
+      "nombre": "Corredera Oculta Genérica (42-49 mm)",
+      "proveedor": "Genérico",
+      "precio_unitario": 8.00,
+      "moneda": "USD",
+      "parametros_tecnicos": {
+        "tipo_corredera": "oculta",
+        "aplicacion": "cajon",
+        "delta_ancho": 45.0,
+        "longitudes_comerciales": [300.0, 350.0, 400.0, 450.0, 500.0, 550.0, 600.0],
+        "longitud_default": 550.0,
+        "cota_ranura_z": 11.0,
+        "diametro_pin_trasero": 6.0,
+        "profundidad_pin_trasero": 12.0,
+        "distancia_pin_borde_trasero": 8.0,
+        "prof_ranura_lateral": 4.0,
+        "notch_ancho": 35.0,
+        "notch_alto": 12.0,
+        "grosor_caja_ideal": 16.0,
+        "capacidad_peso_kg": 25.0
+      }
+    },
+    "HAFELE-OCULTA": {
+      "nombre": "Corredera Oculta Hafele",
+      "proveedor": "Hafele",
+      "precio_unitario": 10.90,
+      "moneda": "USD",
+      "parametros_tecnicos": {
+        "tipo_corredera": "oculta",
+        "aplicacion": "cajon",
+        "delta_ancho": 45.0,
+        "longitudes_comerciales": [300.0, 350.0, 400.0, 450.0, 500.0, 550.0],
+        "longitud_default": 550.0,
+        "cota_ranura_z": 11.0,
+        "diametro_pin_trasero": 6.0,
+        "profundidad_pin_trasero": 12.0,
+        "distancia_pin_borde_trasero": 8.0,
+        "prof_ranura_lateral": 4.0,
+        "notch_ancho": 35.0,
+        "notch_alto": 12.0,
+        "grosor_caja_ideal": 16.0,
+        "capacidad_peso_kg": 35.0
+      }
+    },
+    "DUCASSE-OCULTA": {
+      "nombre": "Corredera Oculta Ducasse",
+      "proveedor": "Ducasse Industrial",
+      "precio_unitario": 11.50,
+      "moneda": "USD",
+      "parametros_tecnicos": {
+        "tipo_corredera": "oculta",
+        "aplicacion": "cajon",
+        "delta_ancho": 45.0,
+        "longitudes_comerciales": [300.0, 350.0, 400.0, 450.0, 500.0, 550.0],
+        "longitud_default": 550.0,
+        "cota_ranura_z": 10.5,
+        "diametro_pin_trasero": 6.0,
+        "profundidad_pin_trasero": 12.0,
+        "distancia_pin_borde_trasero": 8.0,
+        "prof_ranura_lateral": 4.0,
+        "notch_ancho": 35.0,
+        "notch_alto": 12.0,
+        "grosor_caja_ideal": 16.0,
+        "capacidad_peso_kg": 30.0
+      }
+    }
+  },
+  "corredera_telescopica": {
+    "GEN-TELESCOPICA-45KG": {
+      "nombre": "Corredera Telescópica Genérica 45kg",
+      "proveedor": "Genérico",
+      "precio_unitario": 4.50,
+      "moneda": "USD",
+      "parametros_tecnicos": {
+        "tipo_corredera": "telescopica",
+        "aplicacion": "cajon",
+        "capacidad_peso_kg": 45.0,
+        "holgura_lateral_por_lado": 12.7,
+        "fondo_ranurado": 5.5,
+        "espesor_hoja_min": 12.0,
+        "longitud_minima": 250.0
+      }
+    }
+  }
+}

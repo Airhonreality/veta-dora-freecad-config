@@ -1,5 +1,7 @@
 __pycache__/
 *.pyc
+*.FCBak
+Macro/tests/output/
 VDO_GIT.txt
 v1-1/
 v1.1/

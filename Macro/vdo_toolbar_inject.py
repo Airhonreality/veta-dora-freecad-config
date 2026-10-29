@@ -8,6 +8,7 @@ USO: python3 vdo_toolbar_inject.py [ruta/user.cfg]
      (sin argumento: detecta el user.cfg del FreeCAD local)
      o ejecutar dentro de FreeCAD: Macro → Ejecutar → vdo_toolbar_inject.py
 """
+import filecmp
 import os
 import re
 import sys
@@ -27,19 +28,9 @@ from datetime import datetime
 
 VDO_MACROS = [
     {
-        "name": "Std_Macro_0",
-        "script": "vdo_panel_estandar.FCMacro",
-        "menu": "Crear Panel de Melamina",
-        "tooltip": "Genera un tablero o entrepaño atómico vinculado al sistema VDO",
-        "whatsthis": "Inserta un tablero individual de melamina con control de dimensiones, espesor y posición para complementar el diseño del mobiliario.",
-        "statustip": "Crea un panel de melamina independiente con medidas y cantos personalizables",
-        "pixmap": "vdo_panel",
-        "accel": "P, A, N, E",
-    },
-    {
         "name": "Std_Macro_1",
         "script": "vdo_coco_4c.FCMacro",
-        "menu": "Crear COCO",
+        "menu": "Nuevo COCO",
         "tooltip": "Genera el contenedor volumétrico básico con Task Panel paramétrico",
         "whatsthis": "Genera una caja estructural de 4 lados y fondo (laterales, tapa y base) con control de espesores, ranura inteligente para fondo y configuración de tapas/bases internas o externas.",
         "statustip": "Crea un nuevo módulo COCO parametrizable en el documento activo",
@@ -47,44 +38,24 @@ VDO_MACROS = [
         "accel": "C, O, C, O",
     },
     {
-        "name": "Std_Macro_2",
-        "script": "vdo_panel_fachada.FCMacro",
-        "menu": "Crear Fachada",
-        "tooltip": "Genera un frente o puerta paramétrica para los módulos de mobiliario",
-        "whatsthis": "Inserta un panel frontal o puerta dimensionable para cerrar los compartimentos de los módulos COCO con control de luz y holguras perimetrales.",
-        "statustip": "Crea una fachada o puerta ajustable con holguras para el sistema VDO",
-        "pixmap": "vdo_panel",
-        "accel": "F, A, C, H",
+        "name": "Std_Macro_0",
+        "script": "vdo_panel_estandar.FCMacro",
+        "menu": "Panel Libre L1",
+        "tooltip": "Genera un tablero o entrepaño atómico vinculado al sistema VDO",
+        "whatsthis": "Inserta un tablero individual de melamina con control de dimensiones, espesor y posición para complementar el diseño del mobiliario.",
+        "statustip": "Crea un panel de melamina independiente con medidas y cantos personalizables",
+        "pixmap": "vdo_panel_estandar",
+        "accel": "P, A, N, E",
     },
     {
-        "name": "Std_Macro_3",
-        "script": "VDO_Crear_Hoja_Melamina.FCMacro",
-        "menu": "Crear Hoja",
-        "tooltip": "Crear hoja de melamina con parámetros",
-        "whatsthis": "Crear hoja de melamina con parámetros",
-        "statustip": "Crear Hoja",
-        "pixmap": "vdo_workbench",
-        "accel": "H, O, J, A",
-    },
-    {
-        "name": "Std_Macro_4",
-        "script": "vdo_cajon_oculta.FCMacro",
-        "menu": "Cajón Oculta",
-        "tooltip": "Cajón con corredera oculta (Blum Tandem) con despiece milimétrico",
-        "whatsthis": "Cajón con corredera oculta (Blum Tandem) con despiece milimétrico",
-        "statustip": "Cajón Oculta",
-        "pixmap": "vdo_cajon",
-        "accel": "C, A, J, O",
-    },
-    {
-        "name": "Std_Macro_5",
-        "script": "vdo_panel_division.FCMacro",
-        "menu": "Crear División",
-        "tooltip": "Panel divisor (orientado verticalmente) vinculado al sistema VDO",
-        "whatsthis": "Inserta un panel divisor vertical para separar los compartimentos internos de un módulo.",
-        "statustip": "Crea una división vertical independiente",
-        "pixmap": "vdo_panel",
-        "accel": "D, I, V, I",
+        "name": "Std_Macro_9",
+        "script": "vdo_hardware_manager.py",
+        "menu": "Herrajes (Gestor)",
+        "tooltip": "Abre el gestor visual del catálogo de herrajes VDO (Capa H)",
+        "whatsthis": "Lanza el diálogo de inspección y edición del catálogo de herrajes (bisagras, sistemas corredizos, cazoletas, correderas) almacenado en vdo_hardware_catalog.json.",
+        "statustip": "Abre el Gestor de Herrajes VDO",
+        "pixmap": "vdo_herrajes",
+        "accel": "H, E, R, J",
     },
 ]
 
@@ -97,15 +68,110 @@ NOMBRES_VDO_OBSOLETOS = {
     "VDO - Muebles Paramétricos",
 }
 
+# Iconos que deben vivir en la raíz del directorio de macros para que
+# Qt/FreeCAD los resuelva por nombre simple.
+SVG_ICONS = sorted({
+    f"{macro['pixmap']}.svg" for macro in VDO_MACROS
+} | {
+    "vdo_coco.svg",
+    "vdo_panel_estandar.svg",
+    "vdo_panel_fachada.svg",
+    "vdo_workbench.svg",
+    "vdo_zocalo.svg",
+    "vdo_puerta.svg",
+    "vdo_herrajes.svg",
+})
+
+
+def _ruta_macro_dir():
+    """Directorio de macros de FreeCAD o el directorio del script."""
+    try:
+        import FreeCAD as _App
+        return _App.getUserMacroDir(True)
+    except Exception:
+        return os.path.dirname(os.path.abspath(__file__))
+
+
+def preparar_iconos():
+    """Copia los SVG VDO a la raíz del directorio de macros.
+
+    Si el script ya vive en el directorio de macros no duplica archivos;
+    si se ejecuta desde el repo, deja los iconos donde Qt los busca.
+    """
+    destino = _ruta_macro_dir()
+    try:
+        os.makedirs(destino, exist_ok=True)
+    except Exception:
+        return 0
+
+    origen = os.path.dirname(os.path.abspath(__file__))
+    fuentes = []
+    for nombre in SVG_ICONS:
+        fuentes.append(os.path.join(origen, nombre))
+    icons_dir = os.path.join(origen, "icons")
+    if os.path.isdir(icons_dir):
+        for nombre in os.listdir(icons_dir):
+            if nombre.lower().endswith(".svg"):
+                fuentes.append(os.path.join(icons_dir, nombre))
+
+    copiados = 0
+    for src in fuentes:
+        if not os.path.isfile(src):
+            continue
+        dst = os.path.join(destino, os.path.basename(src))
+        try:
+            if os.path.abspath(src) == os.path.abspath(dst):
+                continue
+            if (not os.path.isfile(dst)
+                    or not filecmp.cmp(src, dst, shallow=False)):
+                shutil.copy2(src, dst)
+                copiados += 1
+        except Exception as exc:
+            print(f"[VDO] No se pudo copiar icono {src}: {exc}")
+    if copiados:
+        print(f"[VDO] Iconos copiados al directorio de macros: {copiados}")
+    return copiados
+
+
+def registrar_ruta_iconos(ruta=None):
+    """Registra el directorio de macros en el motor de iconos de Qt.
+
+    ``Gui.addIconPath`` no existe en todas las versiones de FreeCAD, por
+    eso se usa solo si está disponible. user.cfg escribe además la ruta
+    absoluta del SVG en el nodo Pixmap como respaldo.
+    """
+    try:
+        import FreeCAD as _App
+        import FreeCADGui as _Gui
+    except Exception:
+        return False
+    if not getattr(_App, "GuiUp", False):
+        return False
+    base = ruta or _ruta_macro_dir()
+    if hasattr(_Gui, "addIconPath"):
+        try:
+            _Gui.addIconPath(base)
+            print(f"[VDO] Ruta de iconos registrada: {base}")
+            return True
+        except Exception as exc:
+            print(f"[VDO] addIconPath no disponible en este FreeCAD: {exc}")
+    return False
+
+
+def _ruta_icono_abs(nombre):
+    """Devuelve la ruta absoluta del SVG si existe; si no, el nombre."""
+    if not nombre:
+        return nombre
+    base = os.path.basename(str(nombre))
+    if not base.lower().endswith(".svg"):
+        base += ".svg"
+    ruta = os.path.join(_ruta_macro_dir(), base)
+    return ruta if os.path.isfile(ruta) else nombre
+
 
 def _ruta_macro_abs(nombre):
     """Devuelve la ruta ABSOLUTA de una macro (evita ambigüedad de rutas relativas)."""
-    try:
-        import FreeCAD as _App
-        base = _App.getUserMacroDir(True)
-    except Exception:
-        base = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(base, nombre)
+    return os.path.join(_ruta_macro_dir(), nombre)
 
 
 def _limpiar_toolbars_obsoletas(baseapp):
@@ -161,6 +227,10 @@ def find_user_cfg():
 def inject_toolbar(cfg_path):
     """Inyecta macros VDO y toolbar en user.cfg."""
 
+    # Dejar los SVG en la raíz de macros y registrar la ruta en Qt.
+    preparar_iconos()
+    registrar_ruta_iconos()
+
     # Backup
     backup = cfg_path + f".bak_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     shutil.copy2(cfg_path, backup)
@@ -204,7 +274,8 @@ def inject_toolbar(cfg_path):
         ET.SubElement(grp, "FCText", Name="Tooltip").text = macro["tooltip"]
         ET.SubElement(grp, "FCText", Name="WhatsThis").text = macro.get("whatsthis", macro["tooltip"])
         ET.SubElement(grp, "FCText", Name="Statustip").text = macro.get("statustip", macro["menu"])
-        ET.SubElement(grp, "FCText", Name="Pixmap").text = macro["pixmap"]
+        ET.SubElement(grp, "FCText", Name="Pixmap").text = _ruta_icono_abs(
+            macro["pixmap"])
         ET.SubElement(grp, "FCText", Name="Accel").text = macro.get("accel", "")
         ET.SubElement(grp, "FCBool", Name="System", Value="0")
         print(f"[VDO] Macro definida: {macro['name']} → {macro['script']}"
@@ -339,8 +410,8 @@ def main():
         print("[VDO] LISTO. Reinicia FreeCAD para ver la toolbar.")
         print(f"[VDO] Toolbar '{TOOLBAR_NAME}' aparecerá en:")
         print(f"       - {WORKBENCH_TARGET}" if WORKBENCH_TARGET != "Global" else "       - TODOS los workbenches")
-        print(f"       - {len(VDO_MACROS)} botones: Panel, COCO, Fachada, Hoja, Cajón, División")
-        print(f"       - Atajos (máx. 4 teclas Qt): PANE, COCO, FACH, HOJA, CAJO, DIVI")
+        print(f"       - {len(VDO_MACROS)} botones: COCO, Panel Libre L1, Herrajes (Gestor)")
+        print(f"       - Atajos (máx. 4 teclas Qt): COCO, PANE, HERJ")
         print("=" * 60)
 
     return ok

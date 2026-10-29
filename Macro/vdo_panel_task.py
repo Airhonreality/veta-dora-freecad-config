@@ -173,115 +173,48 @@ class PanelTaskPanel(VDOTransactionMixin):
         main_layout.addWidget(botones)
 
         self.chk_params.toggled.connect(self._on_params_toggled)
-        self.chk_reengrose.toggled.connect(self._on_reengrose_toggled)
-        self.combo_re_modo.currentIndexChanged.connect(
-            self._on_reengrose_modo_changed)
-        self.combo_re_alcance.currentIndexChanged.connect(
-            self._on_reengrose_modo_changed)
-        self.combo_re_orientacion.currentIndexChanged.connect(
-            self._on_reengrose_modo_changed)
+        self.re_editor.changed.connect(self._on_reengrose_modo_changed)
         return widget
 
     def _crear_grupo_reengrose(self):
-        grupo = QtGui.QGroupBox("Reengrose / Pacha")
-        grid = QtGui.QGridLayout(grupo)
+        from vdo_reengrose_ui import ReengroseBorderEditor
+        self.re_editor = ReengroseBorderEditor()
+        self.chk_reengrose = self.re_editor.chk_activo
+        self.spin_re_ancho = self.re_editor.spin_ancho
+        self.spin_re_espesor = self.re_editor.spin_espesor
+        self.combo_re_cara = self.re_editor.combo_cara
+        self.combo_re_modo = self.re_editor.combo_fabricacion
+        self.combo_re_politica = self.re_editor.combo_choque
+        self.combo_re_prioridad = self.re_editor.combo_esquinas
+        self.combo_re_esquinas = self.re_editor.combo_esquinas
+        self.combo_re_choque = self.re_editor.combo_choque
+        self.spin_re_offset = self.re_editor.spin_offset
+        self.chk_re_uniforme = self.re_editor.chk_uniforme
+        self.btn_all = self.re_editor.btn_all
+        self.btn_borde = self.re_editor.btn_borde
+        self.btn_borde_frente = self.re_editor.btn_borde["frente"]
+        self.btn_borde_fondo = self.re_editor.btn_borde["fondo"]
+        self.btn_borde_izquierda = self.re_editor.btn_borde["izquierda"]
+        self.btn_borde_derecha = self.re_editor.btn_borde["derecha"]
+        self.spin_re_ancho_borde = self.re_editor.spin_ancho_borde
+        self.spin_re_offset_borde = self.re_editor.spin_offset_borde
+        self.lbl_re_resumen = self.re_editor.lbl_resumen
+        self.chk_sync_esquinas = self.re_editor.chk_sync_esquinas
+        self.combo_esquina = self.re_editor.combo_esquina
+        self.preview_reengrose = self.re_editor.preview
 
-        self.chk_reengrose = QtGui.QCheckBox("Activar reengrose")
-        self.chk_reengrose.setToolTip(
-            "<b>Reengrose / Pacha</b><br>"
-            "Activa una tira de refuerzo sobre una cara del tablero. "
-            "Ejemplo típico: 70 mm en el nudo de bisagras de una división "
-            "central de 18 mm.")
-        grid.addWidget(self.chk_reengrose, 0, 0, 1, 4)
-
-        grid.addWidget(QtGui.QLabel("Orientación:"), 1, 0)
+        # Controles legacy ocultos para compatibilidad de API.
         self.combo_re_orientacion = QtGui.QComboBox()
-        self.combo_re_orientacion.addItem(
-            "Paralela a la pieza", "paralela")
-        self.combo_re_orientacion.addItem(
-            "Transversal / cruzada", "transversal")
-        self.combo_re_orientacion.setToolTip(
-            "Paralela: la tira corre a lo largo del panel, como un refuerzo "
-            "vertical en un lateral. Transversal: cruza el ancho, como un "
-            "tope horizontal o un refuerzo de esquina.")
-        grid.addWidget(self.combo_re_orientacion, 1, 1)
-
-        grid.addWidget(QtGui.QLabel("Ancho tira:"), 1, 2)
-        self.spin_re_ancho = VDO_DoubleSpinBox()
-        self.spin_re_ancho.setRange(1.0, 5000.0)
-        self.spin_re_ancho.setDecimals(1)
-        self.spin_re_ancho.setSuffix(" mm")
-        self.spin_re_ancho.setValue(70.0)
-        self.spin_re_ancho.setToolTip(
-            "Ancho de la tira. 70 mm es la medida habitual para el nudo de "
-            "bisagras; 100 mm se usa para zócalos o refuerzos grandes.")
-        grid.addWidget(self.spin_re_ancho, 1, 3)
-
-        grid.addWidget(QtGui.QLabel("Espesor tira:"), 2, 0)
-        self.spin_re_espesor = VDO_DoubleSpinBox()
-        self.spin_re_espesor.setRange(0.0, 100.0)
-        self.spin_re_espesor.setDecimals(1)
-        self.spin_re_espesor.setSuffix(" mm")
-        self.spin_re_espesor.setSpecialValueText("Auto")
-        self.spin_re_espesor.setValue(0.0)
-        self.spin_re_espesor.setToolTip(
-            "Espesor de la tira. En <b>Auto</b> usa el mismo espesor que el "
-            "panel base. Editable para proyectos especiales.")
-        grid.addWidget(self.spin_re_espesor, 2, 1)
-
-        grid.addWidget(QtGui.QLabel("Cara:"), 2, 2)
-        self.combo_re_cara = QtGui.QComboBox()
-        self.combo_re_cara.addItem("Cara A (+)", "cara_a")
-        self.combo_re_cara.addItem("Cara B (−)", "cara_b")
-        self.combo_re_cara.setToolTip(
-            "Cara del tablero donde se pega el refuerzo. En un panel "
-            "vertical, una cara mira al vano izquierdo y la otra al derecho.")
-        grid.addWidget(self.combo_re_cara, 2, 3)
-
-        grid.addWidget(QtGui.QLabel("Alineación:"), 3, 0)
+        self.combo_re_orientacion.addItem("Paralela", "paralela")
+        self.combo_re_orientacion.addItem("Transversal", "transversal")
         self.combo_re_alineacion = QtGui.QComboBox()
         self.combo_re_alineacion.addItem("Frente", "frente")
         self.combo_re_alineacion.addItem("Centrado", "centrado")
         self.combo_re_alineacion.addItem("Fondo", "fondo")
-        self.combo_re_alineacion.setToolTip(
-            "Posición de la tira sobre la cara: junto al frente de la puerta, "
-            "centrada o contra el fondo del mueble.")
-        grid.addWidget(self.combo_re_alineacion, 3, 1)
-
-        grid.addWidget(QtGui.QLabel("Fabricación:"), 3, 2)
-        self.combo_re_modo = QtGui.QComboBox()
-        self.combo_re_modo.addItem("Independiente", "independiente")
-        self.combo_re_modo.addItem("Pacha", "pacha")
-        self.combo_re_modo.setToolTip(
-            "Independiente: la tira se corta y cantea aparte. "
-            "Pacha: se pega en bruto y se cantea como un bloque macizo.")
-        grid.addWidget(self.combo_re_modo, 3, 3)
-
-        grid.addWidget(QtGui.QLabel("Alcance:"), 4, 0)
         self.combo_re_alcance = QtGui.QComboBox()
-        self.combo_re_alcance.addItem("Parcial (tira)", "parcial")
-        self.combo_re_alcance.addItem("Total (área completa)", "total")
-        self.combo_re_alcance.setToolTip(
-            "Parcial: refuerzo en una franja. Total: duplica toda la cara "
-            "del panel para lograr un espesor doble.")
-        grid.addWidget(self.combo_re_alcance, 4, 1)
-
-        grid.addWidget(QtGui.QLabel("Repisa:"), 4, 2)
-        self.combo_re_politica = QtGui.QComboBox()
-        self.combo_re_politica.addItem("Retroceder", "retroceder")
-        self.combo_re_politica.addItem("Mochear / rebaje", "mochear")
-        self.combo_re_politica.setToolTip(
-            "Si una repisa choca contra el reengrose: retroceder es un corte "
-            "recto a 90°; mochear hace un rebaje en escuadra para abrazarlo.")
-        grid.addWidget(self.combo_re_politica, 4, 3)
-
-        self.lbl_re_resumen = QtGui.QLabel("Sin reengrose.")
-        self.lbl_re_resumen.setWordWrap(True)
-        self.lbl_re_resumen.setStyleSheet(
-            "QLabel { background: #f4f4f2; padding: 5px; "
-            "border: 1px solid #d0d0d0; }")
-        grid.addWidget(self.lbl_re_resumen, 5, 0, 1, 4)
-        return grupo
+        self.combo_re_alcance.addItem("Parcial", "parcial")
+        self.combo_re_alcance.addItem("Total", "total")
+        return self.re_editor
 
     def _tiene_expresiones(self, obj):
         try:
@@ -332,83 +265,21 @@ class PanelTaskPanel(VDOTransactionMixin):
             combo.setCurrentIndex(idx)
 
     def _leer_reengrose(self):
-        espesor = self.spin_re_espesor.value()
-        modo = self.combo_re_modo.currentData()
-        alcance = (
-            self.combo_re_alcance.currentData()
-            if modo == "pacha" else "parcial")
-        return VDO_RE.ReengroseModifier({
-            "activo": self.chk_reengrose.isChecked(),
-            "orientacion": self.combo_re_orientacion.currentData(),
-            "ancho": self.spin_re_ancho.value(),
-            "espesor": espesor if espesor > 0 else None,
-            "cara": self.combo_re_cara.currentData(),
-            "alineacion_profundidad": self.combo_re_alineacion.currentData(),
-            "modo_fabricacion": modo,
-            "alcance": alcance,
-            "politica_repisa": self.combo_re_politica.currentData(),
-        })
+        return self.re_editor.leer_modificador()
 
     def _actualizar_resumen_reengrose(self):
-        if not self.chk_reengrose.isChecked():
-            self.lbl_re_resumen.setText("Sin reengrose.")
-            return
-        try:
-            mod = self._leer_reengrose()
-            geo = VDO_RE.calcular_geometria_reengrose({
-                "nombre": self.edit_etiqueta.text().strip() or "Panel",
-                "largo": self.spin_largo.value(),
-                "ancho": self.spin_ancho.value(),
-                "espesor": self.spin_espesor.value(),
-            }, mod)
-        except Exception as exc:
-            self.lbl_re_resumen.setText(f"⚠ {exc}")
-            return
-
-        pieza = geo["refuerzos"][0]
-        modo = mod.modo_fabricacion
-        alcance = "total" if mod.alcance == "total" else "parcial"
-        self.lbl_re_resumen.setText(
-            f"{modo.capitalize()} {alcance}: "
-            f"{pieza['largo']:.1f} × {pieza['ancho']:.1f} × "
-            f"{pieza['espesor']:.1f} mm · cara {mod.cara[-1].upper()} · "
-            f"{mod.orientacion}.")
+        self.re_editor._actualizar_resumen()
 
     def _on_reengrose_toggled(self, activo):
         self._on_reengrose_modo_changed()
 
-    def _on_reengrose_modo_changed(self):
-        activo = self.chk_reengrose.isChecked()
-        es_pacha = self.combo_re_modo.currentData() == "pacha"
-        es_total = (
-            es_pacha and self.combo_re_alcance.currentData() == "total")
-        es_transversal = (
-            self.combo_re_orientacion.currentData() == "transversal")
-        self.combo_re_alcance.setEnabled(activo and es_pacha)
-        self.spin_re_ancho.setEnabled(activo and not es_total)
-        self.combo_re_orientacion.setEnabled(activo and not es_total)
-        self.combo_re_alineacion.setEnabled(
-            activo and not es_total and not es_transversal)
-        self.spin_re_espesor.setEnabled(activo)
-        self.combo_re_cara.setEnabled(activo)
-        self.combo_re_politica.setEnabled(activo)
-        self._actualizar_resumen_reengrose()
+    def _on_reengrose_modo_changed(self, *args):
+        self.re_editor._actualizar_estado()
 
     def _cargar_reengrose(self, obj):
         mod = VDO_RE.desde_objeto(obj)
-        self.chk_reengrose.setChecked(mod.activo)
-        self._set_combo_data(
-            self.combo_re_orientacion, mod.orientacion)
-        self._set_combo_data(self.combo_re_cara, mod.cara)
-        self._set_combo_data(
-            self.combo_re_alineacion, mod.alineacion_profundidad)
-        self._set_combo_data(self.combo_re_modo, mod.modo_fabricacion)
-        self._set_combo_data(self.combo_re_alcance, mod.alcance)
-        self._set_combo_data(
-            self.combo_re_politica, mod.politica_repisa)
-        self.spin_re_ancho.setValue(mod.ancho)
-        self.spin_re_espesor.setValue(mod.espesor or 0.0)
-        self._on_reengrose_modo_changed()
+        self.re_editor.cargar(mod)
+        self.re_editor._actualizar_estado()
 
     def _on_ok(self):
         if self.accept():

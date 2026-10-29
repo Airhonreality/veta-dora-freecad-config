@@ -140,6 +140,12 @@ def crear_modulo_interactivo(module_key, config=None):
             on_cancel=on_cancel,
             auto_transaction=False,
         )
+        try:
+            if hasattr(Gui.Control, "activeDialog") \
+                    and Gui.Control.activeDialog():
+                Gui.Control.closeDialog()
+        except Exception:
+            pass
         Gui.Control.showDialog(panel)
         return obj
 

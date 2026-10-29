@@ -36,6 +36,12 @@ def obtener_ruta_macros():
         return os.path.expanduser("~/.local/share/FreeCAD/Macro/")
 
 
+def _icono_vdo(nombre):
+    """Ruta absoluta del SVG VDO si existe; si no, nombre simple."""
+    ruta = os.path.join(obtener_ruta_macros(), f"{nombre}.svg")
+    return ruta if os.path.isfile(ruta) else nombre
+
+
 def obtener_ruta_repositorio():
     """Obtiene la raíz del repositorio (directorio que contiene Macro/)."""
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -132,7 +138,7 @@ def _registrar_comandos_freecad():
 
     class VDO_Cmd_PanelEstandar:
         def GetResources(self):
-            return {"Pixmap": "vdo_panel_estandar", "MenuText": "Panel Estándar",
+            return {"Pixmap": _icono_vdo("vdo_panel_estandar"), "MenuText": "Panel Estándar",
                     "ToolTip": "Crea panel de melamina estándar con cantos selectivos"}
         def Activated(self):
             f = os.path.join(obtener_ruta_macros(), "vdo_panel_estandar.FCMacro")
@@ -142,7 +148,7 @@ def _registrar_comandos_freecad():
 
     class VDO_Cmd_PanelFachada:
         def GetResources(self):
-            return {"Pixmap": "vdo_panel_fachada", "MenuText": "Panel Fachada",
+            return {"Pixmap": _icono_vdo("vdo_panel_fachada"), "MenuText": "Panel Fachada",
                     "ToolTip": "Crea panel de fachada con 4 cantos gruesos"}
         def Activated(self):
             f = os.path.join(obtener_ruta_macros(), "vdo_panel_fachada.FCMacro")
@@ -152,7 +158,7 @@ def _registrar_comandos_freecad():
 
     class VDO_Cmd_Coco4C:
         def GetResources(self):
-            return {"Pixmap": "vdo_coco", "MenuText": "COCO 4C",
+            return {"Pixmap": _icono_vdo("vdo_coco"), "MenuText": "COCO 4C",
                     "ToolTip": "Genera contenedor de 4 paneles con fondo paramétrico"}
         def Activated(self):
             f = os.path.join(obtener_ruta_macros(), "vdo_coco_4c.FCMacro")
@@ -162,7 +168,7 @@ def _registrar_comandos_freecad():
 
     class VDO_Cmd_PanelDivision:
         def GetResources(self):
-            return {"Pixmap": "vdo_panel", "MenuText": "Panel División",
+            return {"Pixmap": _icono_vdo("vdo_panel"), "MenuText": "Panel División",
                     "ToolTip": "Crea panel divisor vertical paramétrico"}
         def Activated(self):
             f = os.path.join(obtener_ruta_macros(), "vdo_panel_division.FCMacro")
@@ -170,9 +176,19 @@ def _registrar_comandos_freecad():
         def IsActive(self):
             return App.ActiveDocument is not None
 
+    class VDO_Cmd_Zocalo:
+        def GetResources(self):
+            return {"Pixmap": _icono_vdo("vdo_zocalo"), "MenuText": "Zócalo",
+                    "ToolTip": "Crea un zócalo paramétrico de base"}
+        def Activated(self):
+            f = os.path.join(obtener_ruta_macros(), "vdo_zocalo.FCMacro")
+            if os.path.exists(f): exec(open(f).read())
+        def IsActive(self):
+            return App.ActiveDocument is not None
+
     class VDO_Cmd_CrearHoja:
         def GetResources(self):
-            return {"Pixmap": "vdo_workbench", "MenuText": "Crear Hoja Parámetros",
+            return {"Pixmap": _icono_vdo("vdo_workbench"), "MenuText": "Crear Hoja Parámetros",
                     "ToolTip": "Crea las hojas Params_Melamina y Params"}
         def Activated(self):
             f = os.path.join(obtener_ruta_macros(), "VDO_Crear_Hoja_Melamina.FCMacro")
@@ -185,6 +201,7 @@ def _registrar_comandos_freecad():
         ("VDO_PanelFachada", VDO_Cmd_PanelFachada()),
         ("VDO_Coco4C", VDO_Cmd_Coco4C()),
         ("VDO_PanelDivision", VDO_Cmd_PanelDivision()),
+        ("VDO_Zocalo", VDO_Cmd_Zocalo()),
         ("VDO_CrearHoja", VDO_Cmd_CrearHoja()),
     ]
     for nombre, instancia in comandos:
@@ -218,6 +235,7 @@ if FREECAD_AVAILABLE and App.GuiUp:
                 "VDO_PanelEstandar",
                 "VDO_PanelFachada",
                 "VDO_PanelDivision",
+                "VDO_Zocalo",
                 "Separator",
                 "VDO_Coco4C",
             ]

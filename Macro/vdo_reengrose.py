@@ -41,6 +41,114 @@ _MAPA_MODO_LEGACY = {
     "interrumpir_tira": "interrumpir_tira",
 }
 
+BORDES_2D = ("frente", "fondo", "izquierda", "derecha")
+ESQUINAS_2D = ("frente_izquierda", "frente_derecha", "fondo_izquierda", "fondo_derecha")
+ESQUINAS = ("vertical_domina", "horizontal_domina", "inglete_45", "marco_interior")
+ENCUENTROS_ESQUINAS = ESQUINAS
+LARGOS_TIRA = ("marco_interior", "punta_a_punta")
+DISTANCIA_AL_CANTO_DEFAULT = 0.0
+LARGO_TIRA_DEFAULT = "marco_interior"
+ENCUENTRO_ESQUINAS_DEFAULT = "vertical_domina"
+FABRICACIONES = ("pacha", "independiente")
+CHOQUES_NUCLEO = ("retroceso", "mocheo", "interrumpir_tira")
+SUFIJOS_BORDE = {
+    "frente": "Frente",
+    "fondo": "Fondo",
+    "izquierda": "Izq",
+    "derecha": "Der",
+}
+
+
+class BordeConfig:
+    """Configuracion de un borde del tablero.
+
+    Vocabulario de taller:
+      - ``distancia_al_canto``: distancia desde el canto del tablero hacia
+        adentro (0 = al ras).
+      - ``largo_tira``: ``marco_interior`` (respeta la luz de las esquinas)
+        o ``punta_a_punta`` (de orilla a orilla del tablero).
+      - ``encuentro_esquinas``: como se resuelve el cruce con otro borde.
+    """
+
+    def __init__(self, activo=False, ancho=70.0, distancia_al_canto=None,
+                 largo_tira=LARGO_TIRA_DEFAULT, espesor=None,
+                 encuentro_esquinas=None, offset_borde=None):
+        self.activo = bool(activo)
+        self.ancho = float(ancho)
+        if distancia_al_canto is None:
+            distancia_al_canto = (
+                offset_borde if offset_borde is not None
+                else DISTANCIA_AL_CANTO_DEFAULT)
+        self.distancia_al_canto = float(distancia_al_canto)
+        self.largo_tira = str(largo_tira or LARGO_TIRA_DEFAULT)
+        self.encuentro_esquinas = encuentro_esquinas
+        self.espesor = espesor
+
+    @property
+    def offset_borde(self):
+        """Alias retrocompatible de ``distancia_al_canto``."""
+        return self.distancia_al_canto
+
+    @offset_borde.setter
+    def offset_borde(self, valor):
+        self.distancia_al_canto = float(valor)
+
+    def to_dict(self):
+        return {
+            "activo": self.activo,
+            "ancho": self.ancho,
+            "distancia_al_canto": self.distancia_al_canto,
+            "largo_tira": self.largo_tira,
+            "encuentro_esquinas": self.encuentro_esquinas,
+            "espesor": self.espesor,
+            "offset_borde": self.distancia_al_canto,
+        }
+
+    @classmethod
+    def from_dict(cls, datos):
+        datos = datos or {}
+        return cls(
+            activo=datos.get("activo", False),
+            ancho=datos.get("ancho", 70.0),
+            distancia_al_canto=datos.get("distancia_al_canto"),
+            largo_tira=datos.get("largo_tira", LARGO_TIRA_DEFAULT),
+            espesor=datos.get("espesor"),
+            encuentro_esquinas=datos.get("encuentro_esquinas"),
+            offset_borde=datos.get("offset_borde"))
+
+
+class ReengroseDTO:
+    """DTO universal de bordes 2D."""
+
+    def __init__(self, activo=False, esquinas="vertical_domina",
+                 fabricacion="pacha", choque_nucleo="retroceso",
+                 bordes=None):
+        self.activo = bool(activo)
+        self.esquinas = esquinas
+        self.fabricacion = fabricacion
+        self.choque_nucleo = choque_nucleo
+        self.bordes = {}
+        for borde in BORDES_2D:
+            cfg = (bordes or {}).get(borde)
+            if isinstance(cfg, BordeConfig):
+                self.bordes[borde] = cfg
+            else:
+                self.bordes[borde] = BordeConfig.from_dict(cfg)
+
+    def to_dict(self):
+        return {
+            "activo": self.activo,
+            "esquinas": self.esquinas,
+            "fabricacion": self.fabricacion,
+            "choque_nucleo": self.choque_nucleo,
+            "bordes": {
+                borde: cfg.to_dict()
+                for borde, cfg in self.bordes.items()
+            },
+            "usa_bordes": True,
+        }
+
+
 BORDES = ("norte", "sur", "este", "oeste")
 CANTO_VISTO = "RIG"
 CANTO_OCULTO = "FX"
@@ -113,15 +221,37 @@ def _normalizar_modo_choque(valor, nombre="comportamiento_choque_nucleo"):
 
 
 class ReengroseModifier:
-    """DTO puro del modificador de reengrose."""
+    """DTO puro del modificador de reengrose.
+
+    Mantiene las propiedades planas historicas (orientacion, ancho, cara,
+    etc.) y expone ademas ``bordes`` como ``BordeConfig`` para la nueva UI
+    de modificador universal.
+    """
 
     def __init__(self, datos=None):
         datos = normalizar_modificador(datos)
         for clave, valor in datos.items():
-            setattr(self, clave, valor)
+            if clave == "bordes":
+                self.bordes = {
+                    borde: BordeConfig.from_dict(cfg)
+                    for borde, cfg in valor.items()
+                }
+            else:
+                setattr(self, clave, valor)
 
     def to_dict(self):
-        return {clave: getattr(self, clave) for clave in PROPS}
+        datos = {clave: getattr(self, clave) for clave in PROPS}
+        datos.update({
+            "esquinas": self.esquinas,
+            "fabricacion": self.fabricacion,
+            "choque_nucleo": self.choque_nucleo,
+            "bordes": {
+                borde: cfg.to_dict()
+                for borde, cfg in self.bordes.items()
+            },
+            "usa_bordes": bool(getattr(self, "usa_bordes", False)),
+        })
+        return datos
 
     def to_json(self):
         return json.dumps(self.to_dict(), ensure_ascii=False)
@@ -137,7 +267,128 @@ class ReengroseModifier:
         return cls(json.loads(texto))
 
 
+def _normalizar_borde_config(datos, ancho_defecto=70.0,
+                             espesor_defecto=None):
+    if isinstance(datos, BordeConfig):
+        datos = datos.to_dict()
+    datos = dict(datos or {})
+    activo = _a_bool(datos.get("activo", False))
+    ancho = _a_float(datos.get("ancho", ancho_defecto), "ancho")
+    if ancho is None:
+        ancho = float(ancho_defecto)
+    distancia = datos.get("distancia_al_canto")
+    if distancia is None or distancia == "":
+        distancia = datos.get("offset_borde", DISTANCIA_AL_CANTO_DEFAULT)
+    distancia = _a_float(distancia, "distancia_al_canto")
+    if distancia is None:
+        distancia = DISTANCIA_AL_CANTO_DEFAULT
+    largo_tira = _validar_enum(
+        datos.get("largo_tira", LARGO_TIRA_DEFAULT),
+        "largo_tira", LARGOS_TIRA)
+    encuentro = datos.get("encuentro_esquinas")
+    if encuentro in (None, ""):
+        encuentro = None
+    else:
+        encuentro = _validar_enum(
+            encuentro, "encuentro_esquinas", ENCUENTROS_ESQUINAS)
+    espesor = _a_float(datos.get("espesor"), "espesor")
+    if espesor is not None and espesor <= 0:
+        raise ReengroseError("El espesor de la tira debe ser mayor que 0.")
+    if ancho < 0:
+        raise ReengroseError("El ancho de la tira no puede ser negativo.")
+    if activo and ancho <= 0:
+        raise ReengroseError("El ancho del borde activo debe ser mayor que 0.")
+    if distancia < 0:
+        raise ReengroseError(
+            "La distancia_al_canto no puede ser negativa.")
+    return {
+        "activo": activo,
+        "ancho": float(ancho),
+        "distancia_al_canto": float(distancia),
+        "largo_tira": largo_tira,
+        "encuentro_esquinas": encuentro,
+        "espesor": espesor,
+        "offset_borde": float(distancia),
+    }
+
+
+def _normalizar_bordes(datos, ancho_defecto=70.0, espesor_defecto=None):
+    datos = datos or {}
+    return {
+        borde: _normalizar_borde_config(
+            datos.get(borde), ancho_defecto, espesor_defecto)
+        for borde in BORDES_2D
+    }
+
+
+def _bordes_desde_legacy(datos):
+    ancho = float(datos["ancho"])
+    espesor = datos["espesor"]
+    bordes = {
+        borde: {
+            "activo": False, "ancho": ancho,
+            "distancia_al_canto": 0.0,
+            "largo_tira": LARGO_TIRA_DEFAULT,
+            "encuentro_esquinas": None,
+            "espesor": espesor,
+            "offset_borde": 0.0,
+        }
+        for borde in BORDES_2D
+    }
+    if datos["activo"] and datos["modo_fabricacion"] != "pacha":
+        if datos["orientacion"] == "paralela":
+            if datos["alineacion_profundidad"] in ("frente", "fondo"):
+                borde = datos["alineacion_profundidad"]
+                bordes[borde]["activo"] = True
+        elif datos["orientacion"] == "transversal":
+            # El modo transversal historico no es un borde: se conserva
+            # como geometria legacy y no se usa como marco perimetral.
+            pass
+    return bordes
+
+
+def _legacy_desde_bordes(activo, bordes, esquinas, fabricacion,
+                         choque, datos):
+    activos = [borde for borde in BORDES_2D
+               if bordes[borde]["activo"]]
+    primero = bordes[activos[0]] if activos else None
+    ancho = primero["ancho"] if primero else _a_float(
+        datos.get("ancho", DEFAULTS["ancho"]), "ancho")
+    espesor = primero["espesor"] if primero else _a_float(
+        datos.get("espesor"), "espesor")
+    if any(b in activos for b in ("frente", "fondo")):
+        orientacion = "paralela"
+    elif any(b in activos for b in ("izquierda", "derecha")):
+        orientacion = "transversal"
+    else:
+        orientacion = "paralela"
+    if "frente" in activos:
+        alineacion = "frente"
+    elif "fondo" in activos:
+        alineacion = "fondo"
+    else:
+        alineacion = "centrado"
+    cara = _validar_enum(
+        datos.get("cara", DEFAULTS["cara"]), "cara", CARAS)
+    return {
+        "activo": bool(activo),
+        "orientacion": orientacion,
+        "ancho": ancho if ancho and ancho > 0 else DEFAULTS["ancho"],
+        "espesor": espesor,
+        "cara": cara,
+        "alineacion_profundidad": alineacion,
+        "modo_fabricacion": fabricacion,
+        "alcance": "parcial",
+        "politica_repisa": _MAPA_MODO_LEGACY[choque],
+        "prioridad_encuentro_tiras": _prioridad_legacy_desde_esquinas(
+            esquinas),
+        "comportamiento_choque_nucleo": choque,
+    }
+
+
 def normalizar_modificador(datos=None):
+    if isinstance(datos, ReengroseDTO):
+        datos = datos.to_dict()
     if isinstance(datos, ReengroseModifier):
         datos = datos.to_dict()
     if datos is None:
@@ -146,6 +397,37 @@ def normalizar_modificador(datos=None):
         raise ReengroseError("El modificador de reengrose debe ser un dict.")
     if "modificador_reengrose" in datos:
         datos = datos["modificador_reengrose"] or {}
+
+    if "usa_bordes" in datos:
+        nuevo = _a_bool(datos.get("usa_bordes"))
+    else:
+        nuevo = any(
+            clave in datos for clave in
+            ("bordes", "esquinas", "fabricacion", "choque_nucleo"))
+
+    if nuevo:
+        activo = _a_bool(datos.get("activo", DEFAULTS["activo"]))
+        esquinas = _normalizar_encuentro(
+            datos.get("esquinas", DEFAULTS["prioridad_encuentro_tiras"]))
+        fabricacion = _validar_enum(
+            datos.get("fabricacion", DEFAULTS["modo_fabricacion"]),
+            "fabricacion", FABRICACIONES)
+        choque = _normalizar_modo_choque(
+            datos.get("choque_nucleo",
+                      datos.get("comportamiento_choque_nucleo",
+                                DEFAULTS["comportamiento_choque_nucleo"])),
+            "choque_nucleo")
+        bordes = _normalizar_bordes(datos.get("bordes"))
+        resultado = _legacy_desde_bordes(
+            activo, bordes, esquinas, fabricacion, choque, datos)
+        resultado.update({
+            "esquinas": esquinas,
+            "fabricacion": fabricacion,
+            "choque_nucleo": choque,
+            "bordes": bordes,
+            "usa_bordes": True,
+        })
+        return resultado
 
     activo = _a_bool(datos.get("activo", DEFAULTS["activo"]))
     orientacion = _validar_enum(
@@ -168,8 +450,6 @@ def normalizar_modificador(datos=None):
     alcance = _validar_enum(
         datos.get("alcance", DEFAULTS["alcance"]),
         "alcance", ALCANCES)
-    # La politica legacy y el nuevo comportamiento de choque se mantienen
-    # sincronizados. Si llega la propiedad nueva, tiene prioridad.
     modo_nucleo = None
     if datos.get("comportamiento_choque_nucleo") not in (None, ""):
         modo_nucleo = _normalizar_modo_choque(
@@ -186,7 +466,7 @@ def normalizar_modificador(datos=None):
                   DEFAULTS["prioridad_encuentro_tiras"]),
         "prioridad_encuentro_tiras", PRIORIDADES_ENCUENTRO)
 
-    return {
+    resultado = {
         "activo": activo,
         "orientacion": orientacion,
         "ancho": ancho,
@@ -199,7 +479,15 @@ def normalizar_modificador(datos=None):
         "prioridad_encuentro_tiras": prioridad,
         "comportamiento_choque_nucleo": modo_nucleo,
     }
-
+    bordes = _bordes_desde_legacy(resultado)
+    resultado.update({
+        "esquinas": prioridad,
+        "fabricacion": modo,
+        "choque_nucleo": modo_nucleo,
+        "bordes": bordes,
+        "usa_bordes": False,
+    })
+    return resultado
 
 def espesor_efectivo(panel_base, modifier):
     mod = normalizar_modificador(modifier)
@@ -219,6 +507,394 @@ def _inicio_alineado(total, tamano, alineacion):
     else:
         inicio = (total - tamano) / 2.0
     return max(0.0, inicio)
+
+
+def _poligono_rect(x0, y0, x1, y1):
+    if x1 - x0 <= 1e-9 or y1 - y0 <= 1e-9:
+        return []
+    return [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+
+
+def _clip_poligono(poligono, a, b, c, sentido=1.0, tolerancia=1e-9):
+    """Recorta un poligono contra la semirrecta a*x+b*y=c.
+
+    ``sentido=1`` conserva a*x+b*y >= c; ``sentido=-1`` conserva <=.
+    """
+    if not poligono:
+        return []
+    salida = []
+    total = len(poligono)
+    for i, punto in enumerate(poligono):
+        siguiente = poligono[(i + 1) % total]
+        f0 = sentido * (a * punto[0] + b * punto[1] - c)
+        f1 = sentido * (a * siguiente[0] + b * siguiente[1] - c)
+        dentro0 = f0 >= -tolerancia
+        dentro1 = f1 >= -tolerancia
+        if dentro0:
+            salida.append(punto)
+        if dentro0 != dentro1:
+            den = f0 - f1
+            if abs(den) <= 1e-15:
+                continue
+            t = f0 / den
+            salida.append((
+                punto[0] + t * (siguiente[0] - punto[0]),
+                punto[1] + t * (siguiente[1] - punto[1])))
+    limpio = []
+    for punto in salida:
+        if not limpio or (
+                abs(punto[0] - limpio[-1][0]) > 1e-9
+                or abs(punto[1] - limpio[-1][1]) > 1e-9):
+            limpio.append(punto)
+    if len(limpio) > 1 and (
+            abs(limpio[0][0] - limpio[-1][0]) <= 1e-9
+            and abs(limpio[0][1] - limpio[-1][1]) <= 1e-9):
+        limpio.pop()
+    return limpio
+
+
+def _normalizar_encuentro(encuentro_esquinas):
+    """Devuelve dict {esquina: tipo} a partir de un str global o un dict."""
+    if isinstance(encuentro_esquinas, dict):
+        resultado = {}
+        for esquina in ESQUINAS_2D:
+            valor = encuentro_esquinas.get(esquina, ENCUENTRO_ESQUINAS_DEFAULT)
+            resultado[esquina] = _validar_enum(
+                valor, "encuentro_esquinas", ENCUENTROS_ESQUINAS)
+        return resultado
+    # str global: se aplica a las 4 esquinas (compatibilidad).
+    tipo = _validar_enum(
+        encuentro_esquinas, "encuentro_esquinas", ENCUENTROS_ESQUINAS)
+    return {esquina: tipo for esquina in ESQUINAS_2D}
+
+
+def _prioridad_legacy_desde_esquinas(esquinas):
+    """Deriva el enum legacy ``prioridad_encuentro_tiras`` desde el dict."""
+    if isinstance(esquinas, str):
+        if esquinas in PRIORIDADES_ENCUENTRO:
+            return esquinas
+        return ENCUENTRO_ESQUINAS_DEFAULT
+    valores = {
+        (esquinas or {}).get(esquina, ENCUENTRO_ESQUINAS_DEFAULT)
+        for esquina in ESQUINAS_2D
+    }
+    if len(valores) == 1:
+        unico = valores.pop()
+        return unico if unico in PRIORIDADES_ENCUENTRO else (
+            ENCUENTRO_ESQUINAS_DEFAULT)
+    primero = (esquinas or {}).get(
+        ESQUINAS_2D[0], ENCUENTRO_ESQUINAS_DEFAULT)
+    return primero if primero in PRIORIDADES_ENCUENTRO else (
+        ENCUENTRO_ESQUINAS_DEFAULT)
+
+
+def _esquina_bordes(esquina):
+    """Devuelve el par de bordes (horizontal, vertical) que se unen en la esquina."""
+    return {
+        "frente_izquierda": ("frente", "izquierda"),
+        "frente_derecha": ("frente", "derecha"),
+        "fondo_izquierda": ("fondo", "izquierda"),
+        "fondo_derecha": ("fondo", "derecha"),
+    }[esquina]
+
+
+def _inglete_clip(poligonos, rects, esquina, borde_h, borde_v, largo, ancho):
+    """Aplica corte a 45° (miter) en una esquina entre dos bordes activos."""
+    h0, h1 = rects[borde_h][1], rects[borde_h][3]  # rango Y del borde horizontal
+    v0, v1 = rects[borde_v][0], rects[borde_v][2]  # rango X del borde vertical
+    if esquina == "frente_izquierda":
+        poligonos[borde_h] = _clip_poligono(
+            poligonos[borde_h], -1.0, 1.0, h0 - v0, -1.0)
+        poligonos[borde_v] = _clip_poligono(
+            poligonos[borde_v], 1.0, -1.0, v0 - h0, -1.0)
+    elif esquina == "frente_derecha":
+        poligonos[borde_h] = _clip_poligono(
+            poligonos[borde_h], 1.0, 1.0, v1 + h0, -1.0)
+        poligonos[borde_v] = _clip_poligono(
+            poligonos[borde_v], 1.0, 1.0, v1 + h0, 1.0)
+    elif esquina == "fondo_izquierda":
+        poligonos[borde_h] = _clip_poligono(
+            poligonos[borde_h], 1.0, 1.0, v0 + h1, 1.0)
+        poligonos[borde_v] = _clip_poligono(
+            poligonos[borde_v], 1.0, 1.0, v0 + h1, -1.0)
+    elif esquina == "fondo_derecha":
+        poligonos[borde_h] = _clip_poligono(
+            poligonos[borde_h], -1.0, 1.0, h1 - v1, 1.0)
+        poligonos[borde_v] = _clip_poligono(
+            poligonos[borde_v], -1.0, 1.0, h1 - v1, -1.0)
+
+
+def generar_tiras_perimetrales(largo_tablero, ancho_tablero, bordes,
+                               espesor_madre,
+                               encuentro_esquinas=ENCUENTRO_ESQUINAS_DEFAULT):
+    """Primitiva perimetral 2D con lenguaje limpio de taller.
+
+    Coordenadas del tablero: x = largo (0..largo_tablero),
+    y = ancho/profundidad (0..ancho_tablero).
+
+    Cada borde acepta:
+      - ``distancia_al_canto``: separacion desde el canto hacia adentro.
+      - ``largo_tira``: ``marco_interior`` o ``punta_a_punta``.
+      - ``encuentro_esquinas``: ``vertical_domina``,
+        ``horizontal_domina``, ``inglete_45`` o ``marco_interior``.
+        Puede ser un str (aplica a las 4 esquinas) o un dict por esquina.
+
+    Reglas de esquina (el tipo de esquina manda sobre el recorte final):
+      - vertical_domina: el borde vertical (izq/der) llega al canto; el
+        horizontal hace tope.
+      - horizontal_domina: el borde horizontal (frente/fondo) llega al
+        canto; el vertical hace tope.
+      - marco_interior: ninguno llega al canto exterior; hueco en la esquina.
+      - inglete_45: ambos llegan al canto con corte a 45° (miter).
+    """
+    largo = float(largo_tablero)
+    ancho = float(ancho_tablero)
+    if largo <= 0 or ancho <= 0:
+        return []
+    encuentro_por_esquina = _normalizar_encuentro(encuentro_esquinas)
+
+    cfgs = {}
+    for borde in BORDES_2D:
+        cfg = _normalizar_borde_config(
+            (bordes or {}).get(borde),
+            ancho_defecto=espesor_madre,
+            espesor_defecto=espesor_madre)
+        esp = cfg["espesor"]
+        if esp is None:
+            esp = float(espesor_madre)
+        cfgs[borde] = {
+            "activo": bool(cfg["activo"]),
+            "ancho": min(
+                float(cfg["ancho"]),
+                largo if borde in ("izquierda", "derecha") else ancho),
+            "distancia": float(cfg["distancia_al_canto"]),
+            "largo_tira": cfg["largo_tira"],
+            "espesor": float(esp),
+        }
+
+    activos = {b for b in BORDES_2D if cfgs[b]["activo"]}
+    if not activos:
+        return []
+
+    # Caja interior definida por los bordes y su distancia al canto.
+    x0_box = cfgs["izquierda"]["distancia"] if "izquierda" in cfgs else 0.0
+    x1_box = largo - (cfgs["derecha"]["distancia"] if "derecha" in cfgs else 0.0)
+    y0_box = cfgs["frente"]["distancia"] if "frente" in cfgs else 0.0
+    y1_box = ancho - (cfgs["fondo"]["distancia"] if "fondo" in cfgs else 0.0)
+
+    # Rangos largos base segun largo_tira.
+    def long_range(borde):
+        cfg = cfgs[borde]
+        lt = cfg["largo_tira"]
+        es_punta = lt == "punta_a_punta"
+        if borde == "frente":
+            return (0.0 if es_punta else x0_box,
+                    largo if es_punta else x1_box)
+        if borde == "fondo":
+            return (0.0 if es_punta else x0_box,
+                    largo if es_punta else x1_box)
+        if borde == "izquierda":
+            return (0.0 if es_punta else y0_box,
+                    ancho if es_punta else y1_box)
+        return (0.0 if es_punta else y0_box,
+                ancho if es_punta else y1_box)
+
+    frentex0, frentex1 = long_range("frente")
+    fondox0, fondox1 = long_range("fondo")
+    izquierday0, izquierday1 = long_range("izquierda")
+    derechay0, derechay1 = long_range("derecha")
+
+    # Dimension corta (fija por distancia_al_canto).
+    def short_range(borde):
+        cfg = cfgs[borde]
+        w = max(0.0, cfg["ancho"])
+        off = cfg["distancia"]
+        if borde == "frente":
+            return off, off + w
+        if borde == "fondo":
+            y1 = ancho - off
+            return y1 - w, y1
+        if borde == "izquierda":
+            return off, off + w
+        x1 = largo - off
+        return x1 - w, x1
+
+    frente_y0, frente_y1 = short_range("frente")
+    fondo_y0, fondo_y1 = short_range("fondo")
+    izquierda_x0, izquierda_x1 = short_range("izquierda")
+    derecha_x0, derecha_x1 = short_range("derecha")
+    izquierday0, izquierday1 = long_range("izquierda")
+    derechay0, derechay1 = long_range("derecha")
+
+    def wd(borde):
+        return max(0.0, cfgs[borde]["ancho"])
+
+    # Recorte por esquina: el tipo de esquina manda sobre el recorte final.
+    if "frente" in activos and "izquierda" in activos:
+        tipo = encuentro_por_esquina["frente_izquierda"]
+        if tipo == "vertical_domina":
+            frentex0 = max(frentex0, x0_box + wd("izquierda"))
+        elif tipo == "horizontal_domina":
+            izquierday0 = max(izquierday0, y0_box + wd("frente"))
+        elif tipo == "marco_interior":
+            frentex0 = max(frentex0, x0_box + wd("izquierda"))
+            izquierday0 = max(izquierday0, y0_box + wd("frente"))
+
+    if "frente" in activos and "derecha" in activos:
+        tipo = encuentro_por_esquina["frente_derecha"]
+        if tipo == "vertical_domina":
+            frentex1 = min(frentex1, x1_box - wd("derecha"))
+        elif tipo == "horizontal_domina":
+            derechay0 = max(derechay0, y0_box + wd("frente"))
+        elif tipo == "marco_interior":
+            frentex1 = min(frentex1, x1_box - wd("derecha"))
+            derechay0 = max(derechay0, y0_box + wd("frente"))
+
+    if "fondo" in activos and "izquierda" in activos:
+        tipo = encuentro_por_esquina["fondo_izquierda"]
+        if tipo == "vertical_domina":
+            fondox0 = max(fondox0, x0_box + wd("izquierda"))
+        elif tipo == "horizontal_domina":
+            izquierday1 = min(izquierday1, y1_box - wd("fondo"))
+        elif tipo == "marco_interior":
+            fondox0 = max(fondox0, x0_box + wd("izquierda"))
+            izquierday1 = min(izquierday1, y1_box - wd("fondo"))
+
+    if "fondo" in activos and "derecha" in activos:
+        tipo = encuentro_por_esquina["fondo_derecha"]
+        if tipo == "vertical_domina":
+            fondox1 = min(fondox1, x1_box - wd("derecha"))
+        elif tipo == "horizontal_domina":
+            derechay1 = min(derechay1, y1_box - wd("fondo"))
+        elif tipo == "marco_interior":
+            fondox1 = min(fondox1, x1_box - wd("derecha"))
+            derechay1 = min(derechay1, y1_box - wd("fondo"))
+
+    def sane(x0, x1):
+        if x1 < x0:
+            x1 = x0
+        return x0, x1
+
+    frentex0, frentex1 = sane(frentex0, frentex1)
+    fondox0, fondox1 = sane(fondox0, fondox1)
+    izquierday0, izquierday1 = sane(izquierday0, izquierday1)
+    derechay0, derechay1 = sane(derechay0, derechay1)
+
+    rects = {
+        "frente": [frentex0, frente_y0, frentex1, frente_y1],
+        "fondo": [fondox0, fondo_y0, fondox1, fondo_y1],
+        "izquierda": [izquierda_x0, izquierday0, izquierda_x1, izquierday1],
+        "derecha": [derecha_x0, derechay0, derecha_x1, derechay1],
+    }
+
+    poligonos = {}
+    for borde in activos:
+        x0, y0, x1, y1 = rects[borde]
+        x0, x1 = sorted((x0, x1))
+        y0, y1 = sorted((y0, y1))
+        poligonos[borde] = _poligono_rect(x0, y0, x1, y1)
+
+    # Inglete 45° por esquina (sobre parejas activas en esa esquina).
+    for esquina in ESQUINAS_2D:
+        if encuentro_por_esquina[esquina] != "inglete_45":
+            continue
+        borde_h, borde_v = _esquina_bordes(esquina)
+        if borde_h not in activos or borde_v not in activos:
+            continue
+        _inglete_clip(poligonos, rects, esquina, borde_h, borde_v, largo, ancho)
+
+    tiras = []
+    for borde in BORDES_2D:
+        if borde not in activos:
+            continue
+        poly = poligonos.get(borde) or []
+        if len(poly) < 3:
+            continue
+        xs = [p[0] for p in poly]
+        ys = [p[1] for p in poly]
+        x0, x1 = min(xs), max(xs)
+        y0, y1 = min(ys), max(ys)
+        if x1 - x0 <= 1e-9 or y1 - y0 <= 1e-9:
+            continue
+        ancho_borde = float(x1 - x0)
+        largo_borde = float(y1 - y0)
+        tiene_inglete = any(
+            encuentro_por_esquina[e] == "inglete_45"
+            for e in ESQUINAS_2D
+            if borde in _esquina_bordes(e))
+        tira = {
+            "borde": borde,
+            "nombre_sufijo": SUFIJOS_BORDE[borde],
+            "x": float(x0),
+            "y": float(y0),
+            "w": ancho_borde,
+            "h": largo_borde,
+            "largo": max(ancho_borde, largo_borde),
+            "ancho": min(ancho_borde, largo_borde),
+            "d": float(cfgs[borde]["espesor"]),
+            "espesor": float(cfgs[borde]["espesor"]),
+            "distancia_al_canto": float(cfgs[borde]["distancia"]),
+            "largo_tira": cfgs[borde]["largo_tira"],
+            "encuentro_esquinas": dict(encuentro_por_esquina),
+            "offset_borde": float(cfgs[borde]["distancia"]),
+        }
+        if tiene_inglete:
+            tira["poligono"] = [
+                (float(px), float(py)) for px, py in poly]
+            tira["esquinas"] = "inglete_45"
+        tiras.append(tira)
+    return tiras
+
+
+def generar_geometria_tiras_perimetrales(ancho_tablero, largo_tablero,
+                                         reengrose_dto, espesor_madre):
+    """Compatibilidad: tiras perimetrales desde un ReengroseDTO.
+
+    x = largo (0..largo_tablero), y = ancho/profundidad (0..ancho_tablero).
+    Devuelve una lista de tiras con x/y/w/h/d y, para inglete, ``poligono``.
+    """
+    mod = normalizar_modificador(reengrose_dto)
+    if not mod["activo"]:
+        return []
+    return generar_tiras_perimetrales(
+        float(largo_tablero), float(ancho_tablero),
+        mod["bordes"], espesor_madre, mod["esquinas"])
+
+
+
+def _refuerzos_bordes_reengrose(largo, ancho, espesor, nombre, mod):
+    tiras = generar_geometria_tiras_perimetrales(
+        ancho, largo, mod, espesor)
+    caras = ["cara_a", "cara_b"] if mod["cara"] == "ambos" else [mod["cara"]]
+    refuerzos = []
+    for cara in caras:
+        sufijo_cara = ""
+        if len(caras) > 1:
+            sufijo_cara = "_A" if cara == "cara_a" else "_B"
+        for tira in tiras:
+            esp_ref = float(tira["d"])
+            z0 = espesor if cara == "cara_a" else -esp_ref
+            ref = {
+                "nombre": (
+                    f"{nombre}_Tira_{tira['nombre_sufijo']}{sufijo_cara}"),
+                "rol": "refuerzo",
+                "largo": float(tira.get("largo", tira["w"])),
+                "ancho": float(tira.get("ancho", tira["h"])),
+                "espesor": esp_ref,
+                "x": float(tira["x"]),
+                "y": float(tira["y"]),
+                "z": float(z0),
+                "borde": tira["borde"],
+                "cara": cara,
+                "eje_extrusion": "z",
+            }
+            if tira.get("poligono"):
+                ref["poligono"] = [
+                    (float(px), float(py), float(z0))
+                    for px, py in tira["poligono"]
+                ]
+            refuerzos.append(ref)
+    return refuerzos, tiras
 
 
 def calcular_geometria_reengrose(panel_base, modifier):
@@ -249,6 +925,15 @@ def calcular_geometria_reengrose(panel_base, modifier):
 
     if largo <= 0 or ancho <= 0 or espesor <= 0:
         raise ReengroseError("El panel base debe tener dimensiones positivas.")
+
+    if mod["usa_bordes"]:
+        refuerzos, tiras = _refuerzos_bordes_reengrose(
+            largo, ancho, espesor, nombre, mod)
+        resultado["refuerzos"] = refuerzos
+        resultado["tiras"] = tiras
+        if mod["fabricacion"] == "pacha" and refuerzos:
+            resultado["grupo_pacha"] = f"Pacha_{nombre}"
+        return resultado
 
     esp_ref = espesor_efectivo(panel_base, mod)
     caras = ["cara_a", "cara_b"] if mod["cara"] == "ambos" else [mod["cara"]]
@@ -306,6 +991,54 @@ def calcular_geometria_reengrose(panel_base, modifier):
     return resultado
 
 
+def _refuerzos_bordes_caja(base, ejes, largo, ancho, espesor,
+                           nombre, mod):
+    tiras = generar_geometria_tiras_perimetrales(
+        ancho, largo, mod, espesor)
+    dim_key = {"x": "w", "y": "h", "z": "d"}
+    cara_lista = (
+        ["cara_a", "cara_b"] if mod["cara"] == "ambos"
+        else [mod["cara"]])
+    refuerzos = []
+    for cara in cara_lista:
+        sufijo_cara = ""
+        if len(cara_lista) > 1:
+            sufijo_cara = "_A" if cara == "cara_a" else "_B"
+        for tira in tiras:
+            esp_ref = float(tira["d"])
+            z_local = espesor if cara == "cara_a" else -esp_ref
+            ref = dict(base)
+            ref[ejes["largo"]] = base[ejes["largo"]] + float(tira["x"])
+            ref[dim_key[ejes["largo"]]] = float(tira["w"])
+            ref[ejes["ancho"]] = base[ejes["ancho"]] + float(tira["y"])
+            ref[dim_key[ejes["ancho"]]] = float(tira["h"])
+            ref[ejes["espesor"]] = base[ejes["espesor"]] + z_local
+            ref[dim_key[ejes["espesor"]]] = esp_ref
+            ref["nombre"] = (
+                f"{nombre}_Tira_{tira['nombre_sufijo']}{sufijo_cara}")
+            ref["rol"] = "refuerzo"
+            ref["borde"] = tira["borde"]
+            ref["cara"] = cara
+            ref["eje_extrusion"] = ejes["espesor"]
+            if tira.get("poligono"):
+                puntos = []
+                for px, py in tira["poligono"]:
+                    coords = {
+                        eje: float(base[eje]) for eje in _EJES
+                    }
+                    coords[ejes["largo"]] = (
+                        base[ejes["largo"]] + float(px))
+                    coords[ejes["ancho"]] = (
+                        base[ejes["ancho"]] + float(py))
+                    coords[ejes["espesor"]] = (
+                        base[ejes["espesor"]] + z_local)
+                    puntos.append((
+                        coords["x"], coords["y"], coords["z"]))
+                ref["poligono"] = puntos
+            refuerzos.append(ref)
+    return refuerzos, tiras
+
+
 def calcular_geometria_caja(caja, modifier, ejes=None):
     """Calcula refuerzos de una pieza en coordenadas de modulo.
 
@@ -344,6 +1077,15 @@ def calcular_geometria_caja(caja, modifier, ejes=None):
     espesor = dims[ejes["espesor"]]
     if largo <= 0 or ancho <= 0 or espesor <= 0:
         raise ReengroseError("La caja base debe tener dimensiones positivas.")
+
+    if mod["usa_bordes"]:
+        refuerzos, tiras = _refuerzos_bordes_caja(
+            base, ejes, largo, ancho, espesor, nombre, mod)
+        resultado["refuerzos"] = refuerzos
+        resultado["tiras"] = tiras
+        if mod["fabricacion"] == "pacha" and refuerzos:
+            resultado["grupo_pacha"] = f"Pacha_{nombre}"
+        return resultado
 
     esp_ref = float(mod["espesor"] or espesor)
     caras = ["cara_a", "cara_b"] if mod["cara"] == "ambos" else [mod["cara"]]
@@ -869,6 +1611,62 @@ def resolver_encuentro_tiras(tira_a, tira_b, prioridad="vertical_domina"):
     return resultado
 
 
+def _retroceso_panel(panel_t, tira_t, eje_normal, eje_ancho):
+    """Retroceso simetrico panel/tira en el eje de profundidad correcto.
+
+    Si la tira cubre todo el ancho del panel, el panel se retira por su
+    eje restante (por ejemplo una division baja para pasar bajo el techo).
+    Si solo cubre una franja, el panel retrocede en profundidad hasta la
+    cara de la tira. El resultado se expresa como AABB.
+    """
+    panel = {
+        "x": panel_t[0], "y": panel_t[1], "z": panel_t[2],
+        "w": panel_t[3], "h": panel_t[4], "d": panel_t[5],
+    }
+    tira = {
+        "x": tira_t[0], "y": tira_t[1], "z": tira_t[2],
+        "w": tira_t[3], "h": tira_t[4], "d": tira_t[5],
+    }
+    dims_p = {"x": panel["w"], "y": panel["h"], "z": panel["d"]}
+    dims_t = {"x": tira["w"], "y": tira["h"], "z": tira["d"]}
+    tol = 1e-6
+
+    a = eje_ancho
+    p0, p1 = panel[a], panel[a] + dims_p[a]
+    t0, t1 = tira[a], tira[a] + dims_t[a]
+    cubre_ancho = t0 <= p0 + tol and t1 >= p1 - tol
+
+    if cubre_ancho:
+        eje = next(
+            e for e in _EJES if e not in (eje_normal, eje_ancho))
+        p0h, p1h = panel[eje], panel[eje] + dims_p[eje]
+        t0h, t1h = tira[eje], tira[eje] + dims_t[eje]
+        corte0, corte1 = max(p0h, t0h), min(p1h, t1h)
+        if corte1 <= corte0 + tol:
+            return _aabb_dict(panel)
+        if (t0h + t1h) / 2.0 < (p0h + p1h) / 2.0:
+            panel[eje] = corte1
+            panel[_DIM[eje]] = max(0.0, p1h - corte1)
+        else:
+            panel[_DIM[eje]] = max(0.0, corte0 - p0h)
+        return _aabb_dict(panel)
+
+    if t0 <= p0 + tol:
+        # La tira invade desde el frente del panel: el panel nace detras
+        # de su cara posterior y conserva la cota hasta el fondo.
+        nuevo = max(p0, t1)
+        panel[a] = nuevo
+        panel[_DIM[a]] = max(0.0, p1 - nuevo)
+    else:
+        # La tira esta delante del panel: retroceder el origen hasta su
+        # cara posterior. Antes se asignaba la profundidad igual al offset,
+        # lo que colapsaba la repisa a una tira flotante.
+        nuevo = min(p1, t1)
+        panel[a] = nuevo
+        panel[_DIM[a]] = max(0.0, p1 - nuevo)
+    return _aabb_dict(panel)
+
+
 def resolver_choque_tira_panel(tira, panel_perpendicular, modo="retroceso"):
     """Resuelve el choque entre una tira y un panel perpendicular.
 
@@ -917,33 +1715,13 @@ def resolver_choque_tira_panel(tira, panel_perpendicular, modo="retroceso"):
         }))
         return plan
 
-    # Retroceso recto clasico: una repisa horizontal frente a un montante
-    # vertical retira su profundidad hasta la cara trasera de la tira.
-    if eje_normal_panel == "z" and eje_largo == "z" and eje_ancho == "y":
-        x, y, z, w, h, d = panel_t
-        tx, ty, tz, tw, th, td = tira_t
-        cubre_fondo = (
-            ty <= y + 1e-6 and ty + th >= y + h - 1e-6)
-        if cubre_fondo:
-            if tx + tw / 2.0 < x + w / 2.0:
-                nuevo_x = max(x, tx + tw)
-                plan["panel"] = _aabb_dict({
-                    "x": nuevo_x, "y": y, "z": z,
-                    "w": max(0.0, x + w - nuevo_x), "h": h, "d": d})
-            else:
-                plan["panel"] = _aabb_dict({
-                    "x": x, "y": y, "z": z,
-                    "w": max(0.0, tx - x), "h": h, "d": d})
-            return plan
-        if ty <= y + 1e-6:
-            nuevo_y = max(y, ty + th)
-            plan["panel"] = _aabb_dict({
-                "x": x, "y": nuevo_y, "z": z,
-                "w": w, "h": max(0.0, y + h - nuevo_y), "d": d})
-        else:
-            plan["panel"] = _aabb_dict({
-                "x": x, "y": y, "z": z,
-                "w": w, "h": max(0.0, ty - y), "d": d})
+    # Retroceso simetrico. La tira corre en el mismo eje que la normal del
+    # panel (es perpendicular a su cara). El panel retrocede por el eje de
+    # ancho de la tira o, si la tira cubre todo ese ancho, por el eje
+    # restante. Cubre repisas contra montantes y montantes contra techo/base.
+    if eje_largo == eje_normal_panel and eje_ancho != eje_normal_panel:
+        plan["panel"] = _retroceso_panel(
+            panel_t, tira_t, eje_normal_panel, eje_ancho)
         return plan
 
     # Paneles verticales (o encuentros no clasicos): cajeado recto en la
@@ -996,6 +1774,17 @@ def generar_mocheo_repisa(repisa, reengrose_vertical, politica=None):
 
 
 def desde_objeto(obj):
+    texto = getattr(obj, "VDO_Reengrose_JSON", "") or ""
+    if texto:
+        try:
+            guardado = json.loads(texto)
+            if (isinstance(guardado, dict)
+                    and any(clave in guardado for clave in
+                            ("bordes", "esquinas", "fabricacion",
+                             "choque_nucleo"))):
+                return ReengroseModifier(guardado)
+        except (TypeError, ValueError):
+            pass
     datos = {}
     for clave, prop in PROPS.items():
         datos[clave] = getattr(obj, prop, DEFAULTS[clave])

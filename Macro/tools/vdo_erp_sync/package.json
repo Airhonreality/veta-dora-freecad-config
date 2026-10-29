@@ -1,0 +1,14 @@
+{
+  "name": "vdo_erp_sync",
+  "version": "1.0.0",
+  "description": "Suite de sincronización Neon/MCP para el sistema VDO (FreeCAD Macros)",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "zod": "^3.23.0",
+    "@types/node": "^20.0.0"
+  }
+}

@@ -1,0 +1,44 @@
+# -*- coding: utf-8 -*-
+# =====================================================================
+# vdo_puerta.FCMacro
+# Envoltorio del submódulo de Puertas y Cierres (L2).
+# Crea una puerta paramétrica vinculada a un vano COCO.
+# Incluye guarda de seguridad contra crasheos por diálogos abiertos.
+# =====================================================================
+
+import sys
+import FreeCAD as App
+
+_vdo_macro_dir = App.getUserMacroDir(True)
+if _vdo_macro_dir not in sys.path:
+    sys.path.insert(0, _vdo_macro_dir)
+
+# --- Guarda de seguridad contra crasheos: cerrar diálogos activos ---
+try:
+    import FreeCADGui as Gui
+    if hasattr(Gui.Control, "activeDialog") and Gui.Control.activeDialog():
+        Gui.Control.closeDialog()
+except Exception:
+    pass
+
+from vdo_creation_flow import crear_modulo_interactivo
+
+configuracion = {
+    "nombre": "Puerta",
+    "tipo_sistema": "Batiente Vertical",
+    "tipo_montaje": "Parche",
+    "sentido_apertura": "Izquierda",
+    "sistema_apertura": "Tirador Tradicional",
+    "hardware_sku": "",
+    "vdo_vano_id": "",
+    "ancho": 400.0,
+    "alto": 700.0,
+    "espesor": 18,
+    "pos_x": 0.0,
+    "pos_y": 0.0,
+    "pos_z": 0.0,
+    "anclaje": "inferior_izquierda_frente",
+}
+
+# Flujo VDO: crear oculto → panel de configuración → colocar con clic.
+crear_modulo_interactivo("puerta", configuracion)

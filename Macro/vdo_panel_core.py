@@ -28,6 +28,7 @@ import vdo_guardian
 import vdo_defaults as VDO_D
 import vdo_module_props as VDO_MOD
 import vdo_reengrose as VDO_RE
+from vdo_reengrose_solids import forma_ref
 from vdo_view_base import VDOViewProviderBase
 
 CANTOS_VALIDOS = ("RIG", "FX", "SMRG")
@@ -240,9 +241,9 @@ class PanelFeature:
                     mod)
                 shapes = [base]
                 for pieza in geo["refuerzos"]:
-                    shapes.append(Part.makeBox(
-                        pieza["largo"], pieza["ancho"], pieza["espesor"],
-                        App.Vector(pieza["x"], pieza["y"], pieza["z"])))
+                    forma = forma_ref(pieza)
+                    if forma is not None:
+                        shapes.append(forma)
                 fp.Shape = Part.makeCompound(shapes)
             except VDO_RE.ReengroseError as exc:
                 App.Console.PrintWarning(

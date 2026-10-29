@@ -13,10 +13,18 @@ _macro_dir = App.getUserMacroDir(True)
 if _macro_dir not in sys.path:
     sys.path.insert(0, _macro_dir)
 
+# Asegurar que los SVG VDO viven en la raíz de macros y que Qt los ve.
+try:
+    from vdo_toolbar_inject import preparar_iconos, registrar_ruta_iconos
+    preparar_iconos()
+    registrar_ruta_iconos(_macro_dir)
+except Exception as _icon_exc:
+    print("[VDO InitGui] Aviso iconos:", _icon_exc)
+
 # Verificar que los archivos VDO existen
 _vdo_files = [
     "vdo_panel_core.py", "vdo_coco_core.py", "vdo_manifest.py",
-    "vdo_reengrose.py",
+    "vdo_reengrose.py", "vdo_zocalo_core.py",
 ]
 _vdo_installed = all(os.path.exists(os.path.join(_macro_dir, f)) for f in _vdo_files)
 
@@ -63,6 +71,13 @@ if _vdo_installed:
             return {"Pixmap": os.path.join(_macro_dir, "vdo_panel.svg"),
                     "MenuText": "Panel División", "ToolTip": "Panel divisor vertical paramétrico"}
 
+    class CmdZocalo:
+        def Activated(self):
+            exec(open(os.path.join(_macro_dir, "vdo_zocalo.FCMacro")).read())
+        def GetResources(self):
+            return {"Pixmap": os.path.join(_macro_dir, "vdo_zocalo.svg"),
+                    "MenuText": "Zócalo", "ToolTip": "Zócalo paramétrico de base"}
+
     class CmdEditarVDO:
         def Activated(self):
             exec(open(os.path.join(_macro_dir, "vdo_editar_vdo.FCMacro")).read())
@@ -80,6 +95,7 @@ if _vdo_installed:
     Gui.addCommand("VDO_PanelFachada", CmdPanelFachada())
     Gui.addCommand("VDO_Coco4C", CmdCoco4C())
     Gui.addCommand("VDO_PanelDivision", CmdPanelDivision())
+    Gui.addCommand("VDO_Zocalo", CmdZocalo())
     Gui.addCommand("VDO_Editar", CmdEditarVDO())
 
     # ============================================================
@@ -94,7 +110,7 @@ if _vdo_installed:
         def Initialize(self):
             cmds = ["VDO_CrearHoja", "VDO_PanelEstandar",
                     "VDO_PanelFachada", "VDO_Coco4C", "VDO_PanelDivision",
-                    "VDO_Editar"]
+                    "VDO_Zocalo", "VDO_Editar"]
             self.appendToolbar("VDO", cmds)
 
         def Activated(self):

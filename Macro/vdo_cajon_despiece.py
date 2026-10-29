@@ -16,36 +16,163 @@
 
 import json
 import os
+import sys
 
-# Bootstrap mínimo para leer el manifest (mismo patrón que vdo_defaults)
+# Tipologías de corredera (compatibles con vdo_cajon_core.py)
+CORREDERA_TELESCOPICA = "telescopica"
+CORREDERA_OCULTA = "oculta"
+CAJA_METALICA = "metalica"
+
 _here = os.path.dirname(os.path.abspath(__file__))
+if _here not in sys.path:
+    sys.path.insert(0, _here)
 _manifest_path = os.path.join(_here, "vdo_manifest.json")
 
 with open(_manifest_path, "r", encoding="utf-8") as _f:
     _MANIFEST = json.load(_f)
 
+try:
+    import vdo_hardware_hub as H
+except ImportError:
+    H = None
+
+try:
+    from vdo_facade_contract import (
+        APERTURA_TIRADOR, APERTURA_GOLA, APERTURA_45_GRADOS, APERTURA_PUSH_OPEN,
+        OPERACION_CANTO_ESTANDAR, OPERACION_CANTO_GOLA, OPERACION_CANTO_45,
+        HOLGURA_PERIMETRAL_DEFAULT, GOLA_DESCUENTO_ALTURA_DEFAULT,
+        aplicar_sistema_apertura, cantos_por_sistema_apertura,
+        necesita_descuento_gola, necesita_bisel_45, necesita_expulsor_magnetico,
+    )
+except ImportError:
+    APERTURA_TIRADOR = "tirador"
+    APERTURA_GOLA = "gola_aluminio"
+    APERTURA_45_GRADOS = "inglete_45"
+    APERTURA_PUSH_OPEN = "push_open"
+    OPERACION_CANTO_ESTANDAR = "CANTO_ESTANDAR"
+    OPERACION_CANTO_GOLA = "CORTE_RECTO_GOLA"
+    OPERACION_CANTO_45 = "BISEL_45"
+    HOLGURA_PERIMETRAL_DEFAULT = 2.0
+    GOLA_DESCUENTO_ALTURA_DEFAULT = 35.0
+
+    def aplicar_sistema_apertura(h, sistema, descuento_gola=35.0):
+        if sistema == APERTURA_GOLA:
+            return (max(0.0, h - descuento_gola), OPERACION_CANTO_GOLA)
+        if sistema == APERTURA_45_GRADOS:
+            return (h, OPERACION_CANTO_45)
+        return (h, OPERACION_CANTO_ESTANDAR)
+
+    def cantos_por_sistema_apertura(sistema, **kwargs):
+        return {"norte": "FX", "sur": "FX", "este": "FX", "oeste": "FX"}
+
+    def necesita_descuento_gola(sistema):
+        return sistema == APERTURA_GOLA
+
+    def necesita_bisel_45(sistema):
+        return sistema == APERTURA_45_GRADOS
+
+    def necesita_expulsor_magnetico(sistema):
+        return sistema == APERTURA_PUSH_OPEN
+
 
 def obtener_marca(marca_id):
-    """Devuelve la definición de una corredera oculta desde el manifest.
+    """Devuelve la definición de una corredera oculta.
 
-    Args:
-        marca_id (str): clave en manifest["correderas_ocultas"]
-                        ("blum_tandem", "generica", "hafele", "ducasse")
+    Fuente primaria: catálogo de Capa H (vdo_hardware_hub).
+    Fallback graceful: vdo_manifest.json para configuraciones antiguas.
 
     Returns:
-        dict con delta_ancho, longitudes_comerciales, mecanizado, ...
+        dict con la misma forma que las entradas de
+        manifest["correderas_ocultas"]:
+            nombre, delta_ancho, unidad_delta, descripcion,
+            longitudes_comerciales, mecanizado, ...
     """
-    marcas = _MANIFEST.get("correderas_ocultas", {})
-    if marca_id not in marcas:
+    # --- Intento 1: catálogo de Capa H ---------------------------------
+    if H is not None:
+        try:
+            hw = H.resolve_drawer_slide(tipo="oculta", marca=marca_id)
+            tecnicos = hw["parametros_tecnicos"]
+            mecanizado = {
+                "diam_taladro": float(
+                    tecnicos.get("diametro_pin_trasero", 6.0)),
+                "prof_taladro": float(
+                    tecnicos.get("profundidad_pin_trasero", 12.0)),
+                "dist_taladro_borde_trasero": float(
+                    tecnicos.get("distancia_pin_borde_trasero", 8.0)),
+                "dist_taladro_sobre_ranura": 11.0,
+                "prof_ranura_lateral": float(
+                    tecnicos.get("prof_ranura_lateral", 4.0)),
+                "notch_ancho": float(tecnicos.get("notch_ancho", 25.0)),
+                "notch_alto": float(tecnicos.get("notch_alto", 20.0)),
+            }
+            return {
+                "nombre": hw.get("nombre", marca_id),
+                "delta_ancho": float(tecnicos.get("delta_ancho", 45.0)),
+                "unidad_delta": "mm",
+                "descripcion": hw.get("proveedor", ""),
+                "longitudes_comerciales": [
+                    float(l)
+                    for l in tecnicos.get("longitudes_comerciales", [300, 350])
+                ],
+                "mecanizado": mecanizado,
+                "proveedor": hw.get("proveedor", ""),
+                "precio_unitario": hw.get("precio_unitario", 0.0),
+                "moneda": hw.get("moneda", "USD"),
+            }
+        except (KeyError, ValueError):
+            pass
+
+        # --- Intento 2: fallback al manifest (archivo viejo) ---
+        marcas = _MANIFEST.get("correderas_ocultas", {})
+        if marca_id in marcas:
+            return marcas[marca_id]
+
+        disponibles = sorted(_MANIFEST.get("correderas_ocultas", {}).keys())
+        if H is not None:
+            try:
+                disponibles = sorted(
+                    list(dict.fromkeys(
+                        list(H.get_family("corredera_oculta").keys()) + disponibles)))
+            except Exception:
+                pass
         raise ValueError(
             f"Marca de corredera desconocida: '{marca_id}'. "
-            f"Disponibles: {', '.join(sorted(marcas))}")
-    return marcas[marca_id]
+            f"Disponibles: {', '.join(disponibles)}")
+
+    # --- Intento 2: fallback al manifest (archivo viejo) ---------------
+    marcas = _MANIFEST.get("correderas_ocultas", {})
+    if marca_id in marcas:
+        return marcas[marca_id]
+
+    disponibles = sorted(_MANIFEST.get("correderas_ocultas", {}).keys())
+    if H is not None:
+        try:
+            disponibles = sorted(
+                list(dict.fromkeys(
+                    list(H.get_family("corredera_oculta").keys()) + disponibles)))
+        except Exception:
+            pass
+    raise ValueError(
+        f"Marca de corredera desconocida: '{marca_id}'. "
+        f"Disponibles: {', '.join(disponibles)}")
 
 
 def listar_marcas():
-    """Lista las claves de correderas ocultas disponibles."""
-    return sorted(_MANIFEST.get("correderas_ocultas", {}).keys())
+    """Lista las claves de correderas ocultas disponibles.
+
+    Combina los SKUs del catálogo de Capa H con las claves del manifest,
+    priorizando los SKUs del catálogo.
+    """
+    manifest_keys = sorted(_MANIFEST.get("correderas_ocultas", {}).keys())
+    if H is not None:
+        try:
+            catalogo_keys = sorted(
+                H.get_family("corredera_oculta").keys())
+            combinadas = list(dict.fromkeys(catalogo_keys + manifest_keys))
+            return sorted(combinadas)
+        except Exception:
+            pass
+    return manifest_keys
 
 
 def seleccionar_guia(prof_int, longitudes_comerciales):
@@ -105,6 +232,15 @@ def calcular_despiece(config):
     marca = obtener_marca(marca_id)
     delta = float(marca["delta_ancho"])
     mecanizado = dict(marca.get("mecanizado", {}))
+
+    # --- Tipo de corredera: ajusta delta para telescópica ---
+    tipo_corredera = str(config.get("tipo_corredera", CORREDERA_OCULTA)).strip().lower()
+    if tipo_corredera == CORREDERA_TELESCOPICA:
+        # Telescópica: holgura lateral 12.7 mm por lado → delta = 25.4 mm
+        delta = 25.4
+
+    # Añadir tipo_corredera al resultado para el generador 3D
+    _tipo_corredera_result = tipo_corredera
 
     # --- Defaults desde manifest (parametros_cajon) ---
     pc = _MANIFEST.get("parametros_cajon", {})
@@ -189,17 +325,24 @@ def calcular_despiece(config):
 
     # --- 6. Fachada ---
     ancho_fachada = ancho_modulo - (2 * holg_lat)
-    alto_fachada = alto_frente - holg_sup - holg_inf
-    if ancho_fachada <= 0 or alto_fachada <= 0:
+    alto_fachada_nominal = alto_frente - holg_sup - holg_inf
+    if ancho_fachada <= 0 or alto_fachada_nominal <= 0:
         raise ValueError(
-            f"Fachada inválida: {ancho_fachada} x {alto_fachada} mm "
+            f"Fachada inválida: {ancho_fachada} x {alto_fachada_nominal} mm "
             f"(holguras demasiado grandes).")
 
-    # --- 7. Posiciones 3D (origen = esquina frontales-inferior-izquierda
-    #        exterior de la caja) ---
-    centro_caja_x = ancho_ext / 2.0  # la caja queda centrada en LI
-    x_mueble_izq = centro_caja_x - (ancho_modulo / 2.0)
+    # --- Aplicar sistema de apertura (contrato universal de fachadas) ---
+    sistema_apertura = config.get("sistema_apertura", APERTURA_TIRADOR)
+    alto_fachada, operacion_canto = aplicar_sistema_apertura(
+        alto_fachada_nominal, sistema_apertura,
+        descuento_gola=GOLA_DESCUENTO_ALTURA_DEFAULT)
+    cantos_fachada = cantos_por_sistema_apertura(sistema_apertura)
 
+    # --- 7. Posiciones 3D (origen = esquina frontales-inferior-izquierda
+    #        exterior de la caja, coordenadas puramente locales al cajón) ---
+    # Nota: el centrado del cajón dentro del vano se resuelve exclusivamente
+    # mediante LocalPlacement en _construir_cajones(); aquí no hay offset
+    # de centrado X para evitar el doble desplazamiento.
     posiciones = {
         "lateral_izquierdo": {"x": 0.0, "y": 0.0, "z": 0.0,
                               "largo_x": g_caja, "largo_y": lg,
@@ -218,7 +361,7 @@ def calcular_despiece(config):
         "piso": {"x": g_caja - pen_ranura, "y": 0.0, "z": z_piso,
                  "largo_x": ancho_piso, "largo_y": largo_piso,
                  "largo_z": g_fondo},
-        "fachada": {"x": x_mueble_izq + holg_lat, "y": -g_fachada,
+        "fachada": {"x": 0.0, "y": -g_fachada,
                     "z": 0.0,
                     "largo_x": ancho_fachada, "largo_y": g_fachada,
                     "largo_z": alto_fachada},
@@ -322,9 +465,14 @@ def calcular_despiece(config):
             "espesor": g_fachada,
             "cantidad": 1,
             "material_ref": material_ref,
+            "sistema_apertura": sistema_apertura,
+            "operacion_canto": operacion_canto,
+            "cantos": cantos_fachada,
             "mecanizados": [
                 {"tipo": "canto", "caras": 4,
                  "nota": "Fachada: 4 cantos (convención VDO)"},
+                {"tipo": operacion_canto, "cara": "superior",
+                 "nota": f"Sistema de apertura: {sistema_apertura}"},
             ],
         },
     ]
@@ -333,6 +481,7 @@ def calcular_despiece(config):
         "guia": {"lg": lg, "delta": delta, "marca": marca_id,
                  "prof_int": prof_int,
                  "auto": lg_manual <= 0},
+        "tipo_corredera": _tipo_corredera_result,
         "caja": {
             "ancho_exterior": ancho_ext,
             "largo_lateral": largo_lateral,
@@ -349,10 +498,23 @@ def calcular_despiece(config):
         "fachada": {
             "ancho": ancho_fachada,
             "alto": alto_fachada,
+            "alto_nominal": alto_fachada_nominal,
             "espesor": g_fachada,
+            "sistema_apertura": sistema_apertura,
+            "operacion_canto": operacion_canto,
+            "cantos": cantos_fachada,
+            "necesita_gola": necesita_descuento_gola(sistema_apertura),
+            "necesita_bisel_45": necesita_bisel_45(sistema_apertura),
+            "necesita_expulsor": necesita_expulsor_magnetico(sistema_apertura),
         },
         "posiciones": posiciones,
-        "piezas": piezas,
+        "piezas": (
+            [p for p in piezas
+             if p["nombre"] not in ("Cajon_Lateral_Izq",
+                                    "Cajon_Lateral_Der")]
+            if _tipo_corredera_result == CAJA_METALICA
+            else piezas
+        ),
         "mecanizados": mecanizados_resumen,
         "avisos": avisos,
     }

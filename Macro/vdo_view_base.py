@@ -151,6 +151,10 @@ def _es_cajon(obj):
     return hasattr(obj, "AnchoLibre") and hasattr(obj, "MarcaCorredera")
 
 
+def _es_zocalo(obj):
+    return hasattr(obj, "AltoZocalo") and hasattr(obj, "DistanciaFrente")
+
+
 def _es_panel(obj):
     return hasattr(obj, "VDO_Orientacion") and hasattr(obj, "Largo")
 
@@ -196,6 +200,9 @@ def reparar_viewprovider(obj):
         if _es_cajon(obj):
             from vdo_cajon_core import ViewProviderCajon
             return ViewProviderCajon(vp)
+        if _es_zocalo(obj):
+            from vdo_zocalo_core import ViewProviderZocalo
+            return ViewProviderZocalo(vp)
         if _es_panel(obj):
             from vdo_panel_core import ViewProviderPanel
             return ViewProviderPanel(vp)
@@ -223,6 +230,9 @@ def abrir_panel_objeto(obj):
         elif _es_cajon(obj):
             from vdo_cajon_task import CajonTaskPanel
             panel = CajonTaskPanel(obj)
+        elif _es_zocalo(obj):
+            from vdo_zocalo_task import ZocaloTaskPanel
+            panel = ZocaloTaskPanel(obj)
         elif _es_panel(obj):
             from vdo_panel_task import PanelTaskPanel
             panel = PanelTaskPanel(obj)
