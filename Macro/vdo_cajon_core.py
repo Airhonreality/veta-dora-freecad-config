@@ -35,7 +35,7 @@ from vdo_cajon_despiece import (
     APERTURA_TIRADOR, APERTURA_GOLA, APERTURA_45_GRADOS, APERTURA_PUSH_OPEN,
     necesita_bisel_45, necesita_descuento_gola,
 )
-from vdo_facade_contract import BISEL_45_ANGULO_DEFAULT
+from vdo_facade_contract import BISEL_45_ANGULO_DEFAULT, MONTAJE_PARCHE, MONTAJE_SEMIPARCHE, MONTAJE_EMBEBIDA
 from vdo_hardware_hub import resolve_drawer_slide
 from vdo_view_base import VDOViewProviderBase
 
@@ -210,6 +210,13 @@ class CajonFeature:
                             APERTURA_45_GRADOS, APERTURA_PUSH_OPEN]
         obj.SistemaApertura = APERTURA_TIRADOR
 
+        # === TIPO DE MONTAJE DE FACHADA (parche / semiparche / embebida) ===
+        obj.addProperty("App::PropertyEnumeration", "TipoMontaje",
+                        "Fachada",
+                        "Tipo de montaje de la fachada frente al vano"
+        ).TipoMontaje = [MONTAJE_PARCHE, MONTAJE_SEMIPARCHE, MONTAJE_EMBEBIDA]
+        obj.TipoMontaje = MONTAJE_PARCHE
+
         # === PROPIEDADES DE EXPORTACIÓN (cutting list) ===
         obj.addProperty("App::PropertyString", "VDO_Tipo", "VDO",
                         "Tipo de objeto").VDO_Tipo = "contenedor"
@@ -261,6 +268,7 @@ class CajonFeature:
             "montaje_trasera": fp.MontajeTrasera,
             "tipo_corredera": fp.TipoCorredera,
             "sistema_apertura": fp.SistemaApertura,
+            "tipo_montaje_fachada": fp.TipoMontaje,
             "penetracion_ranura": VDO_D.CAJON_PENETRACION_RANURA,
             "eje_ranura": eje_ranura,
             "holgura_lateral_fachada": VDO_D.CAJON_HOLGURA_LAT_FACHADA,
@@ -478,6 +486,7 @@ def make_cajon(configuracion):
     obj.MontajeTrasera = configuracion.get("montaje_trasera", "entre_laterales")
     obj.TipoCorredera = configuracion.get("tipo_corredera", CORREDERA_OCULTA)
     obj.SistemaApertura = configuracion.get("sistema_apertura", APERTURA_TIRADOR)
+    obj.TipoMontaje = configuracion.get("tipo_montaje_fachada", MONTAJE_PARCHE)
     if "material_ref" in configuracion:
         obj.VDO_Material_Ref = configuracion["material_ref"]
     obj.VDO_Herraje_Ref = obj.MarcaCorredera

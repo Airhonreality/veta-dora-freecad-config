@@ -175,7 +175,7 @@ class _VDOChassisCrossSectionCanvas(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setMinimumSize(240, 200)
+        self.setMinimumSize(160, 130)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.setCursor(QtCore.Qt.PointingHandCursor)
 
@@ -218,19 +218,19 @@ class _VDOChassisCrossSectionCanvas(QtWidgets.QWidget):
         p.drawRoundedRect(rect.adjusted(1, 1, -1, -1), 6, 6)
 
         # Dimensiones del chasis en el canvas
-        margin_x = 36
-        margin_top = 28
-        margin_bottom = 44  # Espacio para zócalo/patas
+        margin_x = 20
+        margin_top = 16
+        margin_bottom = 26  # Espacio para zócalo/patas
         w = self.width() - (2 * margin_x)
         h = self.height() - margin_top - margin_bottom
 
-        if w < 100 or h < 80:
+        if w < 60 or h < 50:
             p.end()
             return
 
         x0 = margin_x
         y0 = margin_top
-        T = 14  # Espesor gráfico del tablero en píxeles
+        T = 12  # Espesor gráfico del tablero en píxeles
 
         # -------------------------------------------------------------
         # 1. Dibujar el Fondo Trasero (Cavidad Interior)
@@ -422,14 +422,14 @@ class _VDOChassisCrossSectionCanvas(QtWidgets.QWidget):
         x = event.pos().x()
         y = event.pos().y()
 
-        margin_x = 36
-        margin_top = 28
-        margin_bottom = 44
+        margin_x = 20
+        margin_top = 16
+        margin_bottom = 26
         w = self.width() - (2 * margin_x)
         h = self.height() - margin_top - margin_bottom
         x0 = margin_x
         y0 = margin_top
-        T = 18
+        T = 12
 
         # Zonas de clic para las caras
         if y0 <= y <= y0 + T and x0 <= x <= x0 + w:
@@ -555,29 +555,29 @@ class VDOChassisControllerWidget(QtWidgets.QWidget):
         for clave, fila, col, tag in esquinas_spec:
             btn = QtWidgets.QPushButton()
             btn.setProperty("class", "btn-esquina")
-            btn.setFixedSize(36, 36)
+            btn.setFixedSize(28, 28)
             btn.setCursor(QtCore.Qt.PointingHandCursor)
-            btn.setIconSize(QtCore.QSize(22, 22))
+            btn.setIconSize(QtCore.QSize(18, 18))
             btn.clicked.connect(lambda _, c=clave: self._on_esquina_clicked(c))
             grid.addWidget(btn, fila, col)
             self.btn_esquina[clave] = btn
 
         # Botón Tapa Superior (Borde Norte)
-        self.btn_cara_sup = QtWidgets.QPushButton("── TAPA SUPERIOR · Activa ──")
+        self.btn_cara_sup = QtWidgets.QPushButton("━━ TAPA SUPERIOR · Activa ━━")
         self.btn_cara_sup.setCheckable(True)
         self.btn_cara_sup.setChecked(True)
         self.btn_cara_sup.setProperty("class", "btn-cara-horiz")
-        self.btn_cara_sup.setFixedHeight(28)
+        self.btn_cara_sup.setFixedHeight(24)
         self.btn_cara_sup.setCursor(QtCore.Qt.PointingHandCursor)
         self.btn_cara_sup.clicked.connect(lambda: self._on_cara_toggled("superior"))
         grid.addWidget(self.btn_cara_sup, 0, 1)
 
         # Botón Lateral Izquierdo (Borde Oeste)
-        self.btn_cara_izq = QtWidgets.QPushButton("│\nL\nA\nT\n.\n\nI\nZ\nQ\n│")
+        self.btn_cara_izq = QtWidgets.QPushButton("◀ Lat Izq")
         self.btn_cara_izq.setCheckable(True)
         self.btn_cara_izq.setChecked(True)
         self.btn_cara_izq.setProperty("class", "btn-cara-vert")
-        self.btn_cara_izq.setFixedWidth(28)
+        self.btn_cara_izq.setFixedWidth(64)
         self.btn_cara_izq.setCursor(QtCore.Qt.PointingHandCursor)
         self.btn_cara_izq.clicked.connect(lambda: self._on_cara_toggled("izquierda"))
         grid.addWidget(self.btn_cara_izq, 1, 0)
@@ -588,21 +588,21 @@ class VDOChassisControllerWidget(QtWidgets.QWidget):
         grid.addWidget(self.canvas, 1, 1)
 
         # Botón Lateral Derecho (Borde Este)
-        self.btn_cara_der = QtWidgets.QPushButton("│\nL\nA\nT\n.\n\nD\nE\nR\n│")
+        self.btn_cara_der = QtWidgets.QPushButton("Lat Der ▶")
         self.btn_cara_der.setCheckable(True)
         self.btn_cara_der.setChecked(True)
         self.btn_cara_der.setProperty("class", "btn-cara-vert")
-        self.btn_cara_der.setFixedWidth(28)
+        self.btn_cara_der.setFixedWidth(64)
         self.btn_cara_der.setCursor(QtCore.Qt.PointingHandCursor)
         self.btn_cara_der.clicked.connect(lambda: self._on_cara_toggled("derecha"))
         grid.addWidget(self.btn_cara_der, 1, 2)
 
         # Botón Base Inferior (Borde Sur)
-        self.btn_cara_inf = QtWidgets.QPushButton("── BASE INFERIOR · Activa ──")
+        self.btn_cara_inf = QtWidgets.QPushButton("━━ BASE INFERIOR · Activa ━━")
         self.btn_cara_inf.setCheckable(True)
         self.btn_cara_inf.setChecked(True)
         self.btn_cara_inf.setProperty("class", "btn-cara-horiz")
-        self.btn_cara_inf.setFixedHeight(28)
+        self.btn_cara_inf.setFixedHeight(24)
         self.btn_cara_inf.setCursor(QtCore.Qt.PointingHandCursor)
         self.btn_cara_inf.clicked.connect(lambda: self._on_cara_toggled("inferior"))
         grid.addWidget(self.btn_cara_inf, 2, 1)
@@ -1011,23 +1011,25 @@ class VDOChassisControllerWidget(QtWidgets.QWidget):
         act_sup = self._caras["superior"]["activa"]
         self.btn_cara_sup.blockSignals(True)
         self.btn_cara_sup.setChecked(act_sup)
-        self.btn_cara_sup.setText("── TAPA SUPERIOR · Activa ──" if act_sup else "┄ TAPA SUPERIOR · Ausente ┄")
+        self.btn_cara_sup.setText("━━ TAPA SUPERIOR · Activa ━━" if act_sup else "┄ TAPA SUPERIOR · Ausente ┄")
         self.btn_cara_sup.blockSignals(False)
 
         act_inf = self._caras["inferior"]["activa"]
         self.btn_cara_inf.blockSignals(True)
         self.btn_cara_inf.setChecked(act_inf)
-        self.btn_cara_inf.setText("── BASE INFERIOR · Activa ──" if act_inf else "┄ BASE INFERIOR · Ausente ┄")
+        self.btn_cara_inf.setText("━━ BASE INFERIOR · Activa ━━" if act_inf else "┄ BASE INFERIOR · Ausente ┄")
         self.btn_cara_inf.blockSignals(False)
 
         act_izq = self._caras["izquierda"]["activa"]
         self.btn_cara_izq.blockSignals(True)
         self.btn_cara_izq.setChecked(act_izq)
+        self.btn_cara_izq.setText("◀ Lat Izq" if act_izq else "◀ Izq Aus.")
         self.btn_cara_izq.blockSignals(False)
 
         act_der = self._caras["derecha"]["activa"]
         self.btn_cara_der.blockSignals(True)
         self.btn_cara_der.setChecked(act_der)
+        self.btn_cara_der.setText("Lat Der ▶" if act_der else "Der Aus. ▶")
         self.btn_cara_der.blockSignals(False)
 
     def _actualizar_botones_esquinas(self):

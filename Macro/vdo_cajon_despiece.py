@@ -41,6 +41,9 @@ try:
         APERTURA_TIRADOR, APERTURA_GOLA, APERTURA_45_GRADOS, APERTURA_PUSH_OPEN,
         OPERACION_CANTO_ESTANDAR, OPERACION_CANTO_GOLA, OPERACION_CANTO_45,
         HOLGURA_PERIMETRAL_DEFAULT, GOLA_DESCUENTO_ALTURA_DEFAULT,
+        SOLAPE_PARCHE_NOMINAL,
+        MONTAJE_PARCHE, MONTAJE_SEMIPARCHE, MONTAJE_EMBEBIDA,
+        calcular_fachada_base,
         aplicar_sistema_apertura, cantos_por_sistema_apertura,
         necesita_descuento_gola, necesita_bisel_45, necesita_expulsor_magnetico,
     )
@@ -54,6 +57,34 @@ except ImportError:
     OPERACION_CANTO_45 = "BISEL_45"
     HOLGURA_PERIMETRAL_DEFAULT = 2.0
     GOLA_DESCUENTO_ALTURA_DEFAULT = 35.0
+    SOLAPE_PARCHE_NOMINAL = 16.0
+    MONTAJE_PARCHE = "parche"
+    MONTAJE_SEMIPARCHE = "semiparche"
+    MONTAJE_EMBEBIDA = "embebida"
+
+    def calcular_fachada_base(w_vano, h_vano, tipo_montaje,
+                              holgura=HOLGURA_PERIMETRAL_DEFAULT,
+                              solape=SOLAPE_PARCHE_NOMINAL):
+        """Fallback puro de calcular_fachada_base si vdo_facade_contract no está."""
+        w_vano = float(w_vano)
+        h_vano = float(h_vano)
+        tipo_montaje = str(tipo_montaje).strip().lower()
+        if tipo_montaje == MONTAJE_PARCHE:
+            w = w_vano + (2.0 * solape) - holgura
+            h = h_vano + (2.0 * solape) - holgura
+        elif tipo_montaje == MONTAJE_SEMIPARCHE:
+            w = (w_vano + solape) / 2.0 - holgura
+            h = h_vano + (2.0 * solape) - holgura
+        elif tipo_montaje == MONTAJE_EMBEBIDA:
+            w = w_vano - (2.0 * holgura)
+            h = h_vano - (2.0 * holgura)
+        else:
+            raise ValueError(
+                f"Tipo de montaje desconocido: {tipo_montaje!r}.")
+        if w <= 0 or h <= 0:
+            raise ValueError(
+                f"Dimensiones de fachada invalidas: {w:.1f} x {h:.1f} mm.")
+        return (round(w, 6), round(h, 6))
 
     def aplicar_sistema_apertura(h, sistema, descuento_gola=35.0):
         if sistema == APERTURA_GOLA:
@@ -264,6 +295,8 @@ def calcular_despiece(config):
                      or _p("holgura_inferior_fachada", 2))
     montaje = config.get("montaje_trasera", "entre_laterales")
     material_ref = config.get("material_ref", "melamina_standar")
+    tipo_montaje_fachada = str(
+        config.get("tipo_montaje_fachada", MONTAJE_PARCHE)).strip().lower()
 
     avisos = []
 
@@ -324,8 +357,10 @@ def calcular_despiece(config):
     largo_piso = lg  # fórmula del usuario (largo = LG)
 
     # --- 6. Fachada ---
-    ancho_fachada = ancho_modulo - (2 * holg_lat)
     alto_fachada_nominal = alto_frente - holg_sup - holg_inf
+    ancho_fachada, _alto_fachada_contract = calcular_fachada_base(
+        ancho_ext, alto_fachada_nominal, tipo_montaje_fachada,
+        holgura=holg_lat, solape=SOLAPE_PARCHE_NOMINAL)
     if ancho_fachada <= 0 or alto_fachada_nominal <= 0:
         raise ValueError(
             f"Fachada inválida: {ancho_fachada} x {alto_fachada_nominal} mm "
@@ -361,7 +396,7 @@ def calcular_despiece(config):
         "piso": {"x": g_caja - pen_ranura, "y": 0.0, "z": z_piso,
                  "largo_x": ancho_piso, "largo_y": largo_piso,
                  "largo_z": g_fondo},
-        "fachada": {"x": 0.0, "y": -g_fachada,
+        "fachada": {"x": (ancho_ext - ancho_fachada) / 2.0, "y": -g_fachada,
                     "z": 0.0,
                     "largo_x": ancho_fachada, "largo_y": g_fachada,
                     "largo_z": alto_fachada},
@@ -501,6 +536,7 @@ def calcular_despiece(config):
             "alto_nominal": alto_fachada_nominal,
             "espesor": g_fachada,
             "sistema_apertura": sistema_apertura,
+            "tipo_montaje": tipo_montaje_fachada,
             "operacion_canto": operacion_canto,
             "cantos": cantos_fachada,
             "necesita_gola": necesita_descuento_gola(sistema_apertura),
@@ -549,8 +585,10 @@ if __name__ == "__main__":
     assert abs(d["caja"]["alto_contra"] - 102.5) < 1e-9  # 120 - 17.5
     assert d["caja"]["ancho_piso"] == 539.0             # 519 + 2*10
     assert d["caja"]["largo_piso"] == 550.0
-    assert d["fachada"]["ancho"] == 636.0               # 640 - 4
+    assert d["fachada"]["ancho"] == 581.0               # 551 + 2*16 - 2 (parche)
     assert d["fachada"]["alto"] == 221.0                # 225 - 4
+    assert d["fachada"]["tipo_montaje"] == "parche"
+    assert d["posiciones"]["fachada"]["x"] == -15.0     # centrada sobre la caja
     assert len(d["piezas"]) == 6
 
     # --- Montaje a testa ---

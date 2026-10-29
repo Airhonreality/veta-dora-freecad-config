@@ -102,8 +102,9 @@ class VDOViewProviderBase:
     # Doble clic / edición
     # -----------------------------------------------------------------
     def doubleClicked(self, vobj):
-        # Abrir el panel directamente y enfocar el Inspector lateral
-        enfocar_inspector_universal(getattr(vobj, "Object", None))
+        # Si el Inspector Universal está activo, enfocarlo y retornar sin abrir dialogos secundarios
+        if enfocar_inspector_universal(getattr(vobj, "Object", None)):
+            return True
         return self._abrir_panel(vobj.Object)
 
     def setEdit(self, vobj, mode):
@@ -111,8 +112,9 @@ class VDOViewProviderBase:
             return False
         if Gui is None:
             return False
-        # Si el Inspector Universal está activo, enfocarlo y cargar el objeto
-        enfocar_inspector_universal(getattr(vobj, "Object", None))
+        # Si el Inspector Universal está activo, enfocarlo y retornar sin abrir dialogos secundarios
+        if enfocar_inspector_universal(getattr(vobj, "Object", None)):
+            return True
         try:
             panel = self._crear_panel(vobj.Object)
             Gui.Control.showDialog(panel)
@@ -245,7 +247,9 @@ def abrir_panel_objeto(obj):
     """Abre el panel de cualquier módulo VDO, reparando el proxy si hace falta."""
     if obj is None:
         return False
-    enfocar_inspector_universal(obj)
+    # Si el Inspector Universal está disponible, enfocarlo y no abrir diálogos secundarios flotantes
+    if enfocar_inspector_universal(obj):
+        return True
     proxy = getattr(getattr(obj, "ViewObject", None), "Proxy", None)
     if not hasattr(proxy, "_abrir_panel"):
         proxy = reparar_viewprovider(obj)

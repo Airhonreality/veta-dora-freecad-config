@@ -21,6 +21,7 @@ from vdo_facade_contract import (
     APERTURA_45_GRADOS as FA_45,
     APERTURA_PUSH_OPEN as FA_PUSH,
     OPERACION_CANTO_ESTANDAR, OPERACION_CANTO_GOLA, OPERACION_CANTO_45,
+    MONTAJE_PARCHE, MONTAJE_SEMIPARCHE, MONTAJE_EMBEBIDA,
     cantos_por_sistema_apertura,
 )
 from vdo_hardware_hub import (
@@ -254,6 +255,15 @@ class CajonTaskPanel(VDOTransactionMixin):
             self._on_apertura_cambiado)
         grid_a.addWidget(self.combo_apertura, 0, 1)
 
+        grid_a.addWidget(QtGui.QLabel("Montaje fachada:"), 1, 0)
+        self.combo_montaje_fachada = QtGui.QComboBox()
+        self.combo_montaje_fachada.addItems(["Parche", "Semiparche", "Embebida"])
+        self.combo_montaje_fachada.setToolTip(
+            "Parche: solapa sobre los cantos del vano.\n"
+            "Semiparche: comparte montante central.\n"
+            "Embebida: a ras dentro del vano (deja cantos vistos).")
+        grid_a.addWidget(self.combo_montaje_fachada, 1, 1)
+
         main_layout.addWidget(grupo_apertura)
 
         # --- Grupo: Caja y fachada ---
@@ -411,6 +421,10 @@ class CajonTaskPanel(VDOTransactionMixin):
             }
             idx = apertura_map_rev.get(obj.SistemaApertura, 0)
             self.combo_apertura.setCurrentIndex(idx)
+        if hasattr(obj, "TipoMontaje"):
+            idx = self.combo_montaje_fachada.findText(obj.TipoMontaje)
+            if idx >= 0:
+                self.combo_montaje_fachada.setCurrentIndex(idx)
         if hasattr(obj, "VDO_Herraje_Ref"):
             sku = obj.VDO_Herraje_Ref
             sku_idx = self.combo_sku.findData(sku)
@@ -450,6 +464,7 @@ class CajonTaskPanel(VDOTransactionMixin):
                     else APERTURA_GOLA if self.combo_apertura.currentIndex() == 1
                     else APERTURA_45_GRADOS if self.combo_apertura.currentIndex() == 2
                     else APERTURA_PUSH_OPEN),
+                "tipo_montaje_fachada": self.combo_montaje_fachada.currentText(),
                 "penetracion_ranura": 10.0,
                 "eje_ranura": 11.5,
                 "holgura_lateral_fachada": 2.0,
@@ -505,6 +520,7 @@ class CajonTaskPanel(VDOTransactionMixin):
                 else APERTURA_GOLA if self.combo_apertura.currentIndex() == 1
                 else APERTURA_45_GRADOS if self.combo_apertura.currentIndex() == 2
                 else APERTURA_PUSH_OPEN)
+            self.obj.TipoMontaje = self.combo_montaje_fachada.currentText()
             sku_data = self.combo_sku.currentData()
             if sku_data:
                 self.obj.VDO_Herraje_Ref = str(sku_data)

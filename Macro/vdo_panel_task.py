@@ -7,7 +7,7 @@
 import FreeCAD as App
 from PySide import QtGui
 
-from vdo_qt import VDO_DoubleSpinBox
+from vdo_qt import VDO_DoubleSpinBox, VDO_ExpressionInput
 
 import vdo_defaults as VDO_D
 from vdo_task_base import VDOTransactionMixin, cerrar_dialogo
@@ -16,8 +16,7 @@ from vdo_module_props import (
     add_common_props, aplicar_rotacion
 )
 from vdo_panel_core import (
-    CANTOS_VALIDOS, add_reengrose_props, aplicar_mapeo_orientacion
-)
+    CANTOS_VALIDOS, add_reengrose_props)
 import vdo_reengrose as VDO_RE
 
 
@@ -73,37 +72,29 @@ class PanelTaskPanel(VDOTransactionMixin):
         grupo_dim = QtGui.QGroupBox("Dimensiones")
         grid_dim = QtGui.QGridLayout(grupo_dim)
 
-        self.chk_params = QtGui.QCheckBox(
-            "Tomar dimensiones de la hoja Params")
-        self.chk_params.setToolTip(
-            "Si se desmarca, las medidas se editan manualmente y se "
-            "eliminan las expresiones paramétricas.")
-        grid_dim.addWidget(self.chk_params, 0, 0, 1, 2)
+        self.combo_modo = QtGui.QComboBox()
+        self.combo_modo.addItems(["Directo", "Expresión (fórmula)"])
+        self.combo_modo.setToolTip(
+            "Directo: valor numérico libre. "
+            "Expresión (fórmula): expresión nativa de FreeCAD que enlaza "
+            "cualquier propiedad del proyecto (p. ej. Params.Largo / 2).")
+        grid_dim.addWidget(self.combo_modo, 0, 0, 1, 2)
 
         grid_dim.addWidget(QtGui.QLabel("Largo (mm):"), 1, 0)
-        self.spin_largo = VDO_DoubleSpinBox()
-        self.spin_largo.setRange(1, 5000)
-        self.spin_largo.setDecimals(1)
-        self.spin_largo.setSuffix(" mm")
+        self.spin_largo = VDO_ExpressionInput(numeric_only=False)
         self.spin_largo.setToolTip(
             "Largo real de la cara del tablero, no la diagonal ni el desarrollo.")
         grid_dim.addWidget(self.spin_largo, 1, 1)
 
         grid_dim.addWidget(QtGui.QLabel("Ancho (mm):"), 2, 0)
-        self.spin_ancho = VDO_DoubleSpinBox()
-        self.spin_ancho.setRange(1, 5000)
-        self.spin_ancho.setDecimals(1)
-        self.spin_ancho.setSuffix(" mm")
+        self.spin_ancho = VDO_ExpressionInput(numeric_only=False)
         self.spin_ancho.setToolTip(
             "Ancho de la cara del tablero. En un lateral vertical suele ser "
             "la profundidad del mueble.")
         grid_dim.addWidget(self.spin_ancho, 2, 1)
 
         grid_dim.addWidget(QtGui.QLabel("Espesor (mm):"), 3, 0)
-        self.spin_espesor = VDO_DoubleSpinBox()
-        self.spin_espesor.setRange(1, 100)
-        self.spin_espesor.setDecimals(1)
-        self.spin_espesor.setSuffix(" mm")
+        self.spin_espesor = VDO_ExpressionInput(numeric_only=False)
         self.spin_espesor.setToolTip(
             "Espesor del tablero. El reengrose usa este valor por defecto.")
         grid_dim.addWidget(self.spin_espesor, 3, 1)
@@ -172,7 +163,6 @@ class PanelTaskPanel(VDOTransactionMixin):
         btn_cancelar.setToolTip("Cierra sin aplicar los cambios.")
         main_layout.addWidget(botones)
 
-        self.chk_params.toggled.connect(self._on_params_toggled)
         self.re_editor.changed.connect(self._on_reengrose_modo_changed)
         return widget
 
@@ -222,10 +212,6 @@ class PanelTaskPanel(VDOTransactionMixin):
         except Exception:
             return True
 
-    def _on_params_toggled(self, activo):
-        for spin in (self.spin_largo, self.spin_ancho, self.spin_espesor):
-            spin.setEnabled(not activo)
-
     def _cargar_valores(self, obj):
         self.edit_etiqueta.setText(getattr(obj, "VDO_Etiqueta", ""))
         self.edit_material.setText(
@@ -234,10 +220,6 @@ class PanelTaskPanel(VDOTransactionMixin):
             getattr(obj, "VDO_Orientacion", "horizontal"))
         if idx >= 0:
             self.combo_orientacion.setCurrentIndex(idx)
-
-        self.spin_largo.setValue(float(getattr(obj, "Largo", 0.0)))
-        self.spin_ancho.setValue(float(getattr(obj, "Ancho", 0.0)))
-        self.spin_espesor.setValue(float(getattr(obj, "Espesor", 0.0)))
 
         for direccion in ["Norte", "Sur", "Este", "Oeste"]:
             valor = getattr(obj, f"VDO_Canto_{direccion}", "FX")
@@ -253,9 +235,18 @@ class PanelTaskPanel(VDOTransactionMixin):
                 self.combo_anclaje.setCurrentIndex(i)
                 break
 
-        usar_params = self._tiene_expresiones(obj)
-        self.chk_params.setChecked(usar_params)
-        self._on_params_toggled(usar_params)
+        usar_expr = self._tiene_expresiones(obj)
+        self.combo_modo.setCurrentIndex(1 if usar_expr else 0)
+        if usar_expr:
+            expr_engine = dict(obj.ExpressionEngine or [])
+            self.spin_largo.setText(expr_engine.get("Largo", ""))
+            self.spin_ancho.setText(expr_engine.get("Ancho", ""))
+            self.spin_espesor.setText(expr_engine.get("Espesor", ""))
+        else:
+            self.spin_largo.setValue(float(getattr(obj, "Largo", 0.0)))
+            self.spin_ancho.setValue(float(getattr(obj, "Ancho", 0.0)))
+            self.spin_espesor.setValue(float(getattr(obj, "Espesor", 0.0)))
+
         self._cargar_reengrose(obj)
 
     @staticmethod
@@ -295,8 +286,7 @@ class PanelTaskPanel(VDOTransactionMixin):
         try:
             self._vdo_begin()
 
-            for spin in (self.spin_largo, self.spin_ancho,
-                         self.spin_espesor, self.spin_re_ancho,
+            for spin in (self.spin_re_ancho,
                          self.spin_re_espesor, self.spin_rotacion):
                 spin.interpretText()
 
@@ -309,27 +299,29 @@ class PanelTaskPanel(VDOTransactionMixin):
                     f"VDO_Canto_{direccion}",
                     self.combo_cantos[direccion].currentText())
 
-            if self.chk_params.isChecked():
-                aplicar_mapeo_orientacion(
-                    self.obj, self.combo_orientacion.currentText())
+            if self.combo_modo.currentIndex() == 1:
+                for prop, spin in (("Largo", self.spin_largo),
+                                   ("Ancho", self.spin_ancho),
+                                   ("Espesor", self.spin_espesor)):
+                    self.obj.setExpression(prop, spin.value())
             else:
-                for prop in ("Largo", "Ancho", "Espesor"):
+                for prop, spin in (("Largo", self.spin_largo),
+                                   ("Ancho", self.spin_ancho),
+                                   ("Espesor", self.spin_espesor)):
                     try:
                         self.obj.clearExpression(prop)
                     except Exception:
                         pass
-                self.obj.Largo = self.spin_largo.value()
-                self.obj.Ancho = self.spin_ancho.value()
-                self.obj.Espesor = self.spin_espesor.value()
+                    setattr(self.obj, prop, spin.value_float())
 
             mod_reengrose = self._leer_reengrose()
             if mod_reengrose.activo:
                 try:
                     VDO_RE.calcular_geometria_reengrose({
                         "nombre": self.obj.Label,
-                        "largo": self.spin_largo.value(),
-                        "ancho": self.spin_ancho.value(),
-                        "espesor": self.spin_espesor.value(),
+                        "largo": self.spin_largo.value_float(),
+                        "ancho": self.spin_ancho.value_float(),
+                        "espesor": self.spin_espesor.value_float(),
                     }, mod_reengrose)
                 except VDO_RE.ReengroseError as exc:
                     QtGui.QMessageBox.warning(
