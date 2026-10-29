@@ -979,6 +979,11 @@ class VDOUniversalInspectorWidget(QtWidgets.QWidget):
     @classmethod
     def mostrar_en_freecad(cls, parent=None):
         """Abre el inspector en FreeCAD GUI dentro de un TaskPanel o diálogo dockeable."""
+        dock = obtener_o_crear_dock_inspector()
+        if dock is not None:
+            dock.show()
+            dock.raise_()
+            return dock.widget()
         instancia = cls(parent=parent)
         if Gui is not None and hasattr(Gui, "Control"):
             try:
@@ -990,8 +995,37 @@ class VDOUniversalInspectorWidget(QtWidgets.QWidget):
         return instancia
 
 
+def obtener_o_crear_dock_inspector():
+    """
+    Crea o recupera el QDockWidget lateral derecho permanente en FreeCAD GUI
+    con VDOUniversalInspectorWidget.
+    """
+    if Gui is None or not getattr(App, "GuiUp", False):
+        return None
+    try:
+        mw = Gui.getMainWindow()
+    except Exception:
+        mw = None
+    if mw is None:
+        return None
+
+    dock = mw.findChild(QtWidgets.QDockWidget, "VDOUniversalInspectorDock")
+    if dock is None:
+        try:
+            dock = QtWidgets.QDockWidget("VDO Inspector Universal", mw)
+            dock.setObjectName("VDOUniversalInspectorDock")
+            inspector = VDOUniversalInspectorWidget(dock)
+            dock.setWidget(inspector)
+            mw.addDockWidget(QtCore.Qt.RightDockWidgetArea, dock)
+        except Exception as exc:
+            App.Console.PrintError(f"[VDO] Error creando DockWidget Inspector: {exc}\n")
+            return None
+    return dock
+
+
 __all__ = [
     "VDOUniversalInspectorWidget",
+    "obtener_o_crear_dock_inspector",
     "PAGE_CHASIS",
     "PAGE_VANO",
     "PAGE_PIEZA",

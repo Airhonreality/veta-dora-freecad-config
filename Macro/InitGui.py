@@ -86,6 +86,19 @@ if _vdo_installed:
                     "MenuText": "Propiedades VDO",
                     "ToolTip": "Abrir el panel del módulo VDO seleccionado"}
 
+    class CmdInspectorVDO:
+        def Activated(self):
+            from vdo_universal_inspector import obtener_o_crear_dock_inspector
+            dock = obtener_o_crear_dock_inspector()
+            if dock is not None:
+                dock.setVisible(not dock.isVisible())
+                if dock.isVisible():
+                    dock.raise_()
+        def GetResources(self):
+            return {"Pixmap": os.path.join(_macro_dir, "vdo_workbench.svg"),
+                    "MenuText": "Inspector VDO",
+                    "ToolTip": "Mostrar / ocultar el Inspector Universal VDO lateral"}
+
     # ============================================================
     # 2. Registrar comandos
     # ============================================================
@@ -97,6 +110,7 @@ if _vdo_installed:
     Gui.addCommand("VDO_PanelDivision", CmdPanelDivision())
     Gui.addCommand("VDO_Zocalo", CmdZocalo())
     Gui.addCommand("VDO_Editar", CmdEditarVDO())
+    Gui.addCommand("VDO_Inspector", CmdInspectorVDO())
 
     # ============================================================
     # 3. Workbench con toolbar
@@ -110,11 +124,19 @@ if _vdo_installed:
         def Initialize(self):
             cmds = ["VDO_CrearHoja", "VDO_PanelEstandar",
                     "VDO_PanelFachada", "VDO_Coco4C", "VDO_PanelDivision",
-                    "VDO_Zocalo", "VDO_Editar"]
+                    "VDO_Zocalo", "VDO_Editar", "VDO_Inspector"]
             self.appendToolbar("VDO", cmds)
+            self.appendMenu("VDO", cmds)
 
         def Activated(self):
-            pass
+            try:
+                from vdo_universal_inspector import obtener_o_crear_dock_inspector
+                dock = obtener_o_crear_dock_inspector()
+                if dock is not None:
+                    dock.show()
+                    dock.raise_()
+            except Exception as exc:
+                print("[VDO Workbench] Aviso al activar dock inspector:", exc)
 
         def Deactivated(self):
             pass
@@ -123,3 +145,13 @@ if _vdo_installed:
             return "Gui::PythonWorkbench"
 
     Gui.addWorkbench(VDO_Workbench())
+
+    # Inicializar el DockWidget permanente si FreeCAD arrancó con interfaz gráfica
+    try:
+        if getattr(App, "GuiUp", False):
+            from vdo_universal_inspector import obtener_o_crear_dock_inspector
+            _dock = obtener_o_crear_dock_inspector()
+            if _dock is not None:
+                _dock.show()
+    except Exception as _dock_err:
+        print("[VDO InitGui] Aviso inicializando dock inspector:", _dock_err)

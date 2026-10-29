@@ -8,6 +8,7 @@
 import json
 from PySide import QtGui, QtCore
 
+from vdo_chassis_widget import VDOChassisControllerWidget
 from vdo_qt import VDO_DoubleSpinBox
 import FreeCAD as App
 import FreeCADGui as Gui
@@ -294,62 +295,20 @@ class CocoUnifiedTaskPanel(VDOTransactionMixin):
             grid_exp.addWidget(combo, fila, col + 1)
         layout_medidas.addWidget(grupo_exp)
 
-        # --- Tab 2: Estructura y Fondo ---
+        # --- Tab 2: Estructura / Chasis (Corte Transversal 2D Gestalt) ---
         tab_estructura = QtGui.QWidget()
         layout_estructura = QtGui.QVBoxLayout(tab_estructura)
+        layout_estructura.setContentsMargins(0, 0, 0, 0)
 
-        grupo_est = QtGui.QGroupBox("Estructura y Fondo")
-        grid_est = QtGui.QGridLayout(grupo_est)
+        scroll_est = QtGui.QScrollArea()
+        scroll_est.setWidgetResizable(True)
+        scroll_est.setFrameShape(QtGui.QFrame.NoFrame)
 
-        grid_est.addWidget(QtGui.QLabel("Tapa:"), 0, 0)
-        self.combo_tapa = QtGui.QComboBox()
-        self.combo_tapa.addItems(["externo", "interno"])
-        self.combo_tapa.setToolTip(
-            "Externo: la tapa cubre los laterales. Interno: la tapa entra "
-            "entre los laterales.")
-        grid_est.addWidget(self.combo_tapa, 0, 1)
+        self.box_chassis = VDOChassisControllerWidget()
+        self.box_chassis.sigChassisChanged.connect(self._on_chassis_changed)
+        scroll_est.setWidget(self.box_chassis)
 
-        grid_est.addWidget(QtGui.QLabel("Base:"), 1, 0)
-        self.combo_base = QtGui.QComboBox()
-        self.combo_base.addItems(["externo", "interno"])
-        self.combo_base.setToolTip(
-            "Externo: la base cubre los laterales. Interno: la base entra "
-            "entre los laterales.")
-        grid_est.addWidget(self.combo_base, 1, 1)
-
-        self.chk_fondo = QtGui.QCheckBox("Tiene fondo")
-        self.chk_fondo.setToolTip(
-            "Activa el respaldo. El fondo delgado va en Y+ con ranuras; "
-            "el grueso va retranqueado del borde trasero.")
-        grid_est.addWidget(self.chk_fondo, 2, 0, 1, 2)
-
-        grid_est.addWidget(QtGui.QLabel("Calibre fondo (mm):"), 3, 0)
-        self.spin_calibre = QtGui.QSpinBox()
-        self.spin_calibre.setRange(1, 25)
-        self.spin_calibre.setSuffix(" mm")
-        self.spin_calibre.setToolTip(
-            "Espesor del fondo. Hasta 8 mm se considera fondo delgado.")
-        grid_est.addWidget(self.spin_calibre, 3, 1)
-
-        grid_est.addWidget(QtGui.QLabel("Profundidad ranura (mm):"), 4, 0)
-        self.spin_ranura = VDO_DoubleSpinBox()
-        self.spin_ranura.setRange(0.5, 20.0)
-        self.spin_ranura.setSuffix(" mm")
-        self.spin_ranura.setDecimals(1)
-        self.spin_ranura.setToolTip(
-            "Profundidad de la ranura donde entra el fondo delgado.")
-        grid_est.addWidget(self.spin_ranura, 4, 1)
-
-        grid_est.addWidget(QtGui.QLabel("Distancia borde (mm):"), 5, 0)
-        self.spin_borde = VDO_DoubleSpinBox()
-        self.spin_borde.setRange(0, 100.0)
-        self.spin_borde.setSuffix(" mm")
-        self.spin_borde.setDecimals(1)
-        self.spin_borde.setToolTip(
-            "Retranqueo del fondo grueso respecto al borde trasero.")
-        grid_est.addWidget(self.spin_borde, 5, 1)
-
-        layout_estructura.addWidget(grupo_est)
+        layout_estructura.addWidget(scroll_est)
 
         # --- Tab 3: Divisiones (matriz de vanos + preview 2D) ---
         tab_divisiones = QtGui.QWidget()
@@ -393,10 +352,57 @@ class CocoUnifiedTaskPanel(VDOTransactionMixin):
         for spin in [self.spin_alto, self.spin_ancho,
                      self.spin_fondo, self.spin_espesor]:
             spin.valueChanged.connect(self._on_medida_changed)
-        self.combo_tapa.currentIndexChanged.connect(self._on_medida_changed)
-        self.combo_base.currentIndexChanged.connect(self._on_medida_changed)
 
         return widget
+
+    def _on_chassis_changed(self, cfg):
+        """Reacciona al cambio interactivo en el chasis 2D y actualiza el objeto."""
+        if getattr(self, "_building", False):
+            return
+        if self.obj is not None:
+            enc_sup = cfg.get("encuentros", {}).get("superior_izq", "tapa_domina")
+            tapa_val = "externo" if enc_sup == "tapa_domina" else "interno"
+            if hasattr(self.obj, "Tapa"):
+                self.obj.Tapa = tapa_val
+
+            enc_inf = cfg.get("encuentros", {}).get("inferior_izq", "lateral_domina")
+            base_val = "externo" if enc_inf == "base_domina" else "interno"
+            if hasattr(self.obj, "Base"):
+                self.obj.Base = base_val
+
+            fondo_act = cfg.get("caras", {}).get("fondo", {}).get("activa", True)
+            if hasattr(self.obj, "TieneFondo"):
+                self.obj.TieneFondo = bool(fondo_act)
+
+            base_info = cfg.get("base", {})
+            if "altura" in base_info and hasattr(self.obj, "AltoZocalo"):
+                try:
+                    self.obj.AltoZocalo = float(base_info["altura"])
+                except Exception:
+                    pass
+            if "separacion_frente" in base_info and hasattr(self.obj, "DistanciaFrente"):
+                try:
+                    self.obj.DistanciaFrente = float(base_info["separacion_frente"])
+                except Exception:
+                    pass
+
+            try:
+                if hasattr(self.obj, "VDO_Chassis_JSON"):
+                    self.obj.VDO_Chassis_JSON = json.dumps(cfg)
+                elif hasattr(self.obj, "addProperty"):
+                    self.obj.addProperty("App::PropertyString", "VDO_Chassis_JSON", "VDO",
+                                        "Configuración semiótica de Capa 1")
+                    self.obj.VDO_Chassis_JSON = json.dumps(cfg)
+            except Exception:
+                pass
+
+            doc = getattr(self.obj, "Document", None)
+            if doc is not None:
+                try:
+                    doc.recompute()
+                except Exception:
+                    pass
+        self._actualizar_resumen()
 
     def _crear_tab_espacios(self, layout, axis):
         """Crea la UI para un eje (X o Y)."""
@@ -537,16 +543,39 @@ class CocoUnifiedTaskPanel(VDOTransactionMixin):
         self.spin_fondo.setValue(float(obj.FondoModulo))
         self.spin_espesor.setValue(int(obj.Espesor))
 
-        idx = self.combo_tapa.findText(obj.Tapa)
-        if idx >= 0:
-            self.combo_tapa.setCurrentIndex(idx)
-        idx = self.combo_base.findText(obj.Base)
-        if idx >= 0:
-            self.combo_base.setCurrentIndex(idx)
-        self.chk_fondo.setChecked(obj.TieneFondo)
-        self.spin_calibre.setValue(int(obj.CalibreFondo))
-        self.spin_ranura.setValue(float(obj.ProfundidadRanura))
-        self.spin_borde.setValue(float(obj.DistanciaBorde))
+        if hasattr(self, "box_chassis") and self.box_chassis is not None:
+            raw_cfg = getattr(obj, "VDO_Chassis_JSON", None)
+            cfg = None
+            if raw_cfg:
+                try:
+                    cfg = json.loads(raw_cfg) if isinstance(raw_cfg, str) else raw_cfg
+                except Exception:
+                    cfg = None
+            if not cfg or not isinstance(cfg, dict):
+                tapa = getattr(obj, "Tapa", "externo")
+                base = getattr(obj, "Base", "interno")
+                tiene_fondo = getattr(obj, "TieneFondo", True)
+                cfg = {
+                    "caras": {
+                        "superior": {"activa": True, "tipo": "estructural"},
+                        "inferior": {"activa": True, "tipo": "estructural"},
+                        "izquierda": {"activa": True, "tipo": "estructural"},
+                        "derecha": {"activa": True, "tipo": "estructural"},
+                        "fondo": {"activa": bool(tiene_fondo), "tipo": "ranurado_5mm"},
+                    },
+                    "encuentros": {
+                        "superior_izq": "tapa_domina" if tapa == "externo" else "lateral_domina",
+                        "superior_der": "tapa_domina" if tapa == "externo" else "lateral_domina",
+                        "inferior_izq": "base_domina" if base == "externo" else "lateral_domina",
+                        "inferior_der": "base_domina" if base == "externo" else "lateral_domina",
+                    },
+                    "base": {
+                        "estrategia": "zocalo" if getattr(obj, "AltoZocalo", None) else "zocalo",
+                        "altura": float(getattr(obj, "AltoZocalo", 100.0) or 100.0),
+                        "separacion_frente": float(getattr(obj, "DistanciaFrente", 50.0) or 50.0),
+                    }
+                }
+            self.box_chassis.setChassisConfig(cfg)
 
         self.spin_rotacion.setValue(
             float(getattr(obj, "VDO_RotacionZ", 0.0)))
@@ -941,13 +970,18 @@ class CocoUnifiedTaskPanel(VDOTransactionMixin):
     # Resumen
     # =================================================================
     def _leer_valores_ui(self):
+        cfg = self.box_chassis.getChassisConfig() if hasattr(self, "box_chassis") and self.box_chassis else {}
+        enc_sup = cfg.get("encuentros", {}).get("superior_izq", "tapa_domina")
+        enc_inf = cfg.get("encuentros", {}).get("inferior_izq", "lateral_domina")
+        tapa_val = "externo" if enc_sup == "tapa_domina" else "interno"
+        base_val = "externo" if enc_inf == "base_domina" else "interno"
         return {
             "alto": self.spin_alto.value(),
             "ancho": self.spin_ancho.value(),
             "fondo": self.spin_fondo.value(),
             "espesor": self.spin_espesor.value(),
-            "tapa": self.combo_tapa.currentText(),
-            "base": self.combo_base.currentText(),
+            "tapa": tapa_val,
+            "base": base_val,
         }
 
     def _actualizar_resumen(self):
@@ -1170,8 +1204,7 @@ class CocoUnifiedTaskPanel(VDOTransactionMixin):
 
             for spin in (self.spin_alto, self.spin_ancho,
                          self.spin_fondo, self.spin_espesor,
-                         self.spin_calibre, self.spin_ranura,
-                         self.spin_borde, self.spin_rotacion):
+                         self.spin_rotacion):
                 spin.interpretText()
 
             self.obj.Alto = self.spin_alto.value()
@@ -1179,12 +1212,35 @@ class CocoUnifiedTaskPanel(VDOTransactionMixin):
             self.obj.FondoModulo = self.spin_fondo.value()
             self.obj.Espesor = self.spin_espesor.value()
 
-            self.obj.Tapa = self.combo_tapa.currentText()
-            self.obj.Base = self.combo_base.currentText()
-            self.obj.TieneFondo = self.chk_fondo.isChecked()
-            self.obj.CalibreFondo = self.spin_calibre.value()
-            self.obj.ProfundidadRanura = self.spin_ranura.value()
-            self.obj.DistanciaBorde = self.spin_borde.value()
+            if hasattr(self, "box_chassis") and self.box_chassis is not None:
+                cfg = self.box_chassis.getChassisConfig()
+                enc_sup = cfg.get("encuentros", {}).get("superior_izq", "tapa_domina")
+                enc_inf = cfg.get("encuentros", {}).get("inferior_izq", "lateral_domina")
+                self.obj.Tapa = "externo" if enc_sup == "tapa_domina" else "interno"
+                self.obj.Base = "externo" if enc_inf == "base_domina" else "interno"
+                self.obj.TieneFondo = bool(cfg.get("caras", {}).get("fondo", {}).get("activa", True))
+
+                base_info = cfg.get("base", {})
+                if "altura" in base_info and hasattr(self.obj, "AltoZocalo"):
+                    try:
+                        self.obj.AltoZocalo = float(base_info["altura"])
+                    except Exception:
+                        pass
+                if "separacion_frente" in base_info and hasattr(self.obj, "DistanciaFrente"):
+                    try:
+                        self.obj.DistanciaFrente = float(base_info["separacion_frente"])
+                    except Exception:
+                        pass
+
+                try:
+                    if hasattr(self.obj, "VDO_Chassis_JSON"):
+                        self.obj.VDO_Chassis_JSON = json.dumps(cfg)
+                    elif hasattr(self.obj, "addProperty"):
+                        self.obj.addProperty("App::PropertyString", "VDO_Chassis_JSON", "VDO",
+                                            "Configuración semiótica de Capa 1")
+                        self.obj.VDO_Chassis_JSON = json.dumps(cfg)
+                except Exception:
+                    pass
 
             anclaje = self.combo_anclaje.currentData()
             if anclaje:

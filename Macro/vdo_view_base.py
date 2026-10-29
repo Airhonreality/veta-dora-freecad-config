@@ -64,6 +64,8 @@ class VDOViewProviderBase:
         obj = obj or self.Object
         if obj is None or Gui is None:
             return False
+        # Sincronizar y enfocar el Inspector Universal lateral
+        enfocar_inspector_universal(obj)
         try:
             panel = self._crear_panel(obj)
             Gui.Control.showDialog(panel)
@@ -100,8 +102,8 @@ class VDOViewProviderBase:
     # Doble clic / edición
     # -----------------------------------------------------------------
     def doubleClicked(self, vobj):
-        # Abrir el panel directamente evita que FreeCAD entre/salga del
-        # modo edición y cierre el diálogo inmediatamente.
+        # Abrir el panel directamente y enfocar el Inspector lateral
+        enfocar_inspector_universal(getattr(vobj, "Object", None))
         return self._abrir_panel(vobj.Object)
 
     def setEdit(self, vobj, mode):
@@ -109,6 +111,8 @@ class VDOViewProviderBase:
             return False
         if Gui is None:
             return False
+        # Si el Inspector Universal está activo, enfocarlo y cargar el objeto
+        enfocar_inspector_universal(getattr(vobj, "Object", None))
         try:
             panel = self._crear_panel(vobj.Object)
             Gui.Control.showDialog(panel)
@@ -212,10 +216,36 @@ def reparar_viewprovider(obj):
     return None
 
 
+def enfocar_inspector_universal(obj):
+    """
+    Enfoca el QDockWidget del Inspector Universal y sincroniza la vista
+    según el objeto seleccionado.
+    """
+    if obj is None or Gui is None or not getattr(App, "GuiUp", False):
+        return False
+    try:
+        from vdo_universal_inspector import obtener_o_crear_dock_inspector
+        dock = obtener_o_crear_dock_inspector()
+        if dock is not None:
+            dock.show()
+            dock.raise_()
+            inspector = dock.widget()
+            if inspector is not None:
+                from vdo_selection_bridge import VDOSelectionBridge
+                tipo = VDOSelectionBridge.classify_object(obj)
+                if hasattr(inspector, "_on_selection_changed"):
+                    inspector._on_selection_changed(obj, tipo)
+                return True
+    except Exception as exc:
+        App.Console.PrintWarning(f"[VDO] Aviso al enfocar Inspector Universal: {exc}\n")
+    return False
+
+
 def abrir_panel_objeto(obj):
     """Abre el panel de cualquier módulo VDO, reparando el proxy si hace falta."""
     if obj is None:
         return False
+    enfocar_inspector_universal(obj)
     proxy = getattr(getattr(obj, "ViewObject", None), "Proxy", None)
     if not hasattr(proxy, "_abrir_panel"):
         proxy = reparar_viewprovider(obj)

@@ -6,7 +6,7 @@
 import FreeCAD as App
 import FreeCADGui as Gui
 
-from vdo_view_base import abrir_panel_objeto, diagnostico_viewprovider
+from vdo_view_base import abrir_panel_objeto, diagnostico_viewprovider, enfocar_inspector_universal
 
 seleccion = Gui.Selection.getSelection()
 if not seleccion:
@@ -15,4 +15,5 @@ if not seleccion:
 else:
     for obj in seleccion:
         App.Console.PrintMessage(diagnostico_viewprovider(obj) + "\n")
+    enfocar_inspector_universal(seleccion[0])
     abrir_panel_objeto(seleccion[0])

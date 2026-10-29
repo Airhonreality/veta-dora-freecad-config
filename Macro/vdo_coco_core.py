@@ -601,6 +601,16 @@ class ViewProviderCoco(VDOViewProviderBase):
         from vdo_coco_unified_task import CocoUnifiedTaskPanel
         return CocoUnifiedTaskPanel
 
+    def setEdit(self, vobj, mode):
+        from vdo_view_base import enfocar_inspector_universal
+        enfocar_inspector_universal(getattr(vobj, "Object", None))
+        return super().setEdit(vobj, mode)
+
+    def doubleClicked(self, vobj):
+        from vdo_view_base import enfocar_inspector_universal
+        enfocar_inspector_universal(getattr(vobj, "Object", None))
+        return super().doubleClicked(vobj)
+
 
 def make_coco(configuracion):
     """
