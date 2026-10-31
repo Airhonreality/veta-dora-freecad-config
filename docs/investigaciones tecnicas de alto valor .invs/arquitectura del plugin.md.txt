@@ -1,0 +1,204 @@
+Arquitectura de Desarrollo y Empaquetado Profesional para el Workbench de Carpintería Paramétrica en FreeCADLa transformación de un conjunto desorganizado de scripts de Python en un entorno de trabajo (Workbench) profesional, distribuible y mantenible dentro del ecosistema de FreeCAD exige la adopción rigurosa de las especificaciones oficiales de empaquetado de FreeCAD y de las convenciones avanzadas de arquitectura de software en Python. Un módulo orientado a la modulación y fabricación de carpintería paramétrica debe trascender la mera ejecución de algoritmos geométricos; es imprescindible que garantice una integración nativa con el motor 3D, una coexistencia armónica con la interfaz gráfica de usuario y una compatibilidad total tanto con el Gestor de Complementos (Addon Manager) oficial como con sistemas de despliegue corporativo centralizados.Estándar Oficial de Empaquetado y Metadatos de FreeCAD y PythonEl estándar contemporáneo de empaquetado en FreeCAD se articula en torno al archivo de manifiesto package.xml, introducido formalmente a partir de la versión 0.20 para sustituir la fragmentación de configuraciones legadas. Este archivo, estructurado en XML 1.0 según la especificación REP 149 derivada del ecosistema ROS, debe posicionarse en la raíz del repositorio y constituye la fuente primaria de información que el Addon Manager procesa para catalogar, validar e instalar la extensión.XML<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<package format="1" xmlns="https://wiki.freecad.org/Package_Metadata">
+  <name>CarpinteriaParametrica</name>
+  <description>Workbench profesional para el diseño, modulación y fabricación de carpintería paramétrica y mobiliario.</description>
+  <version>1.0.0</version>
+  <date>2026-10-30</date>
+  <maintainer email="soporte@empresa.com">Equipo de Desarrollo</maintainer>
+  <license>LGPL-2.1-or-later</license>
+  <url type="repository">https://github.com/organizacion/CarpinteriaParametrica</url>
+  <url type="readme">https://github.com/organizacion/CarpinteriaParametrica/blob/main/README.md</url>
+  <icon>Resources/icons/CarpinteriaWorkbench.svg</icon>
+
+  <content>
+    <workbench>
+      <classname>CarpinteriaWorkbench</classname>
+      <subdirectory>./</subdirectory>
+      <icon>Resources/icons/CarpinteriaWorkbench.svg</icon>
+    </workbench>
+  </content>
+
+  <depend>
+    <package>BIM</package>
+  </depend>
+</package>
+Gestión de Dependencias MultinivelPara asegurar la robustez en entornos heterogéneos, FreeCAD evalúa tres niveles complementarios de declaración de dependencias:El primer nivel corresponde al archivo package.xml, el cual gestiona la jerarquía de módulos internos de FreeCAD o de otros complementos (Workbenches) requeridos para la ejecución, permitiendo declarar formalmente la necesidad del entorno BIM o de complementos auxiliares de modelado. El segundo nivel se gestiona mediante el archivo metadata.txt, en el cual se especifican dependencias de bibliotecas de Python del sistema o facultativas mediante las claves pylibs= y optionalpylibs=. Por último, el tercer nivel emplea un archivo requirements.txt o pyproject.toml para definir paquetes del ecosistema PyPI (como numpy o scipy), permitiendo que el Addon Manager utilice la herramienta pip en un entorno aislado durante el proceso de instalación.Estructura Canónica de DirectoriosEl paso de un repositorio plano a un espacio de nombres (namespace) profesional requiere organizar el código fuente distinguiendo estrictamente la lógica de datos, la representación visual y los recursos de interfaz.Ruta de Archivo o DirectorioRol Arquitectónico y PropósitoÁmbito de Cargapackage.xmlManifiesto de metadatos del complemento para el Addon Manager.Global / Instalaciónmetadata.txt / requirements.txtDeclaración de dependencias de Python y de otros complementos.Entorno de EjecuciónInit.pyPunto de entrada de bajo nivel. Inicialización sin GUI.Consola / CLI / GUIInitGui.pyPunto de entrada de la interfaz gráfica. Registro de Workbench, barras de herramientas y menús.Exclusivo GUIfreecad/carpinteria/Paquete Python modular con el núcleo de la lógica de negocio.Núcleo de Códigofreecad/carpinteria/objects/Implementación de las clases Proxy para objetos paramétricos FeaturePython.Modelo de Datosfreecad/carpinteria/views/Clases ViewProvider para la representación en escena 3D (Coin3D).Exclusivo GUIfreecad/carpinteria/gui/Implementación de interfaces PySide, paneles de tareas (Task Panels) y widgets .ui.Exclusivo GUIResources/icons/Recursos gráficos vectoriales (.svg) organizados y archivos de compilación Qt (.qrc).Recursos GráficosCiclo de Vida e Inicialización: Mecánica de Init.py e InitGui.pyFreeCAD opera bajo un modelo conceptual que separa estrictamente la capa de aplicación y procesamiento geométrico de la capa de presentación e interacción gráfica. Esta diferenciación impone una arquitectura de inicialización dividida en dos fases secuenciales.Durante el arranque general de FreeCAD, el sistema escanea el directorio de módulos /Mod/ e invoca el archivo Init.py de cada complemento. Este archivo se ejecuta siempre, independientemente de si la aplicación se inicia en interfaz gráfica o en modo de línea de comandos sin cabecera (headless) para automatización de procesos en servidor. En consecuencia, la responsabilidad de Init.py debe reducirse estrictamente a registrar clases de datos, asociar tipos de archivo o extensiones de importación/exportación mediante FreeCAD.addImportType() y FreeCAD.addExportType(), e inicializar variables del árbol de parámetros globales (App.ParamGet). La inclusión de importaciones relativas a paquetes de interfaz gráfica como FreeCADGui, PySide o pivy dentro de Init.py genera fallos catastróficos en entornos de ejecuciones automatizadas, rompiendo la compatibilidad con herramientas de CI/CD y automatización industrial.Si FreeCAD se inicia con la interfaz gráfica activa, el sistema verifica que la variable FreeCAD.GuiUp sea verdadera e invoca inmediatamente después el archivo InitGui.py. En esta segunda fase se instancian las clases derivadas de FreeCADGui.Workbench y se registran las barras de herramientas, menús contextuales, paletas y comandos de la interfaz gráfica.Pythonimport os
+import FreeCAD
+import FreeCADGui
+
+class CarpinteriaWorkbench(FreeCADGui.Workbench):
+    """Definición estandarizada del Workbench de Carpintería Paramétrica."""
+
+    MenuText = "Carpintería Paramétrica"
+    ToolTip = "Modulación y diseño paramétrico de mobiliario y paneles."
+
+    def __init__(self):
+        icon_path = os.path.join(
+            FreeCAD.getHomePath(), "Mod", "CarpinteriaParametrica",
+            "Resources", "icons", "CarpinteriaWorkbench.svg"
+        )
+        self.__class__.Icon = icon_path
+
+    def Initialize(self):
+        """Se ejecuta una sola vez al inicializar la GUI de FreeCAD."""
+        import freecad.carpinteria.gui.commands as CarpinteriaCommands
+
+        # Estructuración de Barras de Herramientas (Toolbars)
+        self.appendToolbar(
+            "Carpintería - Módulos Base",
+            ["Carpinteria_CrearGabinete", "Carpinteria_AgregarRepisa"]
+        )
+        self.appendToolbar(
+            "Carpintería - Herrajes",
+            ["Carpinteria_AgregarBisagra", "Carpinteria_AgregarCorredera"]
+        )
+
+        # Estructuración de Menús Desplegables
+        self.appendMenu(
+            "Carpintería",
+            ["Carpinteria_CrearGabinete", "Carpinteria_AgregarRepisa", "Carpinteria_ExportarDespiece"]
+        )
+
+    def Activated(self):
+        """Método invocado cuando el usuario conmuta hacia este Workbench."""
+        pass
+
+    def Deactivated(self):
+        """Método invocado cuando el usuario cambia a otro Workbench."""
+        pass
+
+    def Contextmenu(self, selected_object):
+        """Permite la inyección dinámica de opciones al menú del botón derecho."""
+        self.appendContextMenu("Carpintería", ["Carpinteria_EditarModulo"])
+
+    def GetClassName(self):
+        return "Gui::PythonWorkbench"
+
+# Registro formal en el entorno gráfico
+FreeCADGui.addWorkbench(CarpinteriaWorkbench())
+Arquitectura GUI: Comandos, Toolbars, Ventanas y Task PanelsPara ofrecer la misma usabilidad y calidad operativa que los módulos nativos de FreeCAD, el complemento debe sustituir los scripts sueltos por el patrón de diseño basado en Comandos GUI y Paneles de Tareas (Task Panels).Registro Estandarizado de Comandos (FreeCADGui.addCommand)Cada acción en las barras de herramientas o menús debe abstraerse como una clase Python que cumpla con el protocolo de comandos de FreeCAD, exponiendo los métodos GetResources(), IsActive() y Activated().Pythonimport FreeCAD
+import FreeCADGui
+
+class CommandCrearGabinete:
+    """Comando profesional para la creación interactiva de gabinetes."""
+
+    def GetResources(self):
+        return {
+            'Pixmap': 'Carpinteria_Gabinete',
+            'MenuText': 'Crear Gabinete Paramétrico',
+            'ToolTip': 'Crea un gabinete modular con propiedades paramétricas ajustables.'
+        }
+
+    def IsActive(self):
+        """Controla la habilitación dinámica del botón en la interfaz."""
+        return FreeCAD.ActiveDocument is not None
+
+    def Activated(self):
+        """Abre el panel de tareas en la vista combinada lateral."""
+        from freecad.carpinteria.gui.task_gabinete import GabineteTaskPanel
+        panel = GabineteTaskPanel()
+        FreeCADGui.Control.showDialog(panel)
+
+FreeCADGui.addCommand('Carpinteria_CrearGabinete', CommandCrearGabinete())
+Integración de Interfaces PySide mediante Paneles de Tareas (Task Panels)El uso de ventanas emergentes flotantes genera interrupciones en el flujo de trabajo tridimensional y resulta inconsistente con los estándares visuales de FreeCAD. La técnica recomendada consiste en integrar los controles dentro de la pestaña "Tarea" (Task Panel) de la Vista Combinada utilizando la API FreeCADGui.Control.showDialog().Pythonfrom PySide2 import QtWidgets, QtCore
+import FreeCAD
+import FreeCADGui
+
+class GabineteTaskPanel:
+    """Panel de tareas alojado en la vista lateral de FreeCAD."""
+
+    def __init__(self):
+        self.form = QtWidgets.QWidget()
+        self.form.setWindowTitle("Parámetros del Gabinete")
+
+        layout = QtWidgets.QVBoxLayout(self.form)
+
+        self.spin_ancho = QtWidgets.QDoubleSpinBox()
+        self.spin_ancho.setRange(100.0, 3000.0)
+        self.spin_ancho.setValue(600.0)
+        self.spin_ancho.setSuffix(" mm")
+
+        layout.addWidget(QtWidgets.QLabel("Ancho del Módulo:"))
+        layout.addWidget(self.spin_ancho)
+
+    def accept(self):
+        """Se ejecuta al presionar el botón 'OK' nativo del panel de tareas."""
+        doc = FreeCAD.ActiveDocument
+        doc.openTransaction("Crear Gabinete Paramétrico")
+
+        obj = doc.addObject("Part::FeaturePython", "GabineteParametrico")
+        from freecad.carpinteria.objects.gabinete import GabineteProxy
+        from freecad.carpinteria.views.view_gabinete import ViewProviderGabinete
+
+        GabineteProxy(obj, self.spin_ancho.value())
+        ViewProviderGabinete(obj.ViewObject)
+
+        doc.commitTransaction()
+        doc.recompute()
+        FreeCADGui.Control.closeDialog()
+        return True
+
+    def reject(self):
+        """Se ejecuta al presionar 'Cancelar' o la tecla Escape."""
+        FreeCADGui.Control.closeDialog()
+        return True
+Objetos Paramétricos (FeaturePython) y Proveedores de Vista (ViewProvider)Un modelo de carpintería paramétrica sólido debe separar el algoritmo geométrico subyacente de su representación visual. La geometría B-Rep se encapsula en una clase Proxy conectada a un objeto Part::FeaturePython, mientras que la asignación de colores, modos de sombreado e iconos del árbol de objetos se gestiona mediante una clase Proxy en ViewObject.Pythonclass GabineteProxy:
+    """Proxy del objeto de datos geométricos (ejecución agnóstica de GUI)."""
+
+    def __init__(self, obj, ancho=600.0):
+        obj.Proxy = self
+        obj.addProperty("App::PropertyLength", "Ancho", "Dimensiones", "Ancho total").Ancho = ancho
+        obj.addProperty("App::PropertyLength", "Alto", "Dimensiones", "Alto total").Alto = 720.0
+        obj.addProperty("App::PropertyLength", "Profundidad", "Dimensiones", "Profundidad total").Profundidad = 560.0
+
+    def execute(self, obj):
+        """Reconstruye la geometría tridimensional durante el recomputo del documento."""
+        import Part
+        mueble = Part.makeBox(obj.Ancho.Value, obj.Profundidad.Value, obj.Alto.Value)
+        obj.Shape = mueble
+
+    def __getstate__(self):
+        return None
+
+    def __setstate__(self, state):
+        return None
+
+
+class ViewProviderGabinete:
+    """Proxy de visualización tridimensional e interacción gráfica (Coin3D)."""
+
+    def __init__(self, vobj):
+        vobj.Proxy = self
+
+    def attach(self, vobj):
+        """Asigna los nodos de sombreado e iluminación a la escena."""
+        from pivy import coin
+        self.shaded = coin.SoGroup()
+        vobj.addDisplayMode(self.shaded, "Shaded")
+
+    def getIcon(self):
+        """Devuelve la ruta al icono visualizado en el árbol de componentes."""
+        import os, FreeCAD
+        return os.path.join(
+            FreeCAD.getHomePath(), "Mod", "CarpinteriaParametrica",
+            "Resources", "icons", "GabineteTree.svg"
+        )
+
+    def __getstate__(self):
+        return None
+
+    def __setstate__(self, state):
+        return None
+Estrategias de Integración: Workbench Independiente vs. Módulo Adicional en BIMAl abordar la arquitectura de la herramienta para el flujo de trabajo edilicio o de diseño de interiores, surge el dilema de definir si el módulo debe implementarse como un Workbench independiente o como un complemento que dependa y se ejecute estrictamente dentro del Workbench BIM de FreeCAD.Análisis comparativo de los enfoques arquitectónicos:En el enfoque de Workbench Independiente, la herramienta dispone de su propio espacio de trabajo en el menú principal de selección de entornos. Esta alternativa ofrece la máxima autonomía de código, manteniendo el desarrollo completamente desacoplado de las actualizaciones internas del entorno BIM. No obstante, genera cierta fricción en el usuario final si este necesita conmutar constantemente de Workbench para intercalar la modelación de muros con la colocación de mobiliario paramétrico.En el enfoque de Módulo Adicional Estricto de BIM, la extensión no registra un espacio de trabajo propio, sino que inyecta sus comandos directamente dentro de los menús y barras del Workbench BIM. Aunque esto resulta conveniente para proyectistas que operan exclusivamente en BIM, introduce un acoplamiento rígido hacia la API del módulo BIM, exponiendo el plugin a fallos en caso de reestructuraciones del código base del entorno primario.La Arquitectura Híbrida Autónoma representa la solución técnica más avanzada y elegante. En este esquema, el complemento se empaqueta e instala como un Workbench totalmente independiente, garantizando su funcionamiento en cualquier instalación de FreeCAD. No obstante, durante la inicialización visual (InitGui.py), el módulo ejecuta un proceso de detección pasiva: si el Workbench BIM está instalado y cargado en memoria, inyecta dinámicamente sus barras de herramientas y menús dentro de la interfaz de BIM sin alterar el árbol de dependencias central.Criterio TéchnicoWorkbench IndependienteMódulo Adicional de BIMArquitectura Híbrida Autónoma (Recomendada)Aislamiento de CódigoAbsoluto. Cero riesgo por cambios en otros módulos.Bajo. Dependencia acoplada de la API de BIM.Alto. Núcleo aislado con conectores pasivos.Experiencia de Usuario (UX)Aísla las herramientas en un entorno enfocado.Excelente para usuarios únicos de BIM.Óptima. Menú propio e inyección en BIM.MantenibilidadAlta. Ciclo de vida del repositorio 100% autónomo.Vulnerable a cambios en el código base de BIM.Alta. Control de excepciones en la inyección.Requisitos de InstalaciónFunciona en cualquier distribución de FreeCAD.Exige la presencia obligatoria de BIM.Funciona como Standalone o integrado según disponibilidad.Pythondef inyectar_en_workbench_bim():
+    """Inyección dinámica y pasiva dentro del Workbench BIM si está activo."""
+    try:
+        bim_wb = FreeCADGui.getWorkbench("BIMWorkbench")
+        if bim_wb:
+            bim_wb.appendToolbar(
+                "Carpintería Paramétrica",
+                ["Carpinteria_CrearGabinete", "Carpinteria_ExportarDespiece"]
+            )
+    except Exception:
+        # Fallo silencioso si BIM no se halla cargado en la sesión activa
+        pass
+Despliegue, Distribución y Gestión de Entrega EmpresarialEl empaquetado estandarizado permite desplegar el Workbench tanto en la comunidad global de software libre como en infraestructuras corporativas cerradas bajo normativas de auditoría interna.Publicación Oficial en el FreeCAD Addon ManagerPara poner el módulo a disposición de la comunidad internacional a través del Gestor de Complementos oficial de FreeCAD, el flujo de publicación requiere los siguientes pasos:Verificación de Metadatos: Validar la integridad del manifiesto package.xml mediante las Herramientas de Desarrollador del Addon Manager (Tools -> Addon Manager -> Developer Tools).Alojamiento en Repositorio Público: Publicar el código fuente en un servicio Git accesible (GitHub, GitLab, Framagit o Salsa Debian) garantizando el etiquetado correcto de versiones semánticas.Solicitud de Inclusión (Pull Request): Realizar una bifurcación (fork) del repositorio de índice oficial FreeCAD/FreeCAD-addons e incluir el nuevo módulo como un submódulo de Git en el archivo .gitmodules, asegurando su ordenación alfabética.Inspección Automatizada: El pipeline de integración continua del proyecto FreeCAD verificará la sintaxis del archivo package.xml, la validez de la licencia informada y la ausencia de conflictos en la estructura de rutas.Despliegue en Entornos Corporativos PrivadosEn entornos industriales donde el software debe distribuirse en redes locales sin acceso a Internet o protegiendo algoritmos propietarios, se deben utilizar las siguientes metodologías de despliegue:A partir de la versión 0.21, FreeCAD admite la configuración de repositorios Git personalizados dentro de las preferencias del Addon Manager (Edit -> Preferences -> Addon Manager -> Custom Repositories). Esto permite a los administradores de sistemas apuntar el cliente de FreeCAD a un servidor GitLab o GitHub Enterprise interno, gestionando actualizaciones automáticas dentro del perímetro de seguridad de la empresa. Alternativamente, las empresas pueden automatizar el despliegue mediante Directivas de Grupo (GPO) o scripts de configuración, copiando la carpeta del módulo empaquetado directamente en la ruta del sistema correspondiente:Entornos Windows: %APPDATA%\FreeCAD\Mod\CarpinteriaParametrica\Entornos Linux: ~/.local/share/FreeCAD/Mod/CarpinteriaParametrica/Entornos macOS: ~/Library/Application Support/FreeCAD/Mod/CarpinteriaParametrica/Conclusiones y Recomendaciones de IngenieríaAdopción del Estándar package.xml: Es indispensable sustituir la colección de scripts aislados por la estructura de paquetes oficial centrada en el manifiesto package.xml en la raíz del proyecto. Esto garantiza la correcta lectura de metadatos, iconos y dependencias por parte de FreeCAD.Desacoplamiento entre Modelo e Interfaz: La lógica de negocio y modelado geométrico debe aislarse en clases Proxy Part::FeaturePython dentro de Init.py o submódulos del núcleo de aplicación, restringiendo el uso de FreeCADGui, PySide y gráficos Coin3D a los archivos de vista (ViewProvider) y a la inicialización visual de InitGui.py.Estandarización de Interfaces con Task Panels: Se debe abandonar la implementación de diálogos emergentes flotantes y estandarizar la creación de herramientas mediante FreeCADGui.Control.showDialog(), garantizando la integración nativa del flujo de trabajo en la pestaña lateral de tareas de FreeCAD.Implementación de Arquitectura Híbrida: La solución más robusta y elegante consiste en registrar el desarrollo como un Workbench totalmente independiente, agregando una rutina de detección que inyecte sus herramientas en el Workbench BIM cuando este se encuentre activo. Esto proporciona máxima flexibilidad operativa y protege al módulo frente a cambios en APIs de terceros.

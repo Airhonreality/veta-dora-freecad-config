@@ -1,0 +1,2242 @@
+{
+ "cajon": {
+  "AltoCaja": {
+   "doc": "Alto de los laterales de la caja (85/120/150)",
+   "grupo": "Caja",
+   "typeid": "App::PropertyLength",
+   "valor": 120.0
+  },
+  "AltoFrente": {
+   "doc": "Alto total asignado a la fachada (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 225.0
+  },
+  "AnchoLibre": {
+   "doc": "Ancho libre interior del mueble LI (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 564.0
+  },
+  "AnchoModulo": {
+   "doc": "Ancho total del módulo (para la fachada, mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 600.0
+  },
+  "ExpressionEngine": {
+   "doc": "Property expressions",
+   "grupo": "Base",
+   "typeid": "App::PropertyExpressionEngine",
+   "valor": []
+  },
+  "GrosorCaja": {
+   "doc": "Espesor del tablero de la caja (15/16 mm)",
+   "grupo": "Caja",
+   "typeid": "App::PropertyLength",
+   "valor": 16.0
+  },
+  "GrosorFachada": {
+   "doc": "Espesor de la fachada decorativa (18 mm)",
+   "grupo": "Fachada",
+   "typeid": "App::PropertyLength",
+   "valor": 18.0
+  },
+  "GrosorFondo": {
+   "doc": "Espesor del piso del cajón (6/12 mm)",
+   "grupo": "Caja",
+   "typeid": "App::PropertyLength",
+   "valor": 6.0
+  },
+  "Hijos": {
+   "doc": "Lista de componentes vinculados (paneles, herrajes)",
+   "grupo": "Estructura Lógica",
+   "typeid": "App::PropertyLinkListChild",
+   "valor": [
+    "Cajon_Lateral_Izq",
+    "Cajon_Lateral_Der",
+    "Cajon_Contrafrente",
+    "Cajon_Frente_Interior",
+    "Cajon_Piso",
+    "Cajon_Fachada"
+   ]
+  },
+  "Label": {
+   "doc": "User name of the object (UTF8)",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": "Cajon"
+  },
+  "Label2": {
+   "doc": "User description of the object (UTF8)",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": ""
+  },
+  "LocalPlacement": {
+   "doc": "Pose relativa al vano del COCO",
+   "grupo": "VDO",
+   "typeid": "App::PropertyPlacement",
+   "valor": {
+    "angle": 0.0,
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "base": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "LongitudGuia": {
+   "doc": "Largo nominal de la guía (0 = auto según ProfLibre)",
+   "grupo": "Herraje",
+   "typeid": "App::PropertyLength",
+   "valor": 0.0
+  },
+  "MarcaCorredera": {
+   "doc": "Marca de corredera oculta (delta y cotas)",
+   "enum": [
+    "BLUM-TANDEM",
+    "DUCASSE-OCULTA",
+    "GEN-OCULTA",
+    "HAFELE-OCULTA",
+    "blum_tandem",
+    "ducasse",
+    "generica",
+    "hafele"
+   ],
+   "grupo": "Herraje",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "blum_tandem"
+  },
+  "MontajeTrasera": {
+   "doc": "Montaje de la contra-frente",
+   "enum": [
+    "entre_laterales",
+    "testa"
+   ],
+   "grupo": "Herraje",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "entre_laterales"
+  },
+  "ParentCOCO": {
+   "doc": "Módulo COCO padre",
+   "grupo": "VDO",
+   "typeid": "App::PropertyLinkHidden",
+   "valor": null
+  },
+  "Placement": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyPlacement",
+   "valor": {
+    "angle": 0.0,
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "base": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "ProfLibre": {
+   "doc": "Profundidad libre interior del mueble (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 560.0
+  },
+  "Proxy": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyPythonObject",
+   "valor": "<VDO.cad.objects.vdo_cad_cajon.CajonFeature object at 0x7fc040408050>"
+  },
+  "Shape": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "Part::PropertyPartShape",
+   "valor": "<Shape object at 0x55dceb48a6c0>"
+  },
+  "ShapeMaterial": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "Materials::PropertyMaterial",
+   "valor": "<Material at 0x55dcea236300>"
+  },
+  "SistemaApertura": {
+   "doc": "Sistema de apertura del frente del cajón",
+   "enum": [
+    "tirador",
+    "gola_aluminio",
+    "inglete_45",
+    "push_open"
+   ],
+   "grupo": "Fachada",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "tirador"
+  },
+  "TipoCorredera": {
+   "doc": "Tipo de corredera: oculta / telescópica / metálica",
+   "enum": [
+    "oculta",
+    "telescopica",
+    "metalica"
+   ],
+   "grupo": "Herraje",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "oculta"
+  },
+  "TipoMontaje": {
+   "doc": "Tipo de montaje de la fachada frente al vano",
+   "enum": [
+    "parche",
+    "semiparche",
+    "embebida"
+   ],
+   "grupo": "Fachada",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "parche"
+  },
+  "VDO_Anclaje": {
+   "doc": "Esquina del módulo que se alinea con el punto de colocación",
+   "enum": [
+    "inferior_izquierda_frente",
+    "inferior_derecha_frente",
+    "inferior_izquierda_fondo",
+    "inferior_derecha_fondo",
+    "superior_izquierda_frente",
+    "superior_derecha_frente",
+    "superior_izquierda_fondo",
+    "superior_derecha_fondo",
+    "centro_inferior"
+   ],
+   "grupo": "Colocación",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "inferior_izquierda_frente"
+  },
+  "VDO_Herraje_Ref": {
+   "doc": "Herraje de corredera oculta",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "blum_tandem"
+  },
+  "VDO_Lados_Apoyados": {
+   "doc": "Lados del módulo apoyados contra muro/piso (JSON)",
+   "grupo": "Exposición",
+   "typeid": "App::PropertyString",
+   "valor": "[\"fondo\"]"
+  },
+  "VDO_Lados_Vistos": {
+   "doc": "Lados del módulo visibles desde el espacio (JSON)",
+   "grupo": "Exposición",
+   "typeid": "App::PropertyString",
+   "valor": "[\"frente\"]"
+  },
+  "VDO_Material_Ref": {
+   "doc": "Material de las piezas",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "melamina_standar"
+  },
+  "VDO_Modulo": {
+   "doc": "Clave de modulo VDO (testigo de tipo; no editar)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "cajon"
+  },
+  "VDO_Paneles_JSON": {
+   "doc": "Descripción JSON de las piezas del despiece",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "[{\"nombre\": \"Cajon_Lateral_Izq\", \"tipo\": \"panel\", \"largo\": 550.0, \"ancho\": 120.0, \"espesor\": 16.0, \"cantidad\": 1, \"material_ref\": \"melamina_standar\", \"mecanizados\": [{\"tipo\": \"ranura_piso\", \"cara\": \"interna\", \"z_base\": 11.5, \"ancho\": 6.0, \"prof\": 4.0, \"largo\": 550.0}, {\"tipo\": \"taladro_fondo\", \"ø\": 6.0, \"prof\": 12.0, \"y_desde_trasero\": 8.0, \"x_centrada\": true}], \"rol\": \"lateral_izquierdo\", \"orientacion\": \"vertical\", \"panel_largo\": 120.0, \"panel_ancho\": 550.0, \"panel_espesor\": 16.0, \"pos\": [0.0, 0.0, 0.0], \"rot_z\": 0.0}, {\"nombre\": \"Cajon_Lateral_Der\", \"tipo\": \"panel\", \"largo\": 550.0, \"ancho\": 120.0, \"espesor\": 16.0, \"cantidad\": 1, \"material_ref\": \"melamina_standar\", \"mecanizados\": [{\"tipo\": \"ranura_piso\", \"cara\": \"interna\", \"z_base\": 11.5, \"ancho\": 6.0, \"prof\": 4.0, \"largo\": 550.0}, {\"tipo\": \"taladro_fondo\", \"ø\": 6.0, \"prof\": 12.0, \"y_desde_trasero\": 8.0, \"x_centrada\": true}], \"rol\": \"lateral_derecho\", \"orientacion\": \"vertical\", \"panel_largo\": 120.0, \"panel_ancho\": 550.0, \"panel_espesor\": 16.0, \"pos\": [499.0, 0.0, 0.0], \"rot_z\": 0.0}, {\"nombre\": \"Cajon_Contrafrente\", \"tipo\": \"panel\", \"largo\": 483.0, \"ancho\": 102.5, \"espesor\": 16.0, \"cantidad\": 1, \"material_ref\": \"melamina_standar\", \"mecanizados\": [{\"tipo\": \"notch_inferior\", \"lados\": \"ambos\", \"ancho\": 35.0, \"alto\": 12.0}], \"rol\": \"contra_frente\", \"orientacion\": \"vertical\", \"panel_largo\": 102.5, \"panel_ancho\": 483.0, \"panel_espesor\": 16.0, \"pos\": [499.0, 534.0, 17.5], \"rot_z\": 90.0}, {\"nombre\": \"Cajon_Frente_Interior\", \"tipo\": \"panel\", \"largo\": 483.0, \"ancho\": 102.5, \"espesor\": 16.0, \"cantidad\": 1, \"material_ref\": \"melamina_standar\", \"mecanizados\": [{\"tipo\": \"zona_locking_device\", \"cara\": \"inferior\", \"nota\": \"Gancho de acople (locking device) según ficha\"}], \"rol\": \"frente_interior\", \"orientacion\": \"vertical\", \"panel_largo\": 102.5, \"panel_ancho\": 483.0, \"panel_espesor\": 16.0, \"pos\": [499.0, 0.0, 17.5], \"rot_z\": 90.0}, {\"nombre\": \"Cajon_Piso\", \"tipo\": \"panel\", \"largo\": 550.0, \"ancho\": 503.0, \"espesor\": 6.0, \"cantidad\": 1, \"material_ref\": \"melamina_standar\", \"mecanizados\": [], \"rol\": \"piso\", \"orientacion\": \"horizontal\", \"panel_largo\": 503.0, \"panel_ancho\": 550.0, \"panel_espesor\": 6.0, \"pos\": [6.0, 0.0, 11.5], \"rot_z\": 0.0}, {\"nombre\": \"Cajon_Fachada\", \"tipo\": \"panel\", \"largo\": 596.0, \"ancho\": 221.0, \"espesor\": 18.0, \"cantidad\": 1, \"material_ref\": \"melamina_standar\", \"sistema_apertura\": \"tirador\", \"operacion_canto\": \"CANTO_ESTANDAR\", \"cantos\": {\"norte\": \"FX\", \"sur\": \"FX\", \"este\": \"FX\", \"oeste\": \"FX\"}, \"mecanizados\": [{\"tipo\": \"canto\", \"caras\": 4, \"nota\": \"Fachada: 4 cantos (convención VDO)\"}, {\"tipo\": \"CANTO_ESTANDAR\", \"cara\": \"superior\", \"nota\": \"Sistema de apertura: tirador\"}], \"rol\": \"fachada\", \"orientacion\": \"vertical\", \"panel_largo\": 221.0, \"panel_ancho\": 596.0, \"panel_espesor\": 18.0, \"pos\": [555.5, -18.0, 0.0], \"rot_z\": 90.0}]"
+  },
+  "VDO_ResumenDespiece": {
+   "doc": "Resumen legible del despiece (solo lectura)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "Cajón Trinidad v2 (oculta)\nGuía blum_tandem: LG=550 mm (auto, Δ=49 mm)\nCaja ext: 515 x 550 x 120 mm (G=16)\nContra-frente: 483 x 102.5 mm (entre_laterales)\nPiso: 503 x 550 x 6 mm (z=11.5)\nFachada: 596 x 221 x 18 mm (tirador)\nTipo corredera: oculta"
+  },
+  "VDO_RotacionZ": {
+   "doc": "Rotación del módulo alrededor del eje Z (pose, no geometría)",
+   "grupo": "Colocación",
+   "typeid": "App::PropertyAngle",
+   "valor": 0.0
+  },
+  "VDO_Subtipo": {
+   "doc": "Subtipo",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "cajon_oculta"
+  },
+  "VDO_Tipo": {
+   "doc": "Tipo de objeto",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "contenedor"
+  },
+  "Visibility": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyBool",
+   "valor": true
+  },
+  "_ElementMapVersion": {
+   "doc": "",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": "15.70200.5"
+  }
+ },
+ "coco_4c": {
+  "Alto": {
+   "doc": "Alto total del módulo (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 720.0
+  },
+  "Ancho": {
+   "doc": "Ancho total del módulo (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 600.0
+  },
+  "Base": {
+   "doc": "Configuración de la base",
+   "enum": [
+    "externo",
+    "interno"
+   ],
+   "grupo": "Estructura",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "interno"
+  },
+  "CalibreFondo": {
+   "doc": "Espesor del fondo (mm)",
+   "grupo": "Estructura",
+   "typeid": "App::PropertyInteger",
+   "valor": 6
+  },
+  "DistanciaBorde": {
+   "doc": "Distancia del borde para fondo grueso (mm)",
+   "grupo": "Estructura",
+   "typeid": "App::PropertyFloat",
+   "valor": 18.0
+  },
+  "Espesor": {
+   "doc": "Espesor del tablero (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyInteger",
+   "valor": 18
+  },
+  "ExpressionEngine": {
+   "doc": "Property expressions",
+   "grupo": "Base",
+   "typeid": "App::PropertyExpressionEngine",
+   "valor": []
+  },
+  "FondoModulo": {
+   "doc": "Profundidad total del módulo (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 580.0
+  },
+  "Hijos": {
+   "doc": "Insertos contenidos (puertas, cajones, paneles)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyLinkListChild",
+   "valor": [
+    "COCO_4C_Techo",
+    "COCO_4C_Base",
+    "COCO_4C_Lateral_Izq",
+    "COCO_4C_Lateral_Der",
+    "COCO_4C_Fondo"
+   ]
+  },
+  "Label": {
+   "doc": "User name of the object (UTF8)",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": "COCO_4C"
+  },
+  "Label2": {
+   "doc": "User description of the object (UTF8)",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": ""
+  },
+  "Piezas_Omitidas": {
+   "doc": "Roles de paneles desvinculados (omitos al recompute)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyStringList",
+   "valor": []
+  },
+  "Placement": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyPlacement",
+   "valor": {
+    "angle": 0.0,
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "base": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "ProfundidadRanura": {
+   "doc": "Profundidad de ranura para fondo (mm)",
+   "grupo": "Estructura",
+   "typeid": "App::PropertyFloat",
+   "valor": 3.0
+  },
+  "Proxy": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyPythonObject",
+   "valor": "<VDO.cad.objects.vdo_cad_coco.CocoFeature object at 0x7fc040408d70>"
+  },
+  "ResumenEspacios": {
+   "doc": "Resumen legible de espacios calculados (solo lectura)",
+   "grupo": "Divisiones",
+   "typeid": "App::PropertyString",
+   "valor": ""
+  },
+  "Shape": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "Part::PropertyPartShape",
+   "valor": "<Shape object at 0x55dceb48a6c0>"
+  },
+  "ShapeMaterial": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "Materials::PropertyMaterial",
+   "valor": "<Material at 0x55dcea236300>"
+  },
+  "Tapa": {
+   "doc": "Configuración de la tapa",
+   "enum": [
+    "externo",
+    "interno"
+   ],
+   "grupo": "Estructura",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "externo"
+  },
+  "TieneFondo": {
+   "doc": "Habilitar fondo/respaldo",
+   "grupo": "Estructura",
+   "typeid": "App::PropertyBool",
+   "valor": true
+  },
+  "VDO_Anclaje": {
+   "doc": "Esquina del módulo que se alinea con el punto de colocación",
+   "enum": [
+    "inferior_izquierda_frente",
+    "inferior_derecha_frente",
+    "inferior_izquierda_fondo",
+    "inferior_derecha_fondo",
+    "superior_izquierda_frente",
+    "superior_derecha_frente",
+    "superior_izquierda_fondo",
+    "superior_derecha_fondo",
+    "centro_inferior"
+   ],
+   "grupo": "Colocación",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "inferior_izquierda_frente"
+  },
+  "VDO_Chassis_JSON": {
+   "doc": "Configuración del chasis 2D (JSON)",
+   "grupo": "Estructura",
+   "typeid": "App::PropertyString",
+   "valor": "{}"
+  },
+  "VDO_Divisiones": {
+   "doc": "Matriz de vanos v2 (JSON)",
+   "grupo": "Divisiones",
+   "typeid": "App::PropertyString",
+   "valor": ""
+  },
+  "VDO_Lados_Apoyados": {
+   "doc": "Lados del módulo apoyados contra muro/piso (JSON)",
+   "grupo": "Exposición",
+   "typeid": "App::PropertyString",
+   "valor": "[\"fondo\"]"
+  },
+  "VDO_Lados_Vistos": {
+   "doc": "Lados del módulo visibles desde el espacio (JSON)",
+   "grupo": "Exposición",
+   "typeid": "App::PropertyString",
+   "valor": "[\"frente\"]"
+  },
+  "VDO_Material_Ref": {
+   "doc": "Material de los paneles",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "melamina_standar"
+  },
+  "VDO_Modulo": {
+   "doc": "Clave de modulo VDO (testigo de tipo; no editar)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "coco"
+  },
+  "VDO_Paneles_JSON": {
+   "doc": "Descripción JSON de las piezas del despiece",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "[{\"nombre\": \"COCO_4C_Techo\", \"tipo\": \"panel\", \"rol\": \"techo\", \"largo\": 600.0, \"ancho\": 580.0, \"espesor\": 18.0, \"orientacion\": \"horizontal\", \"cantidad\": 1, \"material_ref\": \"melamina_standar\", \"pos\": [0.0, 0.0, 702.0], \"cantos\": {\"norte\": \"FX\", \"sur\": \"RIG\", \"este\": \"FX\", \"oeste\": \"FX\"}, \"lados_vistos\": [\"frente\"], \"lados_apoyados\": [\"fondo\"]}, {\"nombre\": \"COCO_4C_Base\", \"tipo\": \"panel\", \"rol\": \"base\", \"largo\": 564.0, \"ancho\": 580.0, \"espesor\": 18.0, \"orientacion\": \"horizontal\", \"cantidad\": 1, \"material_ref\": \"melamina_standar\", \"pos\": [18.0, 0.0, 0.0], \"cantos\": {\"norte\": \"FX\", \"sur\": \"RIG\", \"este\": \"FX\", \"oeste\": \"FX\"}, \"lados_vistos\": [\"frente\"], \"lados_apoyados\": [\"fondo\"]}, {\"nombre\": \"COCO_4C_Lateral_Izq\", \"tipo\": \"panel\", \"rol\": \"lateral_izquierdo\", \"largo\": 580.0, \"ancho\": 702.0, \"espesor\": 18.0, \"orientacion\": \"vertical\", \"cantidad\": 1, \"material_ref\": \"melamina_standar\", \"pos\": [0.0, 0.0, 0.0], \"cantos\": {\"norte\": \"FX\", \"sur\": \"FX\", \"este\": \"FX\", \"oeste\": \"RIG\"}, \"lados_vistos\": [\"frente\"], \"lados_apoyados\": [\"fondo\"]}, {\"nombre\": \"COCO_4C_Lateral_Der\", \"tipo\": \"panel\", \"rol\": \"lateral_derecho\", \"largo\": 580.0, \"ancho\": 702.0, \"espesor\": 18.0, \"orientacion\": \"vertical\", \"cantidad\": 1, \"material_ref\": \"melamina_standar\", \"pos\": [582.0, 0.0, 0.0], \"cantos\": {\"norte\": \"FX\", \"sur\": \"FX\", \"este\": \"FX\", \"oeste\": \"RIG\"}, \"lados_vistos\": [\"frente\"], \"lados_apoyados\": [\"fondo\"]}, {\"nombre\": \"COCO_4C_Fondo\", \"tipo\": \"panel\", \"rol\": \"fondo\", \"largo\": 570.0, \"ancho\": 690.0, \"espesor\": 6.0, \"orientacion\": \"vertical\", \"cantidad\": 1, \"material_ref\": \"melamina_standar\", \"fondo_delgado\": true, \"pos\": [585.0, 571.0, 15.0], \"rot_z\": 90.0, \"cantos\": {\"norte\": \"FX\", \"sur\": \"FX\", \"este\": \"FX\", \"oeste\": \"FX\"}, \"lados_vistos\": [\"frente\"], \"lados_apoyados\": [\"fondo\"]}]"
+  },
+  "VDO_Reengrose_JSON": {
+   "doc": "Modificadores de reengrose por pieza (JSON)",
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyString",
+   "valor": "{}"
+  },
+  "VDO_RotacionZ": {
+   "doc": "Rotación del módulo alrededor del eje Z (pose, no geometría)",
+   "grupo": "Colocación",
+   "typeid": "App::PropertyAngle",
+   "valor": 0.0
+  },
+  "VDO_Subtipo": {
+   "doc": "Subtipo",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "COCO_4C"
+  },
+  "VDO_Tipo": {
+   "doc": "Tipo de objeto",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "contenedor"
+  },
+  "Visibility": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyBool",
+   "valor": true
+  },
+  "_ElementMapVersion": {
+   "doc": "",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": "15.70200.5"
+  }
+ },
+ "panel_division": {
+  "Ancho": {
+   "doc": "Ancho del tablero (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 580.0
+  },
+  "Espesor": {
+   "doc": "Espesor del tablero (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 18.0
+  },
+  "ExpressionEngine": {
+   "doc": "Property expressions",
+   "grupo": "Base",
+   "typeid": "App::PropertyExpressionEngine",
+   "valor": []
+  },
+  "Label": {
+   "doc": "User name of the object (UTF8)",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": "Division"
+  },
+  "Label2": {
+   "doc": "User description of the object (UTF8)",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": ""
+  },
+  "Largo": {
+   "doc": "Largo del tablero (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 600.0
+  },
+  "LocalPlacement": {
+   "doc": "Pose relativa al COCO padre",
+   "grupo": "VDO",
+   "typeid": "App::PropertyPlacement",
+   "valor": {
+    "angle": 0.0,
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "base": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "ParentCOCO": {
+   "doc": "COCO padre (vinculación jerárquica)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyLinkHidden",
+   "valor": null
+  },
+  "Placement": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyPlacement",
+   "valor": {
+    "angle": 0.0,
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "base": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "Proxy": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyPythonObject",
+   "valor": "<VDO.cad.objects.vdo_cad_panel.PanelFeature object at 0x7fc044a41c70>"
+  },
+  "Shape": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "Part::PropertyPartShape",
+   "valor": "<Solid object at 0x55dceb48a6c0>"
+  },
+  "ShapeMaterial": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "Materials::PropertyMaterial",
+   "valor": "<Material at 0x55dcea236300>"
+  },
+  "VDO_Anclaje": {
+   "doc": "Esquina del módulo que se alinea con el punto de colocación",
+   "enum": [
+    "inferior_izquierda_frente",
+    "inferior_derecha_frente",
+    "inferior_izquierda_fondo",
+    "inferior_derecha_fondo",
+    "superior_izquierda_frente",
+    "superior_derecha_frente",
+    "superior_izquierda_fondo",
+    "superior_derecha_fondo",
+    "centro_inferior"
+   ],
+   "grupo": "Colocación",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "inferior_izquierda_frente"
+  },
+  "VDO_Canto_Este": {
+   "doc": "Canto Este",
+   "enum": [
+    "RIG",
+    "FX",
+    "SMRG"
+   ],
+   "grupo": "Cantos",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "FX"
+  },
+  "VDO_Canto_Norte": {
+   "doc": "Canto Norte",
+   "enum": [
+    "RIG",
+    "FX",
+    "SMRG"
+   ],
+   "grupo": "Cantos",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "FX"
+  },
+  "VDO_Canto_Oeste": {
+   "doc": "Canto Oeste",
+   "enum": [
+    "RIG",
+    "FX",
+    "SMRG"
+   ],
+   "grupo": "Cantos",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "FX"
+  },
+  "VDO_Canto_Sur": {
+   "doc": "Canto Sur",
+   "enum": [
+    "RIG",
+    "FX",
+    "SMRG"
+   ],
+   "grupo": "Cantos",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "FX"
+  },
+  "VDO_Etiqueta": {
+   "doc": "Etiqueta libre de la pieza",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "Division"
+  },
+  "VDO_Lados_Apoyados": {
+   "doc": "Lados del módulo apoyados contra muro/piso (JSON)",
+   "grupo": "Exposición",
+   "typeid": "App::PropertyString",
+   "valor": "[\"fondo\"]"
+  },
+  "VDO_Lados_Vistos": {
+   "doc": "Lados del módulo visibles desde el espacio (JSON)",
+   "grupo": "Exposición",
+   "typeid": "App::PropertyString",
+   "valor": "[\"frente\"]"
+  },
+  "VDO_Material_Ref": {
+   "doc": "Material de la pieza",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "melamina_standar"
+  },
+  "VDO_Modulo": {
+   "doc": "Clave de modulo VDO (testigo de tipo; no editar)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "panel"
+  },
+  "VDO_Orientacion": {
+   "doc": "Orientación del panel",
+   "enum": [
+    "horizontal",
+    "vertical"
+   ],
+   "grupo": "VDO",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "vertical"
+  },
+  "VDO_Reengrose_Activo": {
+   "doc": "Activa una tira o duplicado de refuerzo sobre el panel",
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyBool",
+   "valor": false
+  },
+  "VDO_Reengrose_Alcance": {
+   "doc": "Pacha parcial en tira o pacha total de toda la cara",
+   "enum": [
+    "parcial",
+    "total"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "parcial"
+  },
+  "VDO_Reengrose_Alineacion": {
+   "doc": "Posicion de la tira hacia el frente, centro o fondo",
+   "enum": [
+    "frente",
+    "centrado",
+    "fondo"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "frente"
+  },
+  "VDO_Reengrose_Ancho": {
+   "doc": "Ancho de la tira de refuerzo en mm",
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyLength",
+   "valor": 70.0
+  },
+  "VDO_Reengrose_Cara": {
+   "doc": "Cara del tablero donde se adhiere el refuerzo",
+   "enum": [
+    "cara_a",
+    "cara_b",
+    "ambos"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "cara_a"
+  },
+  "VDO_Reengrose_ChoqueNucleo": {
+   "doc": "Choque contra panel nucleo: retroceso, mocheo o interrumpir tira",
+   "enum": [
+    "retroceso",
+    "mocheo",
+    "interrumpir_tira"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "retroceso"
+  },
+  "VDO_Reengrose_Espesor": {
+   "doc": "Espesor de la tira; 0 usa el espesor del panel base",
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyLength",
+   "valor": 0.0
+  },
+  "VDO_Reengrose_JSON": {
+   "doc": "Instantanea JSON del modificador de reengrose",
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyString",
+   "valor": "{\"activo\": false, \"orientacion\": \"paralela\", \"ancho\": 70.0, \"espesor\": null, \"cara\": \"cara_a\", \"alineacion_profundidad\": \"frente\", \"modo_fabricacion\": \"pacha\", \"alcance\": \"parcial\", \"politica_repisa\": \"retroceder\", \"prioridad_encuentro_tiras\": \"vertical_domina\", \"comportamiento_choque_nucleo\": \"retroceso\", \"esquinas\": \"vertical_domina\", \"fabricacion\": \"pacha\", \"choque_nucleo\": \"retroceso\", \"bordes\": {\"frente\": {\"activo\": false, \"ancho\": 70.0, \"distancia_al_canto\": 0.0, \"largo_tira\": \"marco_interior\", \"encuentro_esquinas\": null, \"espesor\": null, \"offset_borde\": 0.0}, \"fondo\": {\"activo\": false, \"ancho\": 70.0, \"distancia_al_canto\": 0.0, \"largo_tira\": \"marco_interior\", \"encuentro_esquinas\": null, \"espesor\": null, \"offset_borde\": 0.0}, \"izquierda\": {\"activo\": false, \"ancho\": 70.0, \"distancia_al_canto\": 0.0, \"largo_tira\": \"marco_interior\", \"encuentro_esquinas\": null, \"espesor\": null, \"offset_borde\": 0.0}, \"derecha\": {\"activo\": false, \"ancho\": 70.0, \"distancia_al_canto\": 0.0, \"largo_tira\": \"marco_interior\", \"encuentro_esquinas\": null, \"espesor\": null, \"offset_borde\": 0.0}}, \"usa_bordes\": false}"
+  },
+  "VDO_Reengrose_Modo": {
+   "doc": "Tira independiente o pacha encolada y canteada en bloque",
+   "enum": [
+    "independiente",
+    "pacha"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "pacha"
+  },
+  "VDO_Reengrose_Orientacion": {
+   "doc": "Paralela al largo del panel o transversal cruzando el ancho",
+   "enum": [
+    "paralela",
+    "transversal"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "paralela"
+  },
+  "VDO_Reengrose_PoliticaRepisa": {
+   "doc": "Ante colision con repisa: retroceder o mochear en escuadra",
+   "enum": [
+    "retroceder",
+    "mochear"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "retroceder"
+  },
+  "VDO_Reengrose_PrioridadEncuentro": {
+   "doc": "Prioridad al cruzar tiras: vertical, horizontal o inglete 45",
+   "enum": [
+    "vertical_domina",
+    "horizontal_domina",
+    "inglete_45"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "vertical_domina"
+  },
+  "VDO_Rol": {
+   "doc": "Rol del panel dentro del COCO (lateral_izquierdo, techo, etc.)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": ""
+  },
+  "VDO_RotacionZ": {
+   "doc": "Rotación del módulo alrededor del eje Z (pose, no geometría)",
+   "grupo": "Colocación",
+   "typeid": "App::PropertyAngle",
+   "valor": 0.0
+  },
+  "VDO_Subtipo": {
+   "doc": "Subtipo",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "panel"
+  },
+  "VDO_Tipo": {
+   "doc": "Tipo de objeto",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "panel"
+  },
+  "Visibility": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyBool",
+   "valor": true
+  },
+  "_ElementMapVersion": {
+   "doc": "",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": "15.70200.5"
+  }
+ },
+ "panel_estandar": {
+  "Ancho": {
+   "doc": "Ancho del tablero (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 580.0
+  },
+  "Espesor": {
+   "doc": "Espesor del tablero (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 18.0
+  },
+  "ExpressionEngine": {
+   "doc": "Property expressions",
+   "grupo": "Base",
+   "typeid": "App::PropertyExpressionEngine",
+   "valor": []
+  },
+  "Label": {
+   "doc": "User name of the object (UTF8)",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": "Panel"
+  },
+  "Label2": {
+   "doc": "User description of the object (UTF8)",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": ""
+  },
+  "Largo": {
+   "doc": "Largo del tablero (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 600.0
+  },
+  "LocalPlacement": {
+   "doc": "Pose relativa al COCO padre",
+   "grupo": "VDO",
+   "typeid": "App::PropertyPlacement",
+   "valor": {
+    "angle": 0.0,
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "base": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "ParentCOCO": {
+   "doc": "COCO padre (vinculación jerárquica)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyLinkHidden",
+   "valor": null
+  },
+  "Placement": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyPlacement",
+   "valor": {
+    "angle": 0.0,
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "base": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "Proxy": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyPythonObject",
+   "valor": "<VDO.cad.objects.vdo_cad_panel.PanelFeature object at 0x7fc044a70c90>"
+  },
+  "Shape": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "Part::PropertyPartShape",
+   "valor": "<Solid object at 0x55dceb48a6c0>"
+  },
+  "ShapeMaterial": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "Materials::PropertyMaterial",
+   "valor": "<Material at 0x55dcea236300>"
+  },
+  "VDO_Anclaje": {
+   "doc": "Esquina del módulo que se alinea con el punto de colocación",
+   "enum": [
+    "inferior_izquierda_frente",
+    "inferior_derecha_frente",
+    "inferior_izquierda_fondo",
+    "inferior_derecha_fondo",
+    "superior_izquierda_frente",
+    "superior_derecha_frente",
+    "superior_izquierda_fondo",
+    "superior_derecha_fondo",
+    "centro_inferior"
+   ],
+   "grupo": "Colocación",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "inferior_izquierda_frente"
+  },
+  "VDO_Canto_Este": {
+   "doc": "Canto Este",
+   "enum": [
+    "RIG",
+    "FX",
+    "SMRG"
+   ],
+   "grupo": "Cantos",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "FX"
+  },
+  "VDO_Canto_Norte": {
+   "doc": "Canto Norte",
+   "enum": [
+    "RIG",
+    "FX",
+    "SMRG"
+   ],
+   "grupo": "Cantos",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "FX"
+  },
+  "VDO_Canto_Oeste": {
+   "doc": "Canto Oeste",
+   "enum": [
+    "RIG",
+    "FX",
+    "SMRG"
+   ],
+   "grupo": "Cantos",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "FX"
+  },
+  "VDO_Canto_Sur": {
+   "doc": "Canto Sur",
+   "enum": [
+    "RIG",
+    "FX",
+    "SMRG"
+   ],
+   "grupo": "Cantos",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "FX"
+  },
+  "VDO_Etiqueta": {
+   "doc": "Etiqueta libre de la pieza",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "Panel estandar"
+  },
+  "VDO_Lados_Apoyados": {
+   "doc": "Lados del módulo apoyados contra muro/piso (JSON)",
+   "grupo": "Exposición",
+   "typeid": "App::PropertyString",
+   "valor": "[\"fondo\"]"
+  },
+  "VDO_Lados_Vistos": {
+   "doc": "Lados del módulo visibles desde el espacio (JSON)",
+   "grupo": "Exposición",
+   "typeid": "App::PropertyString",
+   "valor": "[\"frente\"]"
+  },
+  "VDO_Material_Ref": {
+   "doc": "Material de la pieza",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "melamina_standar"
+  },
+  "VDO_Modulo": {
+   "doc": "Clave de modulo VDO (testigo de tipo; no editar)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "panel"
+  },
+  "VDO_Orientacion": {
+   "doc": "Orientación del panel",
+   "enum": [
+    "horizontal",
+    "vertical"
+   ],
+   "grupo": "VDO",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "horizontal"
+  },
+  "VDO_Reengrose_Activo": {
+   "doc": "Activa una tira o duplicado de refuerzo sobre el panel",
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyBool",
+   "valor": false
+  },
+  "VDO_Reengrose_Alcance": {
+   "doc": "Pacha parcial en tira o pacha total de toda la cara",
+   "enum": [
+    "parcial",
+    "total"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "parcial"
+  },
+  "VDO_Reengrose_Alineacion": {
+   "doc": "Posicion de la tira hacia el frente, centro o fondo",
+   "enum": [
+    "frente",
+    "centrado",
+    "fondo"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "frente"
+  },
+  "VDO_Reengrose_Ancho": {
+   "doc": "Ancho de la tira de refuerzo en mm",
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyLength",
+   "valor": 70.0
+  },
+  "VDO_Reengrose_Cara": {
+   "doc": "Cara del tablero donde se adhiere el refuerzo",
+   "enum": [
+    "cara_a",
+    "cara_b",
+    "ambos"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "cara_a"
+  },
+  "VDO_Reengrose_ChoqueNucleo": {
+   "doc": "Choque contra panel nucleo: retroceso, mocheo o interrumpir tira",
+   "enum": [
+    "retroceso",
+    "mocheo",
+    "interrumpir_tira"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "retroceso"
+  },
+  "VDO_Reengrose_Espesor": {
+   "doc": "Espesor de la tira; 0 usa el espesor del panel base",
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyLength",
+   "valor": 0.0
+  },
+  "VDO_Reengrose_JSON": {
+   "doc": "Instantanea JSON del modificador de reengrose",
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyString",
+   "valor": "{\"activo\": false, \"orientacion\": \"paralela\", \"ancho\": 70.0, \"espesor\": null, \"cara\": \"cara_a\", \"alineacion_profundidad\": \"frente\", \"modo_fabricacion\": \"pacha\", \"alcance\": \"parcial\", \"politica_repisa\": \"retroceder\", \"prioridad_encuentro_tiras\": \"vertical_domina\", \"comportamiento_choque_nucleo\": \"retroceso\", \"esquinas\": \"vertical_domina\", \"fabricacion\": \"pacha\", \"choque_nucleo\": \"retroceso\", \"bordes\": {\"frente\": {\"activo\": false, \"ancho\": 70.0, \"distancia_al_canto\": 0.0, \"largo_tira\": \"marco_interior\", \"encuentro_esquinas\": null, \"espesor\": null, \"offset_borde\": 0.0}, \"fondo\": {\"activo\": false, \"ancho\": 70.0, \"distancia_al_canto\": 0.0, \"largo_tira\": \"marco_interior\", \"encuentro_esquinas\": null, \"espesor\": null, \"offset_borde\": 0.0}, \"izquierda\": {\"activo\": false, \"ancho\": 70.0, \"distancia_al_canto\": 0.0, \"largo_tira\": \"marco_interior\", \"encuentro_esquinas\": null, \"espesor\": null, \"offset_borde\": 0.0}, \"derecha\": {\"activo\": false, \"ancho\": 70.0, \"distancia_al_canto\": 0.0, \"largo_tira\": \"marco_interior\", \"encuentro_esquinas\": null, \"espesor\": null, \"offset_borde\": 0.0}}, \"usa_bordes\": false}"
+  },
+  "VDO_Reengrose_Modo": {
+   "doc": "Tira independiente o pacha encolada y canteada en bloque",
+   "enum": [
+    "independiente",
+    "pacha"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "pacha"
+  },
+  "VDO_Reengrose_Orientacion": {
+   "doc": "Paralela al largo del panel o transversal cruzando el ancho",
+   "enum": [
+    "paralela",
+    "transversal"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "paralela"
+  },
+  "VDO_Reengrose_PoliticaRepisa": {
+   "doc": "Ante colision con repisa: retroceder o mochear en escuadra",
+   "enum": [
+    "retroceder",
+    "mochear"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "retroceder"
+  },
+  "VDO_Reengrose_PrioridadEncuentro": {
+   "doc": "Prioridad al cruzar tiras: vertical, horizontal o inglete 45",
+   "enum": [
+    "vertical_domina",
+    "horizontal_domina",
+    "inglete_45"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "vertical_domina"
+  },
+  "VDO_Rol": {
+   "doc": "Rol del panel dentro del COCO (lateral_izquierdo, techo, etc.)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": ""
+  },
+  "VDO_RotacionZ": {
+   "doc": "Rotación del módulo alrededor del eje Z (pose, no geometría)",
+   "grupo": "Colocación",
+   "typeid": "App::PropertyAngle",
+   "valor": 0.0
+  },
+  "VDO_Subtipo": {
+   "doc": "Subtipo",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "panel"
+  },
+  "VDO_Tipo": {
+   "doc": "Tipo de objeto",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "panel"
+  },
+  "Visibility": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyBool",
+   "valor": true
+  },
+  "_ElementMapVersion": {
+   "doc": "",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": "15.70200.5"
+  }
+ },
+ "panel_fachada": {
+  "Ancho": {
+   "doc": "Ancho del tablero (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 580.0
+  },
+  "Espesor": {
+   "doc": "Espesor del tablero (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 18.0
+  },
+  "ExpressionEngine": {
+   "doc": "Property expressions",
+   "grupo": "Base",
+   "typeid": "App::PropertyExpressionEngine",
+   "valor": []
+  },
+  "Label": {
+   "doc": "User name of the object (UTF8)",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": "Panel_Fachada"
+  },
+  "Label2": {
+   "doc": "User description of the object (UTF8)",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": ""
+  },
+  "Largo": {
+   "doc": "Largo del tablero (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 600.0
+  },
+  "LocalPlacement": {
+   "doc": "Pose relativa al COCO padre",
+   "grupo": "VDO",
+   "typeid": "App::PropertyPlacement",
+   "valor": {
+    "angle": 0.0,
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "base": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "ParentCOCO": {
+   "doc": "COCO padre (vinculación jerárquica)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyLinkHidden",
+   "valor": null
+  },
+  "Placement": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyPlacement",
+   "valor": {
+    "angle": 0.0,
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "base": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "Proxy": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyPythonObject",
+   "valor": "<VDO.cad.objects.vdo_cad_panel.PanelFeature object at 0x7fc044a70f30>"
+  },
+  "Shape": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "Part::PropertyPartShape",
+   "valor": "<Solid object at 0x55dceb48a6c0>"
+  },
+  "ShapeMaterial": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "Materials::PropertyMaterial",
+   "valor": "<Material at 0x55dcea236300>"
+  },
+  "VDO_Anclaje": {
+   "doc": "Esquina del módulo que se alinea con el punto de colocación",
+   "enum": [
+    "inferior_izquierda_frente",
+    "inferior_derecha_frente",
+    "inferior_izquierda_fondo",
+    "inferior_derecha_fondo",
+    "superior_izquierda_frente",
+    "superior_derecha_frente",
+    "superior_izquierda_fondo",
+    "superior_derecha_fondo",
+    "centro_inferior"
+   ],
+   "grupo": "Colocación",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "inferior_izquierda_frente"
+  },
+  "VDO_Canto_Este": {
+   "doc": "Canto Este",
+   "enum": [
+    "RIG",
+    "FX",
+    "SMRG"
+   ],
+   "grupo": "Cantos",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "FX"
+  },
+  "VDO_Canto_Norte": {
+   "doc": "Canto Norte",
+   "enum": [
+    "RIG",
+    "FX",
+    "SMRG"
+   ],
+   "grupo": "Cantos",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "FX"
+  },
+  "VDO_Canto_Oeste": {
+   "doc": "Canto Oeste",
+   "enum": [
+    "RIG",
+    "FX",
+    "SMRG"
+   ],
+   "grupo": "Cantos",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "FX"
+  },
+  "VDO_Canto_Sur": {
+   "doc": "Canto Sur",
+   "enum": [
+    "RIG",
+    "FX",
+    "SMRG"
+   ],
+   "grupo": "Cantos",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "FX"
+  },
+  "VDO_Etiqueta": {
+   "doc": "Etiqueta libre de la pieza",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "Fachada"
+  },
+  "VDO_Lados_Apoyados": {
+   "doc": "Lados del módulo apoyados contra muro/piso (JSON)",
+   "grupo": "Exposición",
+   "typeid": "App::PropertyString",
+   "valor": "[\"fondo\"]"
+  },
+  "VDO_Lados_Vistos": {
+   "doc": "Lados del módulo visibles desde el espacio (JSON)",
+   "grupo": "Exposición",
+   "typeid": "App::PropertyString",
+   "valor": "[\"frente\"]"
+  },
+  "VDO_Material_Ref": {
+   "doc": "Material de la pieza",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "melamina_standar"
+  },
+  "VDO_Modulo": {
+   "doc": "Clave de modulo VDO (testigo de tipo; no editar)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "panel"
+  },
+  "VDO_Orientacion": {
+   "doc": "Orientación del panel",
+   "enum": [
+    "horizontal",
+    "vertical"
+   ],
+   "grupo": "VDO",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "vertical"
+  },
+  "VDO_Reengrose_Activo": {
+   "doc": "Activa una tira o duplicado de refuerzo sobre el panel",
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyBool",
+   "valor": false
+  },
+  "VDO_Reengrose_Alcance": {
+   "doc": "Pacha parcial en tira o pacha total de toda la cara",
+   "enum": [
+    "parcial",
+    "total"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "parcial"
+  },
+  "VDO_Reengrose_Alineacion": {
+   "doc": "Posicion de la tira hacia el frente, centro o fondo",
+   "enum": [
+    "frente",
+    "centrado",
+    "fondo"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "frente"
+  },
+  "VDO_Reengrose_Ancho": {
+   "doc": "Ancho de la tira de refuerzo en mm",
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyLength",
+   "valor": 70.0
+  },
+  "VDO_Reengrose_Cara": {
+   "doc": "Cara del tablero donde se adhiere el refuerzo",
+   "enum": [
+    "cara_a",
+    "cara_b",
+    "ambos"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "cara_a"
+  },
+  "VDO_Reengrose_ChoqueNucleo": {
+   "doc": "Choque contra panel nucleo: retroceso, mocheo o interrumpir tira",
+   "enum": [
+    "retroceso",
+    "mocheo",
+    "interrumpir_tira"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "retroceso"
+  },
+  "VDO_Reengrose_Espesor": {
+   "doc": "Espesor de la tira; 0 usa el espesor del panel base",
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyLength",
+   "valor": 0.0
+  },
+  "VDO_Reengrose_JSON": {
+   "doc": "Instantanea JSON del modificador de reengrose",
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyString",
+   "valor": "{\"activo\": false, \"orientacion\": \"paralela\", \"ancho\": 70.0, \"espesor\": null, \"cara\": \"cara_a\", \"alineacion_profundidad\": \"frente\", \"modo_fabricacion\": \"pacha\", \"alcance\": \"parcial\", \"politica_repisa\": \"retroceder\", \"prioridad_encuentro_tiras\": \"vertical_domina\", \"comportamiento_choque_nucleo\": \"retroceso\", \"esquinas\": \"vertical_domina\", \"fabricacion\": \"pacha\", \"choque_nucleo\": \"retroceso\", \"bordes\": {\"frente\": {\"activo\": false, \"ancho\": 70.0, \"distancia_al_canto\": 0.0, \"largo_tira\": \"marco_interior\", \"encuentro_esquinas\": null, \"espesor\": null, \"offset_borde\": 0.0}, \"fondo\": {\"activo\": false, \"ancho\": 70.0, \"distancia_al_canto\": 0.0, \"largo_tira\": \"marco_interior\", \"encuentro_esquinas\": null, \"espesor\": null, \"offset_borde\": 0.0}, \"izquierda\": {\"activo\": false, \"ancho\": 70.0, \"distancia_al_canto\": 0.0, \"largo_tira\": \"marco_interior\", \"encuentro_esquinas\": null, \"espesor\": null, \"offset_borde\": 0.0}, \"derecha\": {\"activo\": false, \"ancho\": 70.0, \"distancia_al_canto\": 0.0, \"largo_tira\": \"marco_interior\", \"encuentro_esquinas\": null, \"espesor\": null, \"offset_borde\": 0.0}}, \"usa_bordes\": false}"
+  },
+  "VDO_Reengrose_Modo": {
+   "doc": "Tira independiente o pacha encolada y canteada en bloque",
+   "enum": [
+    "independiente",
+    "pacha"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "pacha"
+  },
+  "VDO_Reengrose_Orientacion": {
+   "doc": "Paralela al largo del panel o transversal cruzando el ancho",
+   "enum": [
+    "paralela",
+    "transversal"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "paralela"
+  },
+  "VDO_Reengrose_PoliticaRepisa": {
+   "doc": "Ante colision con repisa: retroceder o mochear en escuadra",
+   "enum": [
+    "retroceder",
+    "mochear"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "retroceder"
+  },
+  "VDO_Reengrose_PrioridadEncuentro": {
+   "doc": "Prioridad al cruzar tiras: vertical, horizontal o inglete 45",
+   "enum": [
+    "vertical_domina",
+    "horizontal_domina",
+    "inglete_45"
+   ],
+   "grupo": "Reengrose",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "vertical_domina"
+  },
+  "VDO_Rol": {
+   "doc": "Rol del panel dentro del COCO (lateral_izquierdo, techo, etc.)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": ""
+  },
+  "VDO_RotacionZ": {
+   "doc": "Rotación del módulo alrededor del eje Z (pose, no geometría)",
+   "grupo": "Colocación",
+   "typeid": "App::PropertyAngle",
+   "valor": 0.0
+  },
+  "VDO_Subtipo": {
+   "doc": "Subtipo",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "panel"
+  },
+  "VDO_Tipo": {
+   "doc": "Tipo de objeto",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "panel"
+  },
+  "Visibility": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyBool",
+   "valor": true
+  },
+  "_ElementMapVersion": {
+   "doc": "",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": "15.70200.5"
+  }
+ },
+ "puerta": {
+  "Alto": {
+   "doc": "Alto de la puerta (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 700.0
+  },
+  "Ancho": {
+   "doc": "Ancho de la puerta (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 400.0
+  },
+  "Espesor": {
+   "doc": "Espesor del panel (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyInteger",
+   "valor": 18
+  },
+  "ExpressionEngine": {
+   "doc": "Property expressions",
+   "grupo": "Base",
+   "typeid": "App::PropertyExpressionEngine",
+   "valor": []
+  },
+  "FuerzaPistonRecomendada": {
+   "doc": "Fuerza de pistón recomendada (solo lectura)",
+   "grupo": "Físico",
+   "typeid": "App::PropertyString",
+   "valor": ""
+  },
+  "HardwareSKU": {
+   "doc": "SKU comercial del herraje activo",
+   "grupo": "Herraje",
+   "typeid": "App::PropertyString",
+   "valor": ""
+  },
+  "Label": {
+   "doc": "User name of the object (UTF8)",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": "Puerta"
+  },
+  "Label2": {
+   "doc": "User description of the object (UTF8)",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": ""
+  },
+  "LocalPlacement": {
+   "doc": "Pose relativa al vano del COCO",
+   "grupo": "VDO",
+   "typeid": "App::PropertyPlacement",
+   "valor": {
+    "angle": 0.0,
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "base": [
+     -16.0,
+     -18.0,
+     -16.0
+    ]
+   }
+  },
+  "ParentCOCO": {
+   "doc": "Módulo COCO padre",
+   "grupo": "VDO",
+   "typeid": "App::PropertyLinkHidden",
+   "valor": null
+  },
+  "Placement": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyPlacement",
+   "valor": {
+    "angle": 0.0,
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "base": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "PosX": {
+   "doc": "Posición X de la puerta (mm)",
+   "grupo": "Posición",
+   "typeid": "App::PropertyDistance",
+   "valor": 0.0
+  },
+  "PosY": {
+   "doc": "Posición Y de la puerta (mm)",
+   "grupo": "Posición",
+   "typeid": "App::PropertyDistance",
+   "valor": 0.0
+  },
+  "PosZ": {
+   "doc": "Posición Z de la puerta (mm)",
+   "grupo": "Posición",
+   "typeid": "App::PropertyDistance",
+   "valor": 0.0
+  },
+  "Proxy": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyPythonObject",
+   "valor": "<VDO.cad.objects.vdo_cad_puerta.PuertaFeature object at 0x7fc040409e80>"
+  },
+  "SentidoApertura": {
+   "doc": "Sentido de apertura",
+   "enum": [
+    "Izquierda",
+    "Derecha",
+    "Doble",
+    "Hacia Arriba",
+    "Hacia Abajo",
+    "2 hojas",
+    "3 hojas"
+   ],
+   "grupo": "Apertura",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "Izquierda"
+  },
+  "Shape": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "Part::PropertyPartShape",
+   "valor": "<Compound object at 0x55dceb49cde0>"
+  },
+  "ShapeMaterial": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "Materials::PropertyMaterial",
+   "valor": "<Material at 0x55dcea236300>"
+  },
+  "SistemaApertura": {
+   "doc": "Sistema de apertura/fachada",
+   "enum": [
+    "tirador",
+    "gola_aluminio",
+    "inglete_45",
+    "push_open"
+   ],
+   "grupo": "Sistema de Apertura",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "tirador"
+  },
+  "TipoMontaje": {
+   "doc": "Tipo de montaje (batiente)",
+   "enum": [
+    "Parche",
+    "Semiparche",
+    "Embebida"
+   ],
+   "grupo": "Montaje",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "Parche"
+  },
+  "TipoSistema": {
+   "doc": "Tipo de sistema de puerta",
+   "enum": [
+    "Batiente Vertical",
+    "Basculante Horizontal",
+    "Corrediza"
+   ],
+   "grupo": "Sistema",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "Batiente Vertical"
+  },
+  "VDO_Anclaje": {
+   "doc": "Esquina del módulo que se alinea con el punto de colocación",
+   "enum": [
+    "inferior_izquierda_frente",
+    "inferior_derecha_frente",
+    "inferior_izquierda_fondo",
+    "inferior_derecha_fondo",
+    "superior_izquierda_frente",
+    "superior_derecha_frente",
+    "superior_izquierda_fondo",
+    "superior_derecha_fondo",
+    "centro_inferior"
+   ],
+   "grupo": "Colocación",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "inferior_izquierda_frente"
+  },
+  "VDO_Deltas_JSON": {
+   "doc": "Deltas de borde netos para el contrato de fachada universal (JSON)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "{}"
+  },
+  "VDO_Lados_Apoyados": {
+   "doc": "Lados del módulo apoyados contra muro/piso (JSON)",
+   "grupo": "Exposición",
+   "typeid": "App::PropertyString",
+   "valor": "[\"fondo\"]"
+  },
+  "VDO_Lados_Vistos": {
+   "doc": "Lados del módulo visibles desde el espacio (JSON)",
+   "grupo": "Exposición",
+   "typeid": "App::PropertyString",
+   "valor": "[\"frente\"]"
+  },
+  "VDO_Material_Ref": {
+   "doc": "Material de la hoja",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "melamina_standar"
+  },
+  "VDO_Modulo": {
+   "doc": "Clave de modulo VDO (testigo de tipo; no editar)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "puerta"
+  },
+  "VDO_Paneles_JSON": {
+   "doc": "Descripción JSON de las piezas del despiece",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "[{\"nombre\": \"Puerta_Hoja\", \"tipo\": \"panel\", \"rol\": \"fachada\", \"orientacion\": \"vertical\", \"largo\": 732.0, \"ancho\": 432.0, \"espesor\": 18.0, \"cantidad\": 1, \"material_ref\": \"melamina_standar\", \"cantos\": {\"norte\": \"RIG\", \"sur\": \"RIG\", \"este\": \"RIG\", \"oeste\": \"RIG\"}, \"grupo\": \"Puerta\", \"operacion\": \"Cantear por separado\"}]"
+  },
+  "VDO_ResumenDespiece": {
+   "doc": "Resumen legible del despiece (solo lectura)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "Puerta_Hoja: 732.0 × 432.0 × 18 mm"
+  },
+  "VDO_RotacionZ": {
+   "doc": "Rotación del módulo alrededor del eje Z (pose, no geometría)",
+   "grupo": "Colocación",
+   "typeid": "App::PropertyAngle",
+   "valor": 0.0
+  },
+  "VDO_Subtipo": {
+   "doc": "Subtipo",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "puerta"
+  },
+  "VDO_Tipo": {
+   "doc": "Tipo de objeto",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "contenedor"
+  },
+  "VDO_Vano_ID": {
+   "doc": "Identificador del vano vinculado (ej. '(x1,y1)')",
+   "grupo": "Vinculación",
+   "typeid": "App::PropertyString",
+   "valor": ""
+  },
+  "Visibility": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyBool",
+   "valor": true
+  },
+  "_ElementMapVersion": {
+   "doc": "",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": "15.70200.5"
+  }
+ },
+ "tambor": {
+  "Ancho": {
+   "doc": "Profundidad en Y",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 250.0
+  },
+  "AnchoListon": {
+   "doc": "Ancho de listonería interior",
+   "grupo": "Estructura",
+   "typeid": "App::PropertyLength",
+   "valor": 30.0
+  },
+  "CostillasInteriores": {
+   "doc": "Cantidad de costillas",
+   "grupo": "Estructura",
+   "typeid": "App::PropertyInteger",
+   "valor": 2
+  },
+  "DiametroVarillaTenedor": {
+   "doc": "Diámetro de varillas de acero",
+   "grupo": "Anclaje",
+   "typeid": "App::PropertyLength",
+   "valor": 12.0
+  },
+  "EspesorTapas": {
+   "doc": "Espesor de las 2 tapas de melamina",
+   "grupo": "Estructura",
+   "typeid": "App::PropertyLength",
+   "valor": 6.0
+  },
+  "EspesorTotal": {
+   "doc": "Espesor total (sándwich)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 42.0
+  },
+  "ExpressionEngine": {
+   "doc": "Property expressions",
+   "grupo": "Base",
+   "typeid": "App::PropertyExpressionEngine",
+   "valor": []
+  },
+  "Label": {
+   "doc": "User name of the object (UTF8)",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": "Repisa_Entamborada"
+  },
+  "Label2": {
+   "doc": "User description of the object (UTF8)",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": ""
+  },
+  "Largo": {
+   "doc": "Largo en X (Ancho frontal)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 800.0
+  },
+  "ModoTenedor": {
+   "doc": "Estrategia para el tenedor a pared",
+   "enum": [
+    "Hueco Abierto Posterior",
+    "Liston Taladrado (Varillas)"
+   ],
+   "grupo": "Anclaje",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "Hueco Abierto Posterior"
+  },
+  "Placement": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyPlacement",
+   "valor": {
+    "angle": 0.0,
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "base": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "ProfundidadVanoTenedor": {
+   "doc": "Profundidad libre para varillas",
+   "grupo": "Anclaje",
+   "typeid": "App::PropertyLength",
+   "valor": 140.0
+  },
+  "Proxy": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyPythonObject",
+   "valor": "<VDO.cad.objects.vdo_cad_tambor.TamborFeature object at 0x7fc040409fd0>"
+  },
+  "Shape": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "Part::PropertyPartShape",
+   "valor": "<Compound object at 0x55dceb49cde0>"
+  },
+  "ShapeMaterial": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "Materials::PropertyMaterial",
+   "valor": "<Material at 0x55dcea236300>"
+  },
+  "TipoTambor": {
+   "doc": "Tipo de panel entamborado",
+   "enum": [
+    "Repisa Flotante (Tenedor)",
+    "Panel Cerrado 4 Lados"
+   ],
+   "grupo": "Configuración",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "Repisa Flotante (Tenedor)"
+  },
+  "VDO_Anclaje": {
+   "doc": "Esquina del módulo que se alinea con el punto de colocación",
+   "enum": [
+    "inferior_izquierda_frente",
+    "inferior_derecha_frente",
+    "inferior_izquierda_fondo",
+    "inferior_derecha_fondo",
+    "superior_izquierda_frente",
+    "superior_derecha_frente",
+    "superior_izquierda_fondo",
+    "superior_derecha_fondo",
+    "centro_inferior"
+   ],
+   "grupo": "Colocación",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "inferior_izquierda_frente"
+  },
+  "VDO_Lados_Apoyados": {
+   "doc": "Lados del módulo apoyados contra muro/piso (JSON)",
+   "grupo": "Exposición",
+   "typeid": "App::PropertyString",
+   "valor": "[\"fondo\"]"
+  },
+  "VDO_Lados_Vistos": {
+   "doc": "Lados del módulo visibles desde el espacio (JSON)",
+   "grupo": "Exposición",
+   "typeid": "App::PropertyString",
+   "valor": "[\"frente\"]"
+  },
+  "VDO_Material_Ref": {
+   "doc": "Material de tapas",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "melamina_standar"
+  },
+  "VDO_Modificadores_JSON": {
+   "doc": "Modificadores geométricos embebidos (JSON)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "[]"
+  },
+  "VDO_Modulo": {
+   "doc": "Clave de modulo VDO (testigo de tipo; no editar)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "tambor"
+  },
+  "VDO_Paneles_JSON": {
+   "doc": "Descripción JSON de las piezas del despiece",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "[{\"nombre\": \"Tambor_Tapa_Inf\", \"largo\": 800.0, \"ancho\": 250.0, \"espesor\": 6.0}, {\"nombre\": \"Tambor_Tapa_Sup\", \"largo\": 800.0, \"ancho\": 250.0, \"espesor\": 6.0}, {\"nombre\": \"Liston_Frente\", \"largo\": 800.0, \"ancho\": 30.0, \"espesor\": 30.0}, {\"nombre\": \"Liston_Lateral\", \"largo\": 220.0, \"ancho\": 30.0, \"espesor\": 30.0, \"cantidad\": 2}, {\"nombre\": \"Costilla_Refuerzo_1\", \"largo\": 80.0, \"ancho\": 30.0, \"espesor\": 30.0}, {\"nombre\": \"Costilla_Refuerzo_2\", \"largo\": 80.0, \"ancho\": 30.0, \"espesor\": 30.0}]"
+  },
+  "VDO_RotacionZ": {
+   "doc": "Rotación del módulo alrededor del eje Z (pose, no geometría)",
+   "grupo": "Colocación",
+   "typeid": "App::PropertyAngle",
+   "valor": 0.0
+  },
+  "VDO_Subtipo": {
+   "doc": "Subtipo",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "tambor"
+  },
+  "VDO_Tipo": {
+   "doc": "Tipo de objeto",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "contenedor"
+  },
+  "Visibility": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyBool",
+   "valor": true
+  },
+  "_ElementMapVersion": {
+   "doc": "",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": "15.70200.5"
+  }
+ },
+ "zocalo": {
+  "AltoZocalo": {
+   "doc": "Alto del zócalo (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 100.0
+  },
+  "AmarresIntermedios": {
+   "doc": "Costillas de refuerzo entre frente y trasera",
+   "grupo": "Estructura",
+   "typeid": "App::PropertyInteger",
+   "valor": 0
+  },
+  "Ancho": {
+   "doc": "Ancho total del mueble (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 600.0
+  },
+  "DistanciaCostados": {
+   "doc": "Distancia desde los costados (mm)",
+   "grupo": "Separación",
+   "typeid": "App::PropertyLength",
+   "valor": 0.0
+  },
+  "DistanciaFrente": {
+   "doc": "Distancia desde el frente del mueble (mm)",
+   "grupo": "Separación",
+   "typeid": "App::PropertyLength",
+   "valor": 50.0
+  },
+  "DistanciaTrasera": {
+   "doc": "Distancia desde el fondo del mueble (mm)",
+   "grupo": "Separación",
+   "typeid": "App::PropertyLength",
+   "valor": 20.0
+  },
+  "EspesorTablero": {
+   "doc": "Espesor del tablero del zócalo (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 18.0
+  },
+  "ExpressionEngine": {
+   "doc": "Property expressions",
+   "grupo": "Base",
+   "typeid": "App::PropertyExpressionEngine",
+   "valor": []
+  },
+  "Fondo": {
+   "doc": "Fondo total del mueble (mm)",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 580.0
+  },
+  "Label": {
+   "doc": "User name of the object (UTF8)",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": "Zocalo"
+  },
+  "Label2": {
+   "doc": "User description of the object (UTF8)",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": ""
+  },
+  "Placement": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyPlacement",
+   "valor": {
+    "angle": 0.0,
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "base": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "Proxy": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyPythonObject",
+   "valor": "<VDO.cad.objects.vdo_cad_zocalo.ZocaloFeature object at 0x7fc04040a270>"
+  },
+  "Shape": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "Part::PropertyPartShape",
+   "valor": "<Compound object at 0x55dceb49cde0>"
+  },
+  "ShapeMaterial": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "Materials::PropertyMaterial",
+   "valor": "<Material at 0x55dcea236300>"
+  },
+  "TieneTrasera": {
+   "doc": "Cierra el cajón del zócalo por detrás",
+   "grupo": "Estructura",
+   "typeid": "App::PropertyBool",
+   "valor": true
+  },
+  "VDO_Anclaje": {
+   "doc": "Esquina del módulo que se alinea con el punto de colocación",
+   "enum": [
+    "inferior_izquierda_frente",
+    "inferior_derecha_frente",
+    "inferior_izquierda_fondo",
+    "inferior_derecha_fondo",
+    "superior_izquierda_frente",
+    "superior_derecha_frente",
+    "superior_izquierda_fondo",
+    "superior_derecha_fondo",
+    "centro_inferior"
+   ],
+   "grupo": "Colocación",
+   "typeid": "App::PropertyEnumeration",
+   "valor": "inferior_izquierda_frente"
+  },
+  "VDO_Lados_Apoyados": {
+   "doc": "Lados del módulo apoyados contra muro/piso (JSON)",
+   "grupo": "Exposición",
+   "typeid": "App::PropertyString",
+   "valor": "[\"fondo\"]"
+  },
+  "VDO_Lados_Vistos": {
+   "doc": "Lados del módulo visibles desde el espacio (JSON)",
+   "grupo": "Exposición",
+   "typeid": "App::PropertyString",
+   "valor": "[\"frente\"]"
+  },
+  "VDO_Material_Ref": {
+   "doc": "Material de las piezas",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "melamina_standar"
+  },
+  "VDO_Modulo": {
+   "doc": "Clave de modulo VDO (testigo de tipo; no editar)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "zocalo"
+  },
+  "VDO_Paneles_JSON": {
+   "doc": "Descripción JSON de las piezas del despiece",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "[{\"nombre\": \"Zocalo_Frente\", \"tipo\": \"panel\", \"rol\": \"frente\", \"borde\": \"frente\", \"orientacion\": \"vertical\", \"largo\": 564.0, \"ancho\": 100.0, \"espesor\": 18.0, \"cantidad\": 1, \"material_ref\": \"melamina_standar\", \"cantos\": {\"norte\": \"RIG\", \"sur\": \"RIG\", \"este\": \"RIG\", \"oeste\": \"RIG\"}, \"grupo\": \"Zocalo\", \"operacion\": \"Cantear por separado\", \"largo_tira\": \"punta_a_punta\", \"distancia_al_canto\": 50.0}, {\"nombre\": \"Zocalo_Trasero\", \"tipo\": \"panel\", \"rol\": \"trasero\", \"borde\": \"fondo\", \"orientacion\": \"vertical\", \"largo\": 564.0, \"ancho\": 100.0, \"espesor\": 18.0, \"cantidad\": 1, \"material_ref\": \"melamina_standar\", \"cantos\": {\"norte\": \"FX\", \"sur\": \"FX\", \"este\": \"FX\", \"oeste\": \"FX\"}, \"grupo\": \"Zocalo\", \"operacion\": \"Cantear por separado\", \"largo_tira\": \"marco_interior\", \"distancia_al_canto\": 20.0}, {\"nombre\": \"Zocalo_Lat_Izq\", \"tipo\": \"panel\", \"rol\": \"lateral_izquierdo\", \"borde\": \"izquierda\", \"orientacion\": \"vertical\", \"largo\": 510.0, \"ancho\": 100.0, \"espesor\": 18.0, \"cantidad\": 1, \"material_ref\": \"melamina_standar\", \"cantos\": {\"norte\": \"RIG\", \"sur\": \"RIG\", \"este\": \"FX\", \"oeste\": \"RIG\"}, \"grupo\": \"Zocalo\", \"operacion\": \"Cantear por separado\", \"largo_tira\": \"marco_interior\", \"distancia_al_canto\": 0.0}, {\"nombre\": \"Zocalo_Lat_Der\", \"tipo\": \"panel\", \"rol\": \"lateral_derecho\", \"borde\": \"derecha\", \"orientacion\": \"vertical\", \"largo\": 510.0, \"ancho\": 100.0, \"espesor\": 18.0, \"cantidad\": 1, \"material_ref\": \"melamina_standar\", \"cantos\": {\"norte\": \"RIG\", \"sur\": \"RIG\", \"este\": \"RIG\", \"oeste\": \"FX\"}, \"grupo\": \"Zocalo\", \"operacion\": \"Cantear por separado\", \"largo_tira\": \"marco_interior\", \"distancia_al_canto\": 0.0}]"
+  },
+  "VDO_ResumenDespiece": {
+   "doc": "Resumen legible del despiece (solo lectura)",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "Zócalo: 600 × 580 × 100 mm (e=18, trasera=sí)\nZocalo_Frente: 564.0 × 100.0 × 18 mm (punta_a_punta, canto=50.0)\nZocalo_Trasero: 564.0 × 100.0 × 18 mm (marco_interior, canto=20.0)\nZocalo_Lat_Izq: 510.0 × 100.0 × 18 mm (marco_interior, canto=0.0)\nZocalo_Lat_Der: 510.0 × 100.0 × 18 mm (marco_interior, canto=0.0)"
+  },
+  "VDO_RotacionZ": {
+   "doc": "Rotación del módulo alrededor del eje Z (pose, no geometría)",
+   "grupo": "Colocación",
+   "typeid": "App::PropertyAngle",
+   "valor": 0.0
+  },
+  "VDO_Subtipo": {
+   "doc": "Subtipo",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "zocalo"
+  },
+  "VDO_Tipo": {
+   "doc": "Tipo de objeto",
+   "grupo": "VDO",
+   "typeid": "App::PropertyString",
+   "valor": "contenedor"
+  },
+  "Visibility": {
+   "doc": "",
+   "grupo": "",
+   "typeid": "App::PropertyBool",
+   "valor": true
+  },
+  "_ElementMapVersion": {
+   "doc": "",
+   "grupo": "Base",
+   "typeid": "App::PropertyString",
+   "valor": "15.70200.5"
+  }
+ }
+}

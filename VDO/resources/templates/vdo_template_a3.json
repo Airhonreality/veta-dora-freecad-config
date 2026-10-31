@@ -1,0 +1,15 @@
+{
+  "nombre": "vdo_template_a3",
+  "hoja": {"ancho": 420, "alto": 297},
+  "margen": 10,
+  "cajetin": {"x": 290, "y": 247, "w": 120, "h": 40},
+  "util": {"x0": 10, "y0": 10, "x1": 290, "y1": 247},
+  "claves_editable": [
+    "vdo_proyecto",
+    "vdo_cliente",
+    "vdo_espacio",
+    "vdo_lamina",
+    "vdo_npt",
+    "vdo_escala"
+  ]
+}

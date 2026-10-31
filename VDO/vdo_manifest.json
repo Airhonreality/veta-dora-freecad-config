@@ -1,0 +1,323 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.8.0",
+  "taller": "Veta de Oro",
+  "unidades": "mm",
+
+  "materiales": {
+    "melamina_standar": {
+      "nombre": "Melamina Estándar",
+      "tipo": "standar",
+      "referencia": "melamina",
+      "costo_m2": 15.5,
+      "espesores": [6, 12, 15, 16, 18, 25, 30],
+      "presentacion": "2440 x 1830",
+      "procesos_compatibles": ["cortar", "acanalar", "perforar"],
+      "herrajes_compatibles": ["bisagra_simple", "bisagra_raff", "tirador_plastico"]
+    },
+    "roble_rh": {
+      "nombre": "Roble RH",
+      "tipo": "rh",
+      "referencia": "roble",
+      "costo_m2": 28.0,
+      "espesores": [18, 25],
+      "presentacion": "2440 x 1830",
+      "procesos_compatibles": ["cortar", "acanalar", "perforar", "cepillar"],
+      "herrajes_compatibles": ["bisagra_raff", "tirador_metal", "bisagra_invisible"]
+    },
+    "mdf": {
+      "nombre": "MDF",
+      "tipo": "standar",
+      "referencia": "mdf",
+      "costo_m2": 12.0,
+      "espesores": [18, 25, 30],
+      "presentacion": "2440 x 1830",
+      "procesos_compatibles": ["cortar", "acanalar", "perforar"],
+      "herrajes_compatibles": ["bisagra_simple", "tirador_plastico"]
+    }
+  },
+
+  "herrajes": {
+    "bisagra_simple": {
+      "nombre": "Bisagra Simple",
+      "costo_unitario": 2.5,
+      "compatible_materiales": ["melamina_standar", "mdf"],
+      "uso": "Puertas estándar"
+    },
+    "bisagra_raff": {
+      "nombre": "Bisagra Raff",
+      "costo_unitario": 5.8,
+      "compatible_materiales": ["melamina_standar", "roble_rh", "mdf"],
+      "uso": "Puertas de calidad"
+    },
+    "bisagra_invisible": {
+      "nombre": "Bisagra Invisible",
+      "costo_unitario": 8.5,
+      "compatible_materiales": ["roble_rh"],
+      "uso": "Puertas fachada premium"
+    },
+    "tirador_plastico": {
+      "nombre": "Tirador Plástico",
+      "costo_unitario": 0.8,
+      "compatible_materiales": ["melamina_standar", "mdf"],
+      "uso": "Tiradores básicos"
+    },
+    "tirador_metal": {
+      "nombre": "Tirador Metal",
+      "costo_unitario": 3.5,
+      "compatible_materiales": ["roble_rh", "melamina_standar"],
+      "uso": "Tiradores de acabado"
+    },
+    "corredera_oculta_tandem": {
+      "nombre": "Corredera Oculta Blum Tandem",
+      "costo_unitario": 12.5,
+      "compatible_materiales": ["melamina_standar", "roble_rh", "mdf"],
+      "uso": "Cajones con corredera oculta (bajo cajón)"
+    },
+    "corredera_oculta_generica": {
+      "nombre": "Corredera Oculta Genérica",
+      "costo_unitario": 8.0,
+      "compatible_materiales": ["melamina_standar", "mdf"],
+      "uso": "Cajones con corredera oculta económica"
+    }
+  },
+
+  "procesos": {
+    "cortar": {
+      "nombre": "Corte",
+      "costo_por_m_lineal": 0.3,
+      "unidad": "m_lineal",
+      "compatible_materiales": ["melamina_standar", "roble_rh", "mdf"]
+    },
+    "acanalar": {
+      "nombre": "Acanalar",
+      "costo_por_m_lineal": 0.5,
+      "unidad": "m_lineal",
+      "compatible_materiales": ["melamina_standar", "roble_rh", "mdf"]
+    },
+    "perforar": {
+      "nombre": "Perforación",
+      "costo_por_agujero": 0.15,
+      "unidad": "agujero",
+      "compatible_materiales": ["melamina_standar", "roble_rh", "mdf"]
+    },
+    "cepillar": {
+      "nombre": "Cepillado",
+      "costo_por_m2": 2.0,
+      "unidad": "m2",
+      "compatible_materiales": ["roble_rh"]
+    }
+  },
+
+  "parametros_globales": {
+    "espesor_default": {
+      "valor": 18,
+      "unidad": "mm",
+      "min": 10,
+      "max": 50
+    },
+    "canto_grueso": {
+      "valor": 2,
+      "unidad": "mm",
+      "descripcion": "Espesor de cinta de canto rígida (RIG)"
+    },
+    "canto_medio": {
+      "valor": 1,
+      "unidad": "mm",
+      "descripcion": "Espesor de cinta de canto semirrígida (SMRG)"
+    },
+    "canto_fino": {
+      "valor": 0.4,
+      "unidad": "mm",
+      "descripcion": "Espesor de cinta de canto fina (referencia)"
+    },
+    "ranura_fondo": {
+      "valor": 3,
+      "unidad": "mm",
+      "descripcion": "Profundidad de ranura para trasera"
+    },
+    "fondo_umbral_delgado": {
+      "valor": 8.0,
+      "unidad": "mm",
+      "min": 0,
+      "max": 20,
+      "descripcion": "Calibre máximo de fondo delgado (se ranura); por encima se atornilla"
+    }
+  },
+
+  "parametros_locales": {
+    "alto": {
+      "valor": 720,
+      "unidad": "mm",
+      "min": 100,
+      "max": 2500,
+      "descripcion": "Alto total del módulo"
+    },
+    "ancho": {
+      "valor": 600,
+      "unidad": "mm",
+      "min": 100,
+      "max": 2440,
+      "descripcion": "Ancho total del módulo"
+    },
+    "fondo": {
+      "valor": 580,
+      "unidad": "mm",
+      "min": 100,
+      "max": 1000,
+      "descripcion": "Profundidad total del módulo"
+    },
+    "espesor": {
+      "valor": 18,
+      "unidad": "mm",
+      "min": 10,
+      "max": 50
+    }
+  },
+
+  "parametros_cajon": {
+    "alto_caja": {
+      "valor": 120,
+      "unidad": "mm",
+      "min": 60,
+      "max": 300,
+      "descripcion": "Alto de los laterales de la caja (comercial: 85/120/150)"
+    },
+    "grosor_caja": {
+      "valor": 16,
+      "unidad": "mm",
+      "min": 12,
+      "max": 25,
+      "descripcion": "Espesor del tablero de la caja (ideal 15 o 16 para corredera oculta)"
+    },
+    "grosor_fondo": {
+      "valor": 6,
+      "unidad": "mm",
+      "min": 4,
+      "max": 12,
+      "descripcion": "Espesor del piso/fondo del cajón"
+    },
+    "grosor_fachada": {
+      "valor": 18,
+      "unidad": "mm",
+      "min": 10,
+      "max": 30,
+      "descripcion": "Espesor de la fachada decorativa"
+    },
+    "holgura_lateral_fachada": {
+      "valor": 2,
+      "unidad": "mm",
+      "min": 0,
+      "max": 10,
+      "descripcion": "Holgura a cada lado de la fachada (fugas)"
+    },
+    "holgura_superior_fachada": {
+      "valor": 2,
+      "unidad": "mm",
+      "min": 0,
+      "max": 10,
+      "descripcion": "Holgura superior de la fachada"
+    },
+    "holgura_inferior_fachada": {
+      "valor": 2,
+      "unidad": "mm",
+      "min": 0,
+      "max": 10,
+      "descripcion": "Holgura inferior de la fachada"
+    },
+    "penetracion_ranura_piso": {
+      "valor": 10,
+      "unidad": "mm",
+      "min": 6,
+      "max": 15,
+      "descripcion": "Penetración del piso en la ranura de cada lateral (8-10 típico)"
+    },
+    "eje_ranura_piso": {
+      "valor": 11.5,
+      "unidad": "mm",
+      "min": 8,
+      "max": 20,
+      "descripcion": "Distancia del borde inferior del lateral a la cara inferior de la ranura (base del piso)"
+    }
+  },
+
+  "correderas_ocultas": {
+    "blum_tandem": {
+      "nombre": "Blum Tandem",
+      "delta_ancho": 49,
+      "unidad_delta": "mm",
+      "descripcion": "Reducción del ancho interior del mueble para obtener el ancho exterior de la caja (laterales 16 mm)",
+      "longitudes_comerciales": [300, 350, 400, 450, 500, 550, 600],
+      "mecanizado": {
+        "diam_taladro": 6,
+        "prof_taladro": 12,
+        "dist_taladro_borde_trasero": 8,
+        "dist_taladro_sobre_ranura": 11,
+        "prof_ranura_lateral": 4,
+        "notch_ancho": 25,
+        "notch_alto": 20
+      }
+    },
+    "generica": {
+      "nombre": "Genérica (42-49 mm)",
+      "delta_ancho": 45,
+      "unidad_delta": "mm",
+      "descripcion": "Corredera oculta genérica; Delta según ficha técnica (rango 42-49 mm)",
+      "longitudes_comerciales": [300, 350, 400, 450, 500, 550, 600],
+      "mecanizado": {
+        "diam_taladro": 6,
+        "prof_taladro": 12,
+        "dist_taladro_borde_trasero": 8,
+        "dist_taladro_sobre_ranura": 11,
+        "prof_ranura_lateral": 4,
+        "notch_ancho": 25,
+        "notch_alto": 20
+      }
+    },
+    "hafele": {
+      "nombre": "Hafele (placeholder)",
+      "delta_ancho": 45,
+      "unidad_delta": "mm",
+      "descripcion": "Placeholder: ajustar delta_ancho a la ficha técnica de Hafele",
+      "longitudes_comerciales": [300, 350, 400, 450, 500, 550],
+      "mecanizado": {
+        "diam_taladro": 6,
+        "prof_taladro": 12,
+        "dist_taladro_borde_trasero": 8,
+        "dist_taladro_sobre_ranura": 11,
+        "prof_ranura_lateral": 4,
+        "notch_ancho": 25,
+        "notch_alto": 20
+      }
+    },
+    "ducasse": {
+      "nombre": "Ducasse (placeholder)",
+      "delta_ancho": 45,
+      "unidad_delta": "mm",
+      "descripcion": "Placeholder: ajustar delta_ancho a la ficha técnica de Ducasse",
+      "longitudes_comerciales": [300, 350, 400, 450, 500, 550],
+      "mecanizado": {
+        "diam_taladro": 6,
+        "prof_taladro": 12,
+        "dist_taladro_borde_trasero": 8,
+        "dist_taladro_sobre_ranura": 11,
+        "prof_ranura_lateral": 4,
+        "notch_ancho": 25,
+        "notch_alto": 20
+      }
+    }
+  },
+
+  "orientaciones": {
+    "horizontal": {
+      "nombre": "Horizontal (acostado)",
+      "normal": "Z",
+      "ejes": {"X": "ancho", "Y": "fondo", "Z": "espesor"}
+    },
+    "vertical": {
+      "nombre": "Vertical (de pie, división/lateral)",
+      "normal": "X",
+      "ejes": {"X": "espesor", "Y": "fondo", "Z": "alto"}
+    }
+  }
+}

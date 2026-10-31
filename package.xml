@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<package format="1" xmlns="https://wiki.freecad.org/Package_Metadata">
+  <name>VDO_CarpinteriaParametrica</name>
+  <description>Workbench profesional para el diseño, modulación y fabricación de carpintería paramétrica y mobiliario.</description>
+  <version>1.8.0</version>
+  <date>2026-10-30</date>
+  <maintainer email="soporte@empresa.com">Equipo de Desarrollo VDO</maintainer>
+  <license>LGPL-2.1-or-later</license>
+  <url type="repository">https://github.com/organizacion/VDO-CarpinteriaParametrica</url>
+  <url type="readme">https://github.com/organizacion/VDO-CarpinteriaParametrica/blob/main/README.md</url>
+  <icon>VDO/resources/icons/vdo_workbench.svg</icon>
+
+  <content>
+    <workbench>
+      <classname>VDO_Workbench</classname>
+      <subdirectory>./</subdirectory>
+      <icon>VDO/resources/icons/vdo_workbench.svg</icon>
+    </workbench>
+  </content>
+
+  <depend>
+    <package>BIM</package>
+  </depend>
+</package>

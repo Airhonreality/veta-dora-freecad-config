@@ -1,0 +1,14 @@
+# Metadatos para el indexador de FreeCAD Addon Manager
+Name = VDO Carpintería Paramétrica
+Description = Workbench profesional para el diseño, modulación y fabricación de carpintería paramétrica y mobiliario.
+Author = Equipo de Desarrollo VDO
+Email = soporte@empresa.com
+License = LGPL-2.1-or-later
+Version = 1.8.0
+Website = https://github.com/organizacion/VDO-CarpinteriaParametrica
+
+# Dependencias de bibliotecas de Python del sistema
+pylibs =
+
+# Dependencias facultativas
+optionalpylibs =

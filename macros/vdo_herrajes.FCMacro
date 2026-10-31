@@ -1,0 +1,20 @@
+# -*- coding: utf-8 -*-
+# =====================================================================
+# vdo_herrajes.FCMacro
+# PENDIENTE DE MIGRACION.
+#
+# Esta macro lanzaba VDOHardwareManagerDialog de vdo_hardware_manager.py,
+# un modulo de la era Macro/ que NO se migro al paquete VDO/. Lo unico
+# que existe hoy es la capa de datos: VDO/hub/vdo_hub_hardware.py sobre
+# VDO/hub/vdo_hardware_catalog.json, sin dialogo visual.
+#
+# Mientras no se migre el gestor, los herrajes se eligen en el panel de
+# propiedades de cada modulo (clic derecho -> Propiedades, o VDO_Editar).
+# =====================================================================
+
+import FreeCAD as App
+
+App.Console.PrintWarning(
+    "[VDO] El gestor visual de herrajes no esta migrado a este workbench. "
+    "Elige el herraje en el panel de propiedades del modulo "
+    "(clic derecho -> Propiedades del ...).\n")

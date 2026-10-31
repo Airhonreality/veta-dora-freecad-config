@@ -1,0 +1,282 @@
+Arquitectura Paramétrica de Objetos y Gestión de Jerarquías en FreeCAD 1.1.x para Addons de Mobiliario ModularEl desarrollo de complementos (addons) avanzados en FreeCAD (versión 1.1.x) destinados a la industria de la carpintería paramétrica y la fabricación asistida por computador (CAD/CAM) requiere una estructuración rigurosa de la jerarquía de objetos dentro del árbol nativo (Tree View). A diferencia de los modelos mecánicos convencionales, un sistema de mobiliario modular demanda la coordinación de componentes individuales (como paneles de melamina, traseras, listones y herrajes) que deben conservar su identidad geométrica B-Rep para procesos de anidado (nesting) y mecanizado CNC, al tiempo que responden sintónicamente a modificaciones paramétricas globales del conjunto.En la arquitectura de FreeCAD, la vista de árbol no es simplemente una representación visual plana, sino la manifestación gráfica de un modelo de datos subyacente compuesto por grafos de dependencias, enlaces de propiedades y proveedores de vista (ViewProviders). Definir incorrectamente estos vínculos conduce a patologías de software severas, como la duplicación topológica de sólidos en el núcleo OpenCASCADE, la existencia de objetos huérfanos tras operaciones de borrado, la degradación del rendimiento del Grafo Dirigido Acíclico (DAG) y la pérdida de la estructura del modelo cuando el script se ejecuta en entornos sin interfaz gráfica (headless mode).1. Arquitectura de Objetos y Desacoplamiento App/Gui en FreeCAD 1.1.xEl diseño del núcleo de FreeCAD descarta la unificación de la geometría y su representación en un único objeto de software, optando por un patrón estrictamente desacoplado tipo Modelo-Vista. La capa de datos (App) opera con independencia total de la plataforma gráfica, gestionando el estado paramétrico, los atributos dimensionales y la topología subyacente. Por su parte, la capa de la interfaz de usuario (Gui) administra los nodos del visor tridimensional basados en Coin3D/Open Inventor y los elementos visuales que componen la vista de árbol (Tree View) mediante la biblioteca Qt.┌────────────────────────────────────────────────────────────────────────┐
+│                   CAPA DE DATOS (C++ / Python)                         │
+│                                                                        │
+│                      App::DocumentObject                               │
+│                               │                                        │
+│                        App::GeoFeature                                 │
+│                               │                                        │
+│                         Part::Feature                                  │
+│                               │                                        │
+│                      Part::FeaturePython                               │
+│            (MuebleModulo / Contenedor Paramétrico)                     │
+│                               │                                        │
+│             Propiedad: App::PropertyLinkListChild                      │
+│                               │                                        │
+│         ┌─────────────────────┴─────────────────────┐                  │
+│         ▼                                           ▼                  │
+│ Panel_Lateral_Izq                         Panel_Lateral_Der            │
+│ (Part::FeaturePython)                     (Part::FeaturePython)        │
+└───────────────────────────────┬────────────────────────────────────────┘
+                                │ Vinculación
+                                ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│               CAPA DE INTERFAZ GRÁFICA (FreeCADGui)                    │
+│                                                                        │
+│                      Gui::ViewProviderDocumentObject                   │
+│                               │                                        │
+│                        Gui::ViewProviderPart                           │
+│                               │                                        │
+│                     ViewProviderProxy (Python)                         │
+│                               │                                        │
+│                Método: claimChildren()  ──────► Controla la vista     │
+│                                                 de Árbol (Tree View)   │
+└────────────────────────────────────────────────────────────────────────┘
+En la cúspide de la jerarquía de la capa de datos se encuentra App::DocumentObject, la clase base para todos los elementos persistentes almacenados en un documento de FreeCAD (.FCStd). De ella deriva App::GeoFeature, la cual introduce la propiedad fundamental Placement, que define la posición y orientación del objeto mediante un vector de traslación y una rotación en el espacio tridimensional. La clase Part::Feature extiende a App::GeoFeature integrando la propiedad Shape, encargada de almacenar las estructuras topológicas de bordes, caras y sólidos B-Rep (Part::TopoShape) producidas por el motor geométrico OpenCASCADE.Para permitir la extensión mediante código interpreted, FreeCAD expone Part::FeaturePython, una subclase programable que transfiere la lógica de recálculo y la gestión de propiedades a clases de Python. Paralelamente, la capa visual utiliza la jerarquía Gui::ViewProviderDocumentObject y sus derivaciones, asociando a cada objeto de datos un proveedor de vista que define sus propiedades de color, transparencia, visibilidad y, fundamentalmente, la estructura de anidamiento visual en la vista de árbol.2. Disyuntiva Arquitectónica: Part::FeaturePython frente a App::Part como Contenedor PadreAl diseñar el nodo raíz de un módulo de carpintería paramétrica (por ejemplo, un gabinete o una alacena), se presenta la disyuntiva técnica de emplear un contenedor nativo App::Part (Std_Part) o implementar un contenedor personalizado basado en Part::FeaturePython. La elección determina las capacidades de personalización visual, la flexibilidad del árbol y la robustez del modelo.App::Part fue concebido en el núcleo de FreeCAD para representar conjuntos mecánicos rígidos, agrupando sub-objetos y aplicándoles una transformación espacial coordinada a través de su propia propiedad Placement. Sin embargo, desde la perspectiva del desarrollo de addons en Python, App::Part exhibe una limitación de diseño crítica: su proveedor de vista asociado (Gui::ViewProviderPart) está compilado internamente en C++ y no expone las interfaces necesarias para asociar un proxy de vista personalizado escrito en Python. Si un desarrollador intenta asignar un proxy a la propiedad ViewObject.Proxy de un objeto App::Part, la aplicación ignorará las llamadas a métodos personalizados como claimChildren() o getIcon().Por el contrario, un contenedor construido sobre Part::FeaturePython permite adjuntar proxies tanto en la capa de datos (obj.Proxy) como en la capa visual (vobj.Proxy), otorgando un control absoluto sobre el comportamiento del objeto. Esta flexibilidad permite personalizar dinámicamente el icono del módulo en el árbol en función del tipo de mueble, interceptar eventos de modificación de propiedades, modificar menús contextuales e implementar algoritmos de empaquetado paramétrico sin depender de la lógica de ensamblaje mecánico convencional.Criterio TéchnicoPart::FeaturePythonApp::Part (Std_Part)App::DocumentObjectGroup (Std_Group)App::GeoFeatureGroupSoporte de Proxy ViewProvider en PythonTotalmente compatibleNo admitido (Bloqueado por C++)CompatibleCompatibleTransformación Espacial (Placement)Nativa (App::GeoFeature)Nativa con propagación localAusente (Sin posición espacial)Nativa con desplazamiento de hijosGeneración de Geometría (Shape)Programable en execute()No (Contenedor espacial puro)No (Contenedor organizativo)No (Contenedor de grupo)Personalización de Iconos en Tree ViewDinámica mediante getIcon()Estática (Icono nativo)Estática / Modificable por proxyEstática / Modificable por proxyEnlace de Datos en ejecuciones CLI/HeadlessMediante App::PropertyLinkListChildPropiedad interna GroupPropiedad interna GroupPropiedad interna GroupControl de Eliminación en CascadasImplementable mediante onDelete()Nativo (Elimina o desvincula)Desvincula componentes hijosDesvincula componentes hijosApp::DocumentObjectGroup (Std_Group) constituye una carpeta puramente organizativa. Carece de la propiedad Placement, por lo que no puede trasladar ni rotar espacialmente los elementos que contiene. App::GeoFeatureGroup resuelve la carencia de posición espacial, pero sigue careciendo de la potencia de un script de recálculo dedicado. Por estas razones, Part::FeaturePython se consolida como la solución superior para construir módulos paramétricos complejos de mobiliario, siempre que el desarrollador adopte patrones de diseño rigurosos para gestionar la geometría y la jerarquía.3. Grafo de Dependencias (DAG) frente a Árbol Visual (Tree View)Una distinción crítica en la arquitectura interna de FreeCAD radica en la separación entre la estructura topológica de dependencias del Grafo Dirigido Acíclico (DAG) y la representación jerárquica mostrada al usuario en la vista de árbol.                     RELACIÓN DE DATOS (DAG)
+            ┌────────────────────────────────────────┐
+            │         Mueble_Base_800                │
+            │    (App::PropertyLinkListChild)        │
+            └───────────────────┬────────────────────┘
+                                │
+               ┌────────────────┴────────────────┐
+               ▼                                 ▼
+      Panel_Lateral_Izq                 Panel_Lateral_Der
+      (Part::FeaturePython)             (Part::FeaturePython)
+
+                                │
+                                │ Método claimChildren()
+                                ▼
+
+                    VISUALIZACIÓN EN TREE VIEW
+            ┌────────────────────────────────────────┐
+            │  ▼ Mueble_Base_800                     │
+            │     ├── Lateral Izquierdo              │
+            │     └── Lateral Derecho                │
+            └────────────────────────────────────────┘
+El Grafo Dirigido Acíclico (DAG) determina la secuencia cronológica en la que el motor de FreeCAD recalcula los objetos del documento. Esta relación se establece formalmente cuando una propiedad de un objeto referencia a otro. El núcleo expone el método getParentObject(), el cual examina la red de propiedades de tipo enlace (InList y OutList) para retornar el objeto que actúa como contenedor primario dentro de la arquitectura de datos.Por otro lado, la jerarquía visual del Tree View está regida por el método claimChildren() perteneciente al ViewProvider del objeto contenedor. Cuando la interfaz gráfica construye o actualiza la vista de árbol, invoca claimChildren() en cada proveedor de vista registrado. Este método retorna una lista de objetos de datos que deben sangrarse visualmente debajo del contenedor:Pythondef claimChildren(self):
+    """Retorna los objetos que deben anidarse visualmente bajo el padre."""
+    if hasattr(self.Object, "Paneles"):
+        return [p for p in self.Object.Paneles if p is not None]
+    return []
+Existe además el método claimChildren3D(), cuya función es indicar qué objetos deben agruparse bajo el mismo nodo de transformación dentro del grafo de escena tridimensional de Coin3D. En el desarrollo de addons para mobiliario, sobrescribir claimChildren3D() no es recomendable, dado que distorsiona la gestión de selección tridimensional y la renderización de resaltado nativa de FreeCAD.El Riesgo del Modo Headless y la Persistencia de DatosEl fallo metodológico más común al programar addons en FreeCAD consiste en confiar la jerarquía del módulo exclusivamente al método claimChildren(). Cuando FreeCAD se ejecuta en la consola de comandos (FreeCADCmd), se importa como módulo de Python en un entorno externo, o procesa archivos en servidores de renderizado o integración continua, la interfaz gráfica (FreeCADGui) no se inicializa. En consecuencia, los proveedores de vista no existen y claimChildren() jamás se ejecuta.Si las relaciones entre el mueble y sus paneles solo existieran dentro del ViewProvider, cualquier script headless destinado a generar listas de materiales (BOM), extraer planos de corte o exportar archivos de mecanizado CNC analizará el documento como una colección de objetos planos inconexos, perdiendo la estructura del módulo. Para evitar este problema, la jerarquía debe residir de forma nativa en la capa de datos utilizando la propiedad especializada App::PropertyLinkListChild o App::PropertyLinkChild.4. Estrategia de Mitigación de Duplicación Geométrica y Gestión de Objetos HuérfanosEn un sistema de carpintería paramétrica, cada componente individual (como laterales, zócalos o divisores) debe existir como una entidad topológica B-Rep independiente asignada a la propiedad Shape de un objeto Part::FeaturePython. Esta independencia es indispensable para que los módulos de mecanizado (CAM/Path), anidado (nesting) y despiece puedan evaluar la orientación de la veta, calcular cantos y generar trayectorias de fresado.El Problema de la Duplicación GeométricaSi el objeto contenedor padre (Mueble_Base) ejecuta en su método execute() una operación de unión booleana (Part.Fuse) o de empaquetado (Part.Compound) con las geometrías de todos sus paneles hijos, y asigna el resultado a su propia propiedad Shape, se produce una duplicación de sólidos en el documento. La misma geometría se procesará tanto en el objeto padre como en cada uno de los objetos hijos.Esta duplicación provoca consecuencias indeseadas:Conflicto de Renderizado (Z-Fighting): En el visor 3D, las caras coplanares del objeto padre y de los objetos hijos compiten por el búfer de profundidad, generando un parpadeo visual molesto.Cálculos Físicos Erróneos: Las consultas de masa, volumen y centro de gravedad duplican exactamente los valores reales del mueble.Inconsistencias en Exportación: Los exportadores a formatos STEP, IGES o DXF duplican cada entidad, provocando que las máquinas de corte CNC procesen dos veces la misma trayectoria de herramienta.Patrones de Diseño Anti-DuplicaciónPara prevenir la duplicación geométrica manteniendo la capacidad de selección y manipulación del mueble en la interfaz, se emplean dos patrones principales:Patrón de Contenedor Lógico con Forma Vacía: El objeto padre Part::FeaturePython no genera ningún sólido en su propiedad Shape. En el método execute(), la forma del padre se inicializa explícitamente como una topología nula (obj.Shape = Part.Shape()). La representación volumétrica recae al 100% en los objetos hijos. Este patrón es el idóneo para módulos de carpintería donde cada pieza se fabrica por separado.Patrón de Marco Delimitador (Wireframe Bounding Box): Si se requiere que el contenedor padre sea fácilmente seleccionable en la escena 3D sin hacer clic en un panel específico, el método execute() del padre calcula la caja envolvente (Bounding Box) que abarca a todos los hijos y genera un marco de alambre (wireframe) a partir de sus 12 aristas. De este modo, el padre aporta un volumen de selección visual sin generar caras ni sólidos B-Rep competitivos.Prevención de Objetos Huérfanos Mediante Eliminación en CascadasCuando un usuario selecciona el contenedor principal de un mueble en el árbol y presiona la tecla de eliminación, la conducta por defecto del motor de FreeCAD consiste en destruir únicamente el objeto seleccionado. Si no se programa una intervención explícita, los paneles hijos permanecen vinculados al documento pero invisibles o desagrupados, transformándose en objetos huérfanos que corrompen la integridad del proyecto.Para garantizar un borrado seguro y coordinado en cascada, el proxy de la capa de datos del objeto contenedor debe implementar el método callback onDelete(). Cuando el objeto se elimina, este método intercepta el evento, recorre la lista de referencias almacenada en App::PropertyLinkListChild y elimina de forma coordinada todos los sub-objetos del documento:Pythondef onDelete(self, obj, subelements):
+    """Callback invocado automáticamente antes de la destrucción del objeto."""
+    if hasattr(obj, "Paneles"):
+        doc = obj.Document
+        for panel in obj.Paneles:
+            if panel and doc.getObject(panel.Name):
+                doc.removeObject(panel.Name)
+    return True
+5. Propagación Paramétrica: Expresiones Algebraicas frente a Recálculo Imperativo en execute()FreeCAD cuenta con un motor de expresiones algebraicas que permite enlazar propiedades entre objetos (utilizando la sintaxis <<Objeto>>.Propiedad). En el desarrollo de un addon de carpintería, la propagación de cambios dimensionales (como alterar el AnchoTotal de un mueble y redistribuir automáticamente sus estantes) se puede resolver mediante dos paradigmas: vinculación declarativa por expresiones o recálculo imperativo en código Python.Declarativo por Expresiones AlgebraicasEn el enfoque declarativo, el script del addon asigna expresiones explícitas a las propiedades de los objetos hijos durante su creación:Pythonpanel_der.setExpression("Placement.Base.x", "Mueble_Base_800.AnchoTotal - Mueble_Base_800.EspesorGeneral")
+Si bien este método resulta transparente para el usuario final (quien puede inspeccionar las fórmulas directamente en el editor de propiedades), introduce una sobrecarga severa en la infraestructura de FreeCAD. En muebles complejos compuestas por docenas de piezas, herrajes y mecanizados, la cantidad de expresiones individuales escala exponencialmente. Cada expresión registra un nodo y una arista adicional en el Grafo Dirigido Acíclico (DAG), incrementando los tiempos de evaluación y elevando el riesgo de dependencias circulares durante modificaciones masivas.Recálculo Imperativo en el Método execute()El enfoque imperativo delega la responsabilidad de posicionar y dimensionar las piezas al método execute() del objeto contenedor padre. Cuando una propiedad dimensional del contenedor cambia (por ejemplo, AnchoTotal), FreeCAD invoca el método execute() del padre. Este método ejecuta un algoritmo sintético en Python que calcula las nuevas coordenadas de cada panel y actualiza directamente sus propiedades Largo, Ancho y Placement:Pythondef execute(self, obj):
+    """Cálculo imperativo de las dimensiones y posiciones de los paneles."""
+    ancho = float(obj.AnchoTotal)
+    alto = float(obj.AltoTotal)
+    esp = float(obj.EspesorGeneral)
+
+    for panel in obj.Paneles:
+        if "Lateral_Der" in panel.Name:
+            panel.Largo = alto
+            panel.Placement.Base = App.Vector(ancho - esp, 0, 0)
+Este paradigma mantiene el Grafo DAG extremadamente limpio, ya que solo existe un enlace de datos global (App::PropertyLinkListChild) entre el padre y sus componentes. El rendimiento de recálculo se incrementa de forma notable.Estrategia Híbrida OptimizadaLa práctica profesional recomendada consiste en adoptar una arquitectura híbrida:Nivel Superior (Interfaz / Proyecto): Utilizar una hoja de cálculo nativa (Spreadsheet) o propiedades globales expuestas en el contenedor padre, donde las expresiones algebraicas definen variables de diseño arquitectónico (por ejemplo, la altura total del recinto o el espesor general de la madera).Nivel Interno (Módulo / Componentes): Utilizar recálculo imperativo en el método execute() del objeto Part::FeaturePython para derivar la geometría, posición y orientación de cada panel individual.6. Análisis de Patrones de Jerarquía en Addons Populares de FreeCADEl estudio de los componentes y complementos consolidados dentro del ecosistema de FreeCAD proporciona valiosas lecciones de arquitectura sobre cómo estructurar el árbol de objetos según el dominio de aplicación:                            ANÁLISIS DE PATRONES
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │ Assembly4                                                              │
+ │ App::Part + App::Link + Datums                                         │
+ │ Estructura cinemática rígida basada en sistemas de coordenadas locales.│
+ └────────────────────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │ PartDesign                                                             │
+ │ PartDesign::Body + PartDesign::Feature                                 │
+ │ Flujo acumulativo monocuerpo mediante árbol de historial lineal.       │
+ └────────────────────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │ Arch / BIM                                                             │
+ │ App::GeoFeatureGroup + Componentes Arquitectónicos                     │
+ │ Contenedores espaciales flexibles para edificios e instalaciones.      │
+ └────────────────────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │ Addons de Carpintería Paramétrica (Patrón Recomendado)                │
+ │ Part::FeaturePython + App::PropertyLinkListChild                       │
+ │ Estructura lógica desligada de masa pero vinculada para despiece y CNC.│
+ └────────────────────────────────────────────────────────────────────────┘
+Assembly4Assembly4 adopta el uso de App::Part como contenedor primario, sobre el cual se estructuran puntos de referencia local (Datum Coordinate Systems o LCS) y enlaces simbólicos (App::Link). Este enfoque es excelente para modelos mecánicos donde las piezas individuales preexisten y se ensamblan mediante restricciones cinemáticas. No obstante, resulta rígido para el mobiliario paramétrico, donde las dimensiones de las piezas no son fijas, sino que se adaptan y regeneran dinámicamente según el espacio disponible.PartDesignEl banco de trabajo PartDesign impone una regla estricta: un objeto PartDesign::Body debe contener un único sólido contiguo B-Rep generado mediante una secuencia lineal de operaciones (Features como bocetos, pad, pocket). Este patrón no es adecuado para actuar como contenedor de un mueble completo, puesto que un mueble se compone de múltiples sólidos físicamente disjuntos (cada tablero de madera está separado por juntas o ensambles). Intentar modelar un gabinete dentro de un único PartDesign::Body vulnera la filosofía de PartDesign y dificulta la extracción independiente de paneles para la fabricación CNC.Arch y BIMLos módulos Arch y BIM emplean objetos basados en App::GeoFeatureGroup y Part::FeaturePython para representar elementos constructivos (muros, ventanas, vigas). Utilizan propiedades de enlace para agrupar elementos dentro de contenedores espaciales (Arch Site, Arch Building, Arch Floor). Este modelo es el que más se asemeja a las necesidades de la carpintería paramétrica, demostrando la eficacia de combinar flexibilidad de datos con controles personalizados de visualización.7. Estándares de Nomenclatura e Identificación para Manufactura CNCPara garantizar la correcta trazabilidad entre el modelo CAD, las herramientas de despiece y los post-procesadores CAM/CNC, se debe establecer una clara distinción entre el identificador de sistema (Name) y el nombre visual de usuario (Label) en cada objeto de FreeCAD.Reglas de Gestión de Name y LabelName (Identificador Interno de Sistema):
+Es la clave única no mutable asignada por el núcleo del documento de FreeCAD al instanciar el objeto. Solo admite caracteres alfanuméricos y guiones bajos [_0-9a-zA-Z], descartando espacios y símbolos especiales. El código interno del addon debe utilizar Name para búsquedas directas y vinculaciones inequívocas.Formato: [TipoModulo]_[RolPieza]_[Hash/ID] (Ejemplo: Mueble_Base_001, Panel_Lateral_Izq_001).Label (Etiqueta Visible para el Usuario):
+Es una cadena de texto UTF-8 modificable por el usuario que se muestra en el Tree View y en los planos de fabricación. El addon debe actualizar dinámicamente esta etiqueta para incluir información dimensional útil para el operario de carpintería.Formato: [Nombre Descriptivo] [[Largo x Ancho x Espesor]] (Ejemplo: Lateral Izquierdo [720 x 560 x 18 mm]).Estructura Jerárquica Conceptual para un Módulo de CarpinteríaA continuación se detalla la estructura lógica de objetos que debe reflejarse dentro del árbol de FreeCAD, categorizada por tipo de datos y atributos de fabricación:Mueble_Base_800 (Tipo: Part::FeaturePython | Rol: Contenedor Padre Principal)Propiedades de Datos: AnchoTotal = 800 mm, AltoTotal = 720 mm, ProfundidadTotal = 560 mm.Geometría Shape: Forma nula Part.Shape() (Evita duplicación).Vínculo de Estructura: App::PropertyLinkListChild conteniendo las referencias a los paneles.Sub-objetos Anidados en Tree View (mediante claimChildren()):Panel_Lateral_Izq_001 (Tipo: Part::FeaturePython | Label: "Lateral Izquierdo [720 x 560 x 18 mm]")Atributos CNC: Material = "Melamina Roble 18mm", Veta = "Longitudinal", Canto_Frontal = "ABS 2mm".Geometría Shape: Sólido Part.Box (B-Rep contiguo).Panel_Lateral_Der_001 (Tipo: Part::FeaturePython | Label: "Lateral Derecho [720 x 560 x 18 mm]")Atributos CNC: Material = "Melamina Roble 18mm", Veta = "Longitudinal", Canto_Frontal = "ABS 2mm".Geometría Shape: Sólido Part.Box (B-Rep contiguo).Panel_Piso_001 (Tipo: Part::FeaturePython | Label: "Piso Inferior [764 x 560 x 18 mm]")Atributos CNC: Material = "Melamina Roble 18mm", Veta = "Transversal", Canto_Frontal = "ABS 2mm".Geometría Shape: Sólido Part.Box (B-Rep contiguo).Panel_Estante_001 (Tipo: Part::FeaturePython | Label: "Estante Ajustable [763 x 540 x 18 mm]")Atributos CNC: Material = "Melamina Roble 18mm", Veta = "Transversal", Canto_Frontal = "ABS 1mm".Geometría Shape: Sólido Part.Box (B-Rep contiguo).8. Código Mínimo Funcional (FreeCAD 1.1.x API)El siguiente módulo de Python proporciona una implementación de referencia completa y funcional. El código demuestra cómo estructurar un contenedor Part::FeaturePython que actúa como padre visual en el árbol de FreeCAD, utiliza App::PropertyLinkListChild para la persistencia de datos en entornos sin GUI, evita la duplicación geométrica y previene la existencia de objetos huérfanos mediante borrado en cascada.Pythonimport FreeCAD as App
+import Part
+
+# Verificación de ejecución en entorno con interfaz gráfica (GUI) vs Headless
+if App.GuiUp:
+    import FreeCADGui as Gui
+
+
+class PanelParametrico:
+    """Proxy de la Capa de Datos para Paneles Individuales de Carpintería."""
+
+    def __init__(self, obj):
+        obj.Proxy = self
+
+        # Propiedades dimensionales con unidades explícitas
+        obj.addProperty("App::PropertyLength", "Largo", "Dimensiones", "Largo del panel en la dirección de veta").Largo = 720.0
+        obj.addProperty("App::PropertyLength", "Ancho", "Dimensiones", "Ancho o profundidad del panel").Ancho = 560.0
+        obj.addProperty("App::PropertyLength", "Espesor", "Dimensiones", "Espesor nominal del tablero").Espesor = 18.0
+
+        # Atributos específicos para procesamiento CNC / BOM
+        obj.addProperty("App::PropertyString", "Material", "Atributos CNC", "Especificación del tablero").Material = "Melamina 18mm"
+        obj.addProperty("App::PropertyString", "Veta", "Atributos CNC", "Orientación de la veta").Veta = "Longitudinal"
+
+    def execute(self, obj):
+        """Genera la geometría sólida B-Rep del panel en OpenCASCADE."""
+        largo = float(obj.Largo)
+        ancho = float(obj.Ancho)
+        espesor = float(obj.Espesor)
+
+        if largo > 0 and ancho > 0 and espesor > 0:
+            # Creación del sólido básico B-Rep
+            box = Part.makeBox(largo, ancho, espesor)
+            obj.Shape = box
+        else:
+            obj.Shape = Part.Shape()
+
+
+class ViewProviderPanel:
+    """Proxy de la Capa Visual (Gui) para el Panel Individual."""
+
+    def __init__(self, vobj):
+        vobj.Proxy = self
+
+    def getIcon(self):
+        """Devuelve la representación de icono para la vista de árbol."""
+        return ""
+
+    def __getstate__(self):
+        return None
+
+    def __setstate__(self, state):
+        return None
+
+
+class MuebleModulo:
+    """Proxy de la Capa de Datos para el Contenedor Principal del Mueble."""
+
+    def __init__(self, obj):
+        obj.Proxy = self
+
+        # Parámetros globales de control del gabinete
+        obj.addProperty("App::PropertyLength", "AnchoTotal", "Dimensiones Módulo", "Ancho exterior total").AnchoTotal = 800.0
+        obj.addProperty("App::PropertyLength", "AltoTotal", "Dimensiones Módulo", "Alto exterior total").AltoTotal = 720.0
+        obj.addProperty("App::PropertyLength", "ProfundidadTotal", "Dimensiones Módulo", "Profundidad exterior").ProfundidadTotal = 560.0
+        obj.addProperty("App::PropertyLength", "EspesorGeneral", "Dimensiones Módulo", "Espesor de tableros").EspesorGeneral = 18.0
+
+        # Propiedad de enlace fundamental para persistencia de jerarquía en DAG (Modo Headless)
+        obj.addProperty("App::PropertyLinkListChild", "Paneles", "Estructura Lógica", "Lista de componentes vinculados")
+
+    def execute(self, obj):
+        """Coordinación paramétrica e imperativa de las piezas hijas."""
+        if not hasattr(obj, "Paneles") or not obj.Paneles:
+            return
+
+        ancho_tot = float(obj.AnchoTotal)
+        alto_tot = float(obj.AltoTotal)
+        prof_tot = float(obj.ProfundidadTotal)
+        esp = float(obj.EspesorGeneral)
+
+        # Iteración y actualización paramétrica de los sub-objetos
+        for panel in obj.Paneles:
+            if panel is None or not hasattr(panel, "Proxy"):
+                continue
+
+            # Ajuste paramétrico según el rol identificado en el sistema
+            if "Lateral_Izq" in panel.Name:
+                panel.Largo = alto_tot
+                panel.Ancho = prof_tot
+                panel.Espesor = esp
+                # Orientación vertical en X=0 (Rotación de 90 grados en eje Y)
+                panel.Placement = App.Placement(App.Vector(0, 0, 0), App.Rotation(App.Vector(0, 1, 0), 90))
+                panel.Label = f"Lateral Izquierdo [{int(alto_tot)}x{int(prof_tot)}x{int(esp)} mm]"
+
+            elif "Lateral_Der" in panel.Name:
+                panel.Largo = alto_tot
+                panel.Ancho = prof_tot
+                panel.Espesor = esp
+                # Orientación vertical desplazada en X = AnchoTotal - Espesor
+                panel.Placement = App.Placement(App.Vector(ancho_tot - esp, 0, 0), App.Rotation(App.Vector(0, 1, 0), 90))
+                panel.Label = f"Lateral Derecho [{int(alto_tot)}x{int(prof_tot)}x{int(esp)} mm]"
+
+            elif "Piso" in panel.Name:
+                largo_piso = ancho_tot - (2 * esp)
+                panel.Largo = largo_piso
+                panel.Ancho = prof_tot
+                panel.Espesor = esp
+                # Orientación horizontal situada entre los dos laterales
+                panel.Placement = App.Placement(App.Vector(esp, 0, 0), App.Rotation(App.Vector(0, 0, 1), 0))
+                panel.Label = f"Piso Inferior [{int(largo_piso)}x{int(prof_tot)}x{int(esp)} mm]"
+
+        # Prevención de duplicación geométrica: El contenedor no almacena sólido propio
+        obj.Shape = Part.Shape()
+
+    def onDelete(self, obj, subelements):
+        """Eliminación limpia en cascada para evitar objetos huérfanos."""
+        if hasattr(obj, "Paneles"):
+            doc = obj.Document
+            for panel in obj.Paneles:
+                if panel and doc.getObject(panel.Name):
+                    doc.removeObject(panel.Name)
+        return True
+
+
+class ViewProviderMueble:
+    """Proxy de la Capa Visual (Gui) para el Contenedor Principal."""
+
+    def __init__(self, vobj):
+        vobj.Proxy = self
+
+    def claimChildren(self):
+        """Garantiza la jerarquía de anidamiento visual en el Tree View de la GUI."""
+        if hasattr(self, "Object") and hasattr(self.Object, "Paneles"):
+            return [p for p in self.Object.Paneles if p is not None]
+        return []
+
+    def getIcon(self):
+        """Proporciona un icono dinámico para el contenedor en el Tree View."""
+        return ""
+
+    def __getstate__(self):
+        return None
+
+    def __setstate__(self, state):
+        return None
+
+
+def instanciar_modulo_mobiliario(doc_name=None):
+    """Función de fábrica para la creación de la jerarquía completa del módulo."""
+    doc = App.getActiveDocument() if doc_name is None else App.getDocument(doc_name)
+    if not doc:
+        doc = App.newDocument("Modulo_Mobiliario_CNC")
+
+    # 1. Instanciación del objeto contenedor padre (Part::FeaturePython)
+    mueble = doc.addObject("Part::FeaturePython", "Mueble_Base_800")
+    MuebleModulo(mueble)
+    if App.GuiUp:
+        ViewProviderMueble(mueble.ViewObject)
+
+    # 2. Instanciación de los componentes hijos (Paneles)
+    panel_izq = doc.addObject("Part::FeaturePython", "Panel_Lateral_Izq")
+    PanelParametrico(panel_izq)
+    if App.GuiUp:
+        ViewProviderPanel(panel_izq.ViewObject)
+
+    panel_der = doc.addObject("Part::FeaturePython", "Panel_Lateral_Der")
+    PanelParametrico(panel_der)
+    if App.GuiUp:
+        ViewProviderPanel(panel_der.ViewObject)
+
+    panel_piso = doc.addObject("Part::FeaturePython", "Panel_Piso")
+    PanelParametrico(panel_piso)
+    if App.GuiUp:
+        ViewProviderPanel(panel_piso.ViewObject)
+
+    # 3. Establecimiento de la jerarquía en la capa de datos (App::PropertyLinkListChild)
+    mueble.Paneles = [panel_izq, panel_der, panel_piso]
+
+    # 4. Recálculo inicial del documento
+    doc.recompute()
+    return mueble
+9. Guía de Buenas y Malas Prácticas (Do's and Don'ts)Prácticas Recomendadas (Do's)Definir la jerarquía primaria en la capa de datos: Utilizar siempre propiedades de enlace explícitas como App::PropertyLinkListChild o App::PropertyLinkChild para registrar la estructura del mueble. Esto garantiza que los comandos de consola, scripts automatizados e integraciones servidor funcionen correctamente sin interfaz gráfica.Implementar claimChildren() exclusivamente como reflejo visual: Limitar la responsabilidad del método claimChildren() dentro de la clase ViewProvider a retornar las listas ya definidas en la capa de datos (App::PropertyLinkListChild).Asignar formas nulas (Part.Shape()) a los objetos contenedores: Asegurar que las clases Part::FeaturePython que actúan como padres lógicos no asignen combinaciones sólidas a su propiedad Shape, previniendo parpadeos visuales (Z-fighting), doble contabilización de masa y errores de mecanizado.Interceptar la eliminación mediante el callback onDelete(): Incorporar lógica de borrado en cascada en la clase Proxy de datos para asegurar que al eliminar un mueble se destruyan sus componentes dependientes, manteniendo el archivo .FCStd libre de objetos huérfanos.Aislar la creación de proveedores de vista mediante la comprobación App.GuiUp: Encapsular la vinculación de ViewObject.Proxy dentro de bloques condicionales que verifiquen si la interfaz gráfica está activa, asegurando la portabilidad del código.Separar las etiquetas del sistema (Name) de las etiquetas de usuario (Label): Mantener los identificadores Name limpios para el código de Python y actualizar dinámicamente las etiquetas Label con información dimensional para el operario de carpintería.Prácticas No Recomendadas (Don'ts)No confiar la estructura del documento únicamente al método claimChildren(): Recordar que los proveedores de vista no se instancian en modo headless o de línea de comandos (FreeCADCmd), lo que fragmentaría la estructura de datos en procesamientos por lotes.No intentar asignar proxies en Python a la propiedad ViewObject.Proxy de un App::Part: El proveedor de vista nativo de App::Part está implementado en C++ e ignorará los métodos declarados en scripts de Python.No realizar fusiones booleanas (Part.Fuse) masivas en el objeto contenedor si los paneles hijos permanecen visibles: La duplicación topológica degrada el rendimiento de OpenCASCADE y corrompe los algoritmos de corte y anidado CNC.No sobrecargar el Grafo DAG con expresiones algebraicas individuales para cada cota de pieza: Reservar las expresiones algebraicas para variables globales del proyecto y resolver las posiciones relativas de las piezas de forma imperativa dentro del método execute().No generar dependencias circulares de propiedades entre componentes: Evitar que las propiedades de un objeto hijo modifiquen directamente propiedades del padre durante la ejecución de su propio método execute(), lo cual congelaría la aplicación en un bucle infinito de recálculo.

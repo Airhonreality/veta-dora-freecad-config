@@ -1,0 +1,38 @@
+# -*- coding: utf-8 -*-
+# =====================================================================
+# vdo_editar_vdo.FCMacro
+# Abre el panel de propiedades del modulo VDO seleccionado.
+# Funciona desde el arbol o desde la vista 3D, y repara el ViewProvider
+# si el objeto quedo sin proxy.
+#
+# La misma accion esta en la toolbar "VDO Muebles" (VDO_Editar) y en el
+# menu contextual del objeto.
+# =====================================================================
+
+import os
+import sys
+
+import FreeCAD as App
+import FreeCADGui as Gui
+
+WB_NAME = "VDO_CarpinteriaParametrica"
+
+if not any(os.path.isdir(os.path.join(p, "VDO")) for p in sys.path):
+    for _cand in (os.path.join(App.getUserAppDataDir(), "Mod", WB_NAME),
+                  os.path.join(App.getResourceDir(), "Mod", WB_NAME)):
+        if os.path.isdir(_cand):
+            sys.path.insert(0, _cand)
+            break
+
+from VDO.cad.views.vdo_cad_view_base import (
+    abrir_panel_objeto, diagnostico_viewprovider,
+)
+
+seleccion = Gui.Selection.getSelection()
+if not seleccion:
+    App.Console.PrintWarning(
+        "[VDO] Selecciona un modulo VDO en el arbol o en la vista 3D.\n")
+else:
+    for obj in seleccion:
+        App.Console.PrintLog(diagnostico_viewprovider(obj) + "\n")
+    abrir_panel_objeto(seleccion[0])

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- vdo_cajon.svg — cajón con corredera oculta -->
+  <rect x="4" y="4" width="56" height="56" rx="4" fill="#f5f0e6" stroke="#5d4037" stroke-width="2"/>
+  <!-- fachada del cajón -->
+  <rect x="10" y="14" width="44" height="24" rx="2" fill="#8d6e63" stroke="#4e342e" stroke-width="2"/>
+  <!-- tirador -->
+  <rect x="26" y="24" width="12" height="4" rx="2" fill="#d7ccc8"/>
+  <!-- caja vista desde arriba (corredera oculta debajo) -->
+  <rect x="12" y="42" width="40" height="12" fill="#bcaaa4" stroke="#4e342e" stroke-width="1.5"/>
+  <!-- raíles ocultos (discontinuos) -->
+  <line x1="14" y1="56" x2="50" y2="56" stroke="#90a4ae" stroke-width="2" stroke-dasharray="4 3"/>
+</svg>

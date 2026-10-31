@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="420mm" height="297mm" viewBox="0 0 420 297" xmlns:freecad="http://www.freecadweb.org/">
+  <!-- Marco horizontal A3 (420 x 297 mm) con cajetín técnico de carpintería -->
+  <rect x="0" y="0" width="420" height="297" fill="none" stroke="#000000" stroke-width="2"/>
+
+  <!-- Línea interior de seguridad (márgen 10 mm) -->
+  <rect x="10" y="10" width="400" height="277" fill="none" stroke="#000000" stroke-width="0.5"/>
+
+  <!-- Cajetín inferior derecho (120 x 40 mm), rejilla 2 columnas × 3 filas -->
+  <rect x="290" y="247" width="120" height="40" fill="none" stroke="#000000" stroke-width="1"/>
+
+  <!-- Divisoria vertical: separa columna izquierda (etiqueta+valor) de derecha (etiqueta+valor) -->
+  <line x1="350" y1="247" x2="350" y2="287" stroke="#000000" stroke-width="0.5"/>
+
+  <!-- Divisorias horizontales: 3 filas de ~13.33 mm cada una -->
+  <line x1="290" y1="260.33" x2="410" y2="260.33" stroke="#000000" stroke-width="0.5"/>
+  <line x1="290" y1="273.67" x2="410" y2="273.67" stroke="#000000" stroke-width="0.5"/>
+
+  <!-- Etiquetas estáticas — columna izquierda -->
+  <text x="293" y="254" font-family="sans-serif" font-size="3.5" fill="#000000">PROYECTO</text>
+  <text x="293" y="267.33" font-family="sans-serif" font-size="3.5" fill="#000000">CLIENTE</text>
+  <text x="293" y="280.67" font-family="sans-serif" font-size="3.5" fill="#000000">ESPACIO</text>
+
+  <!-- Etiquetas estáticas — columna derecha -->
+  <text x="353" y="254" font-family="sans-serif" font-size="3.5" fill="#000000">LÁMINA</text>
+  <text x="353" y="267.33" font-family="sans-serif" font-size="3.5" fill="#000000">NPT</text>
+  <text x="353" y="280.67" font-family="sans-serif" font-size="3.5" fill="#000000">ESCALA</text>
+
+  <!-- Campos editables — FreeCAD requiere <tspan> dentro del <text> con freecad:editable -->
+  <text x="325" y="254" font-family="sans-serif" font-size="3.5" fill="#000000"
+        freecad:editable="vdo_proyecto"><tspan>Proyecto</tspan></text>
+  <text x="325" y="267.33" font-family="sans-serif" font-size="3.5" fill="#000000"
+        freecad:editable="vdo_cliente"><tspan>Cliente</tspan></text>
+  <text x="325" y="280.67" font-family="sans-serif" font-size="3.5" fill="#000000"
+        freecad:editable="vdo_espacio"><tspan>Espacio</tspan></text>
+  <text x="385" y="254" font-family="sans-serif" font-size="3.5" fill="#000000"
+        freecad:editable="vdo_lamina"><tspan>A3-01</tspan></text>
+  <text x="385" y="267.33" font-family="sans-serif" font-size="3.5" fill="#000000"
+        freecad:editable="vdo_npt"><tspan>0.0 mm</tspan></text>
+  <text x="385" y="280.67" font-family="sans-serif" font-size="3.5" fill="#000000"
+        freecad:editable="vdo_escala"><tspan>1:50</tspan></text>
+
+  <!-- Título del membrete -->
+  <text x="20" y="20" font-family="sans-serif" font-size="14" font-weight="bold" fill="#000000">VDO — Carpintería Paramétrica</text>
+  <text x="20" y="34" font-family="sans-serif" font-size="10" fill="#555555">Dossier de láminas por capas informacionales</text>
+</svg>

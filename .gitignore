@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+*.bak
+*.FCBak
+*.FCStd1
+.pytest_cache/
+tests/output/
+node_modules/
+.verif/

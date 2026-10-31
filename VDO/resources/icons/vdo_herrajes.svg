@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Icono de herrajes VDO: bisagra / llave estilizada -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#007acc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#005a9e;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Fondo redondeado suave -->
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="#1e1e1e" stroke="#444444" stroke-width="1.5"/>
+  <!-- Cuerpo de la bisagra (rectángulo central) -->
+  <rect x="18" y="16" width="28" height="32" rx="4" fill="none" stroke="#e0e0e0" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Perno central -->
+  <circle cx="32" cy="32" r="5" fill="url(#grad)" stroke="#003d66" stroke-width="1.2"/>
+  <!-- Agujeros de tornillo -->
+  <circle cx="22" cy="22" r="1.6" fill="#8a8a8a"/>
+  <circle cx="42" cy="22" r="1.6" fill="#8a8a8a"/>
+  <circle cx="22" cy="42" r="1.6" fill="#8a8a8a"/>
+  <circle cx="42" cy="42" r="1.6" fill="#8a8a8a"/>
+  <!-- Llave/acceso derecha -->
+  <path d="M 46 22 L 54 22 L 54 28 L 46 28 Z" fill="#e0e0e0"/>
+  <circle cx="50" cy="25" r="1.2" fill="#007acc"/>
+  <!-- Etiqueta pequeña -->
+  <text x="32" y="58" font-family="sans-serif" font-size="8" fill="#8a8a8a" text-anchor="middle">H</text>
+</svg>

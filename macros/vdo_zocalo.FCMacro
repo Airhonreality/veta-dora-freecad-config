@@ -1,0 +1,35 @@
+# -*- coding: utf-8 -*-
+# =====================================================================
+# vdo_zocalo.FCMacro
+# Zocalo parametrico de base
+#
+# Esta macro es un envoltorio del workbench: la implementacion vive en
+# VDO/ui/vdo_ui_creation_flow.py. La misma accion esta en la toolbar
+# "VDO Muebles" (VDO_Zocalo).
+# =====================================================================
+
+import os
+import sys
+
+import FreeCAD as App
+
+WB_NAME = "VDO_CarpinteriaParametrica"
+
+# El Init.py del workbench ya siembra sys.path; esto es por si la macro
+# se ejecuta antes de que el addon cargue.
+if not any(os.path.isdir(os.path.join(p, "VDO")) for p in sys.path):
+    for _cand in (os.path.join(App.getUserAppDataDir(), "Mod", WB_NAME),
+                  os.path.join(App.getResourceDir(), "Mod", WB_NAME)):
+        if os.path.isdir(_cand):
+            sys.path.insert(0, _cand)
+            break
+
+from VDO.ui.vdo_ui_creation_flow import crear_modulo_interactivo
+
+configuracion = {
+    "nombre": "Zocalo",
+}
+
+# Flujo VDO: crear -> configurar en el panel -> colocar con clic -> commit.
+# Tambien editable despues con clic derecho o doble clic.
+crear_modulo_interactivo("zocalo", configuracion)
