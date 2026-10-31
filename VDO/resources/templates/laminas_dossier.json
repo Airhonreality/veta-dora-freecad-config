@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "descripcion": "Catalogo de laminas del dossier VDO (docs/08 §3-§6). Cada lamina usa el membrete vdo_template_a3.svg.",
+  "laminas": [
+    {
+      "tipo": "1B",
+      "alcance": "espacio",
+      "titulo": "Huella de implantacion",
+      "vistas": [
+        {
+          "id": "planta",
+          "direccion": [
+            0,
+            0,
+            1
+          ],
+          "xdir": [
+            1,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "tipo": "4",
+      "alcance": "modulo",
+      "titulo": "Ficha de modulo",
+      "vistas": [
+        {
+          "id": "casco",
+          "direccion": [
+            1,
+            -1,
+            1
+          ],
+          "xdir": [
+            1,
+            1,
+            0
+          ],
+          "fachadas": "ocultas"
+        },
+        {
+          "id": "vanos",
+          "direccion": [
+            0,
+            -1,
+            0
+          ],
+          "xdir": [
+            1,
+            0,
+            0
+          ],
+          "fachadas": "ocultas"
+        },
+        {
+          "id": "cerrado",
+          "direccion": [
+            0,
+            -1,
+            0
+          ],
+          "xdir": [
+            1,
+            0,
+            0
+          ],
+          "fachadas": "visibles"
+        }
+      ],
+      "descripcion": "Cuadrantes 1-3 de docs/08 §6; fachadas segun vista"
+    }
+  ]
+}
