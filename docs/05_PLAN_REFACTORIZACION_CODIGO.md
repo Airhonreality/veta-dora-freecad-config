@@ -354,7 +354,7 @@ ampliar el N3.
 
 | ID | Síntoma | Impacto | Propuesta |
 |----|---------|---------|-----------|
-| **D53** | **Los `PanelFeature` hijos no reproducen el mecanizado.** El padre calcula sólidos con ranuras, notches, mocheos e ingletes, pero cada hijo se reconstruye como caja simple desde `Largo/Ancho/Espesor`, así que las piezas se interpenetran donde debería haber ranura | Doble masa, Z-fighting y doble corte en CAM: exactamente lo que el axioma T5 quiere evitar. Solapes medidos: fondo↔carcasa 12 366 mm³ ×2 y ~10 000 mm³ ×2; esquinas de tiras 16 200 y 88 200 mm³. **20 de los 21 tests que fallan son este único defecto** | Dar a `PanelFeature` una propiedad de recortes (`VDO_Recortes_JSON`: lista de prismas en coordenadas locales del panel) y que `execute()` los reste. Las capas 2 ya calculan esos prismas con coordenadas conocidas ("booleanos generados por prismas en coordenadas calculadas"), sólo hay que emitirlos en vez de tirarlos |
+| **D53** | **Los `PanelFeature` hijos no reproducen el mecanizado.** El padre calcula sólidos con ranuras, notches, mocheos e ingletes, pero cada hijo se reconstruye como caja simple desde `Largo/Ancho/Espesor`, así que las piezas se interpenetran donde debería haber ranura | Doble masa, Z-fighting y doble corte en CAM: exactamente lo que el axioma T5 quiere evitar. Solapes medidos: fondo↔carcasa 12 366 mm³ ×2 y ~10 000 mm³ ×2; esquinas de tiras 16 200 y 88 200 mm³. **Estado 2026-10-31:** la suite ya no falla (448 passed); el defecto de solapes quedó cubierto por los mocheos y las tiras de borde. Sigue abierto el hueco de *recortes del panel base contra una división* (ver §17) | Dar a `PanelFeature` una propiedad de recortes (`VDO_Recortes_JSON`: lista de prismas en coordenadas locales del panel) y que `execute()` los reste. Las capas 2 ya calculan esos prismas con coordenadas conocidas ("booleanos generados por prismas en coordenadas calculadas"), sólo hay que emitirlos en vez de tirarlos |
 | D54 | El ensamblaje L3 falla 3 comprobaciones de cadena | `tests/test_smoke_l3_desk_assembly.py` → `FAIL=3, GAP=0` | Diagnosticar las 3 cadenas una a una; la cobertura de API ya está al día |
 | D55 | `VDO/cam/` (6 módulos, ~1 500 líneas) no es alcanzable desde el workbench | Lista de corte, nesting y optimizador sin comando: sólo accesibles por macro | Añadir comandos `VDO_ListaCorte`, `VDO_Nesting`, `VDO_Optimizador` y una toolbar CAM |
 | D56 | `vdo_cam_nesting_workflow.py` importa `PySide2` sin alternativa | `ImportError` en FreeCAD 1.x (PySide6) | `try/except` como el resto de los módulos CAM |
@@ -362,4 +362,79 @@ ampliar el N3.
 | D58 | El gestor visual de herrajes no se migró | `vdo_herrajes.FCMacro` es un aviso; sólo existe la capa de datos | Migrar `vdo_hardware_manager.py` a `VDO/ui/vdo_ui_hardware_task.py` |
 | D59 | La estrategia de base del chasis no genera geometría | Altura de zócalo y separación de frente persisten en `VDO_Chassis_JSON` pero el COCO no construye zócalo con ellas | Generar el zócalo del COCO desde `cfg["base"]` (enlaza con D27) |
 | D60 | `vdo_cad_placement.py` sólo lo usa el flujo de creación | La colocación con snap no está disponible al reposicionar un módulo ya creado | Acción "Recolocar" en el menú contextual |
+
+
+---
+
+## 17. Auditoría 2026-10-31 — estado y hallazgos
+
+**Verificado con FreeCADCmd:** suite completa 448 passed, 1 skipped. Auditoría de imports (`tools/vdo_audit.py`): 59 módulos vivos, 29 no alcanzables (antes 41/32). Informe en `.verif/auditoria.txt`.
+
+### Hipótesis `rot_z=90` (mocheos) — probada, latente
+
+- El fondo del COCO es la única pieza con `rot_z=90` y **no recibe mocheos**, así que hoy no hay caso que lo dispare.
+- La conversión de mocheos del COCO (`vdo_cad_coco.py`, bucle de `divisiones_piezas`) resta sólo el origen de `caja_geometrica` y **no aplica la rotación de la pose**. Si algún día se asigna un mocheo a una pieza rotada, saldrá mal.
+- El lado del panel es correcto: `PanelFeature` con pose `rot_z=90` recorta el mocheo local donde corresponde. Cubierto por `tests/test_coco_mocheo_rot.py`.
+- Verificado en el mundo (solape real con la caja mundial del mocheo): la división vertical del techo reengrose tiene solape 0.
+
+### Recortes del panel base contra una división — abierto, requiere decisión
+
+- Hoy las piezas que se tocan no se solapan (solape 0), pero el panel base no lleva rebaje donde entra la división. En CAM eso significa que la base no muestra la ranura.
+- Falta decidir: qué pieza se rebaja, profundidad y anchura, y si el rebaje se modela como mocheo o como ranura. No se implementa hasta fijarlo.
+
+### Subsistema TechDraw
+
+- `VDO/` no contiene ninguna referencia a TechDraw. Sólo existen `tools/vdo_verify_fase1_techdraw.py` y la plantilla A3 (`tests/test_template_vdo.py`).
+
+### Ejecución de la ruta (2026-10-31)
+
+| Paso | Resultado | Dónde |
+|---|---|---|
+| 1. Hipótesis `rot_z=90` | Probada. Latente: ninguna pieza rotada recibe mocheos hoy. Panel correcto; conversión del COCO sin rotación | `tests/test_coco_mocheo_rot.py` |
+| 2. Sincronizar docs y auditoría | Hecho. Auditoría regenerada: 70 vivos, 20 no alcanzables | `.verif/auditoria.txt` |
+| 3. E-0 y E-1 | E-0: implementado (`_asegurar_canvas`, D61). E-1: el «ADR-002» del contraplan colisionaba con «Desvinculación amigable»; las decisiones quedan en ADR-005 (D-1) y **ADR-006** (D-2, D-3) | `docs/04` |
+| 4. Motor de dossier (E-4) | Núcleo implementado: planta 1B y ficha de módulo con 2 vistas, escala común normalizada, membrete | `VDO/cam/vdo_cam_dossier.py` |
+| 5. Hueco de recortes panel base vs división | **Bloqueado por decisión**: qué pieza se rebaja, profundidad y anchura, y si es mocheo o ranura | (abierto) |
+| 6. Workflow completo (E-5) | Espacio → muro → COCO → lista de corte → dossier → guardar → reabrir → dossier | `tests/test_dossier_motor.py::WorkflowCompletoTests` |
+| 7. D55 (VDO/cam alcanzable) | Hecho: comandos VDO_ListaCorte, VDO_Optimizador, VDO_Nesting (opcional, requiere addon), VDO_Dossier; barra y menú CAM. Verificado en GUI real (12 comandos) | `VDO/vdo_initgui.py` |
+| 7. D56 / D57 | Hechos: fallback de Qt en nesting; sin `sys.path.insert` en `VDO/cam/` | `VDO/cam/` |
+| 7. Bug nuevo | `vdo_cam_cutlist_preview.main()` llamaba a `vdo_export_cutting_list` sin importar (NameError). Corregido | `VDO/cam/vdo_cam_cutlist_preview.py` |
+| 7. D58 (gestor de herrajes) | **Cerrado por decisión**: `vdo_hardware_manager.py` no existe en el repo ni en el historial. La selección ya vive en el panel de propiedades (`HardwareSKU`, `MarcaCorredera`…). Un gestor visual sería funcionalidad nueva | `macros/vdo_herrajes.FCMacro` |
+| 7. D59 (zócalo del COCO) | **Bloqueado por decisión**: ¿el zócalo suma a `alto` o va dentro? ¿pieza hija `ZocaloFeature` o base elevada? | (abierto) |
+
+**Estado de la suite:** 459 passed, 1 skipped (FreeCADCmd).
+
+**Deuda nueva detectada:** `make_espacio()` fija `Label` pero no `NombreEspacio` desde `nombre`; el membrete del dossier depende de `NombreEspacio`. `FreeCADCmd` deja `UndoMode` apagado: los tests que cuentan transacciones deben activarlo.
+
+
+
+### Continuación (misma sesión)
+
+| Punto | Resultado | Dónde |
+|---|---|---|
+| Acción mostrar/ocultar fachadas | Implementada. Criterio: `VDO_Rol == "fachada"` o módulo `puerta`. Barra «VDO Vista», `CmdFachadas`. Mismo criterio en el dossier | `VDO/shared/vdo_shared_fachadas.py` |
+| Cuadrantes 2-3 de la ficha | Hechos: casco (sin fachadas), vanos libres (sin fachadas), cerrado (con fachadas) | `laminas_dossier.json` |
+| Exportación `destino` | Hecha: cada lámina se exporta como SVG (membrete relleno y vistas). FreeCADCmd no expone la exportación de página, así que se compone en `exportar_pagina_svg` | `VDO/cam/vdo_cam_dossier.py` |
+| Comandos nuevos en GUI | Registrados en el código; el harness `vdo_verify --gui` sólo cuenta `COMANDOS` (12), así que no los verifica | — |
+| D59 (zócalo del COCO) | **Bloqueado por decisión**: el zócalo sumaría o no a `alto`. Implementarlo exige desplazar en Z la carcasa entera (cajas, `caja_geometrica`, mocheos, posiciones). La UI ya propone `estrategia: zocalo`, altura 100 y separación 50 por defecto | (abierto) |
+| Recortes panel base vs división | **Bloqueado por decisión**: qué pieza se rebaja y con qué profundidad y anchura | (abierto) |
+
+**Suite final:** 463 passed, 1 skipped (FreeCADCmd). Exportación SVG del dossier compuesta en `VDO/cam/vdo_cam_dossier.py` (`_trazos_svg`), sin depender de `viewPartAsSvg`, que resultó poco fiable en la suite completa.
+
+### Decisiones de arquitectura aplicadas (2026-10-31)
+
+Recibidas como indicación de diseño del Guardián de Arquitectura. Donde el texto se contradecía con el repo, la resolución se marca.
+
+| Decisión | Implementación | Dónde |
+|---|---|---|
+| **D59 · Zócalo dentro de `alto`** | La carcasa se calcula con `alto - H_zocalo` y se desplaza en Z. El zócalo frontal ocupa Z ∈ [0, H_zocalo], retranqueado `separacion_frente` (50 mm) en Y, entre laterales. La base arranca en Z = H_zocalo. Sin configuración de base no hay zócalo. | `vdo_cad_coco.py`: `_altura_zocalo`, `_aplicar_zocalo`, `_desplazar_z_paneles` |
+| **Ranura de encastre (D2)** | Operación de **mecanizado** en la base, no B-Rep: cara superior, eje Y, profundidad `espesor_base / 3` (6 mm), anchura `espesor_division + 0.2` (18.2 mm). Se registra en `VDO_Mecanizados_JSON` y aparece en la columna *Operation* del CSV. | `vdo_cad_coco.py`, `vdo_cam_cutlist.py` |
+| **Altura de la división** | **Resolución de la contradicción**: el texto pide que la división crezca 6 mm y, a la vez, contacto coplanar sin solape. El B-Rep queda nominal (sin solape, como exigen las pruebas). El crecimiento de 6 mm va a la **lista de corte** (`VDO_Encastre_mm`). | `vdo_cam_cutlist.py::_datos_panel` |
+| **Fachadas Δ_S** | **No implementado.** La regla `Δ_S = +H_zocalo − luz_suelo` necesita un parámetro de fachada que todavía no existe. | (pendiente) |
+
+**Nota de datos:** las propiedades nuevas `VDO_Encastre_mm` y `VDO_Mecanizados_JSON` cambian el contrato de propiedades. La instantánea `tests/datos/props_snapshot.json` se regeneró con `tools/vdo_snapshot_props.py`.
+
+**Suite:** 468 passed, 1 skipped. Tests nuevos en `tests/test_coco_zocalo_encastre.py` (5).
+
+**Cierre del hueco de recortes (pendiente 2 de la sesión anterior):** se resuelve como ranura de mecanizado en la base. Las piezas siguen sin solape en el B-Rep.
 

@@ -344,6 +344,27 @@ No hay inconsistencia entre T2 y T3: representan dos realidades físicas distint
 
 ---
 
+### ADR-006: Metadatos de proyecto (singleton `VDO_Proyecto`) y escalas normalizadas de láminas
+
+**Estado:** Aprobado  
+**Fecha:** 2026-10-31  
+**Sustituye a:** la numeración «ADR-002» del contraplan (`docs/07` E-1). ADR-002 ya es «Desvinculación amigable»; la decisión del contenedor del Espacio está en ADR-005. Este ADR registra las decisiones D-2 y D-3 de `docs/07` §3.
+
+#### Contexto
+- `App.ActiveDocument.VDO_Proyecto` no existe ni puede existir: `App::Document` no admite propiedades dinámicas (medido, F-15 de `docs/06`).
+- Las escalas de lámina que devuelve `ScaleType="Automatic"` (1:4, 1:8) no existen en un escalímetro de taller.
+
+#### Decisión
+1. **D-2 · Metadatos de proyecto:** singleton `VDO_Proyecto` (`App::FeaturePython`) como fuente de verdad. Participa del DAG: cambiar el nombre del proyecto recomputa las hojas. Espejo opcional a `doc.Meta` sólo para los campos de archivo (cliente, autor) que consumen herramientas externas. `doc.Meta` no se usa como fuente principal porque es sólo texto, invisible al usuario y fuera del DAG.
+2. **D-3 · Escalas normalizadas:** `1:1 1:2 1:5 1:10 1:20 1:25 1:50 1:100`. Se excluye 1:15 (no pertenece a la serie ISO 5455 ni se mide con escalímetro). Se incluye 1:25 (presente en escalímetros de arquitectura; cubre el salto 1:20→1:50).
+
+#### Consecuencias
+- `VDO/cad/objects/vdo_cad_proyecto.py` implementa D-2 (ya existe).
+- La auto-escala de la plantilla elige la escala normalizada **hacia abajo** y lee la escala de vuelta (F-17, F-20).
+- Cualquier cambio de escalas o de la fuente de metadatos exige nuevo ADR.
+
+---
+
 ## 4. Tabla Resumen de ADR
 
 | ADR | Título | Decisión | Estado | Justificación clave |
@@ -353,6 +374,7 @@ No hay inconsistencia entre T2 y T3: representan dos realidades físicas distint
 | ADR-003 | Paradigma de UI | TaskPanel determinista (`VDOTransactionMixin`); sin inspector reactivo | Aprobado | DAG requiere mutaciones atómicas; evita condiciones de carrera con Coin3D |
 | ADR-004 | Forma del contenedor | `Shape = Part.Shape()` nulo (sin `Part.makeCompound`) | Aprobado | Evita Z-fighting, doble masa y duplicación CAM/Nesting |
 | ADR-005 | Contenedor Territorial `VDO_Espacio` (T2) | `Part::FeaturePython` con `Shape` nulo; `PropertyLinkListChild` (`Hijos`) para pertenencia; nodo relacional puro sin CS local propio; clasificación por predicado (`Arquitectura`/`Mobiliario`/`Assets`); cero ciclos DAG con COCO (T3); nombres naturales | Aprobado | NivelPiso y AlturaCielorraso son cotas lógicas, no desplazamientos geométricos; coexistencia T2/T3 representa habitación vs. mueble |
+| ADR-006 | Metadatos de proyecto y escalas de lámina | Singleton `VDO_Proyecto` (`App::FeaturePython`) en el DAG; escalas `1:1…1:100` sin 1:15 y con 1:25 | Aprobado | `App::Document` no admite propiedades; 1:15 no es ISO ni escalímetro |
 
 ---
 

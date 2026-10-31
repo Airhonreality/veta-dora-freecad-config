@@ -298,10 +298,14 @@ El clasificador vive en `VDO/shared/vdo_shared_familias.py` (`hijos_por_familia(
 | Formulario de Proyecto (Start Page / CmdNuevoProyecto) | Parcial (TaskPanel listo) | `VDO/ui/vdo_ui_proyecto_task.py` | Integración en Start Page |
 | Comando `VDO_CrearEspacio` (Toolbar Azul/Arquitectura) | Implementado | `VDO/vdo_initgui.py` (`CmdCrearEspacio`) | — |
 | Plantilla VDO SVG `vdo_template_a3.svg` | Creada | `VDO/resources/templates/vdo_template_a3.svg` | JSON de área útil ya publicado |
-| Motor `generar_dossier` | No implementado | `vdo_cam_dossier.py` (falta) | Crear en `VDO/cam/` (bloqueado por B0-B7) |
+| Motor `generar_dossier` | Implementado: lámina 1B (planta) y ficha de módulo con 3 vistas (casco, vanos libres, cerrado) según la acción de fachadas; exporta SVG con `destino` | `VDO/cam/vdo_cam_dossier.py` | Estilo de huella en GUI (DOS-04); láminas 1A, L02 y tramo |
+| Catálogo de láminas | Creado | `VDO/resources/templates/laminas_dossier.json` | Añadir láminas 1A, L02 y tramo al catálogo |
+| Acción mostrar/ocultar fachadas | Implementada (3D y dossier) | `VDO/shared/vdo_shared_fachadas.py`, `CmdFachadas` en barra «VDO Vista» | — |
+| Comando GUI `VDO_Dossier` (barra CAM) | Creado | `VDO/vdo_initgui.py` (`CmdDossier`) | Probar en sesión GUI con un espacio real |
 | Test `test_espacio_dossier` | Creado | `tests/test_espacio_dossier.py` | — |
 | Test plantilla TPL-11 | Creado | `tests/test_template_vdo.py` | — |
 | Test F-14 cotas con signo | Creado | `tests/test_cotas_con_signo.py` | — |
+| Test motor de dossier y flujo completo | Creado | `tests/test_dossier_motor.py` | — |
 
 ---
 
