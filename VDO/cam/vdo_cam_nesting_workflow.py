@@ -8,14 +8,13 @@ import sys
 import os
 from pathlib import Path
 
-# Bootstrap
-_vdo_macro_dir = os.path.dirname(os.path.abspath(__file__))
-if _vdo_macro_dir not in sys.path:
-    sys.path.insert(0, _vdo_macro_dir)
-
 import FreeCAD
 import FreeCADGui
-from PySide2 import QtWidgets, QtCore
+
+try:
+    from PySide2 import QtWidgets, QtCore
+except ImportError:  # D56: FreeCAD 1.x usa PySide6/PySide
+    from PySide import QtWidgets, QtCore
 
 try:
     from freecad.nestingworkbench.Tools.Nesting.nesting_logic import nest

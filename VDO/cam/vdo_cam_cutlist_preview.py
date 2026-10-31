@@ -27,8 +27,6 @@ try:
 except ImportError:
     from PySide import QtWidgets, QtCore
 
-_macro_dir = Path(__file__).parent
-sys.path.insert(0, str(_macro_dir))
 import VDO.cam.vdo_cam_cutlist
 from VDO.shared import vdo_shared_loader
 
@@ -210,7 +208,7 @@ class CuttingListPreviewPanel:
 
         # Generar CSV
         try:
-            ok = vdo_export_cutting_list.generar_csv_opencutlist(
+            ok = VDO.cam.vdo_cam_cutlist.generar_csv_opencutlist(
                 self.piezas, output_file)
         except Exception as e:
             print(f"❌ Error generando CSV: {e}")
@@ -265,7 +263,7 @@ def main(modo="todo"):
 
     # Extraer piezas según modo (lógica unificada: paneles + contenedores)
     print(f"\n📦 Extrayendo piezas (modo: {modo})...")
-    piezas = vdo_export_cutting_list.extraer_piezas_del_documento(modo)
+    piezas = VDO.cam.vdo_cam_cutlist.extraer_piezas_del_documento(modo)
 
     if not piezas:
         print("❌ No se encontraron piezas de melamina para exportar")
