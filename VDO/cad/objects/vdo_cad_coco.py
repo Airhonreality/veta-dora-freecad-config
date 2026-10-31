@@ -204,6 +204,115 @@ def _expandir_reengrose(pieza):
     return subpiezas
 
 
+# ---------------------------------------------------------------------
+# Zócalo y ranuras de encastre (decisiones D59 y D2 de docs/05 §17).
+#   - El zócalo va DENTRO de `alto`: la carcasa se calcula con
+#     alto - H_zocalo y se desplaza en Z; el origen del mueble queda en Z=0.
+#   - Ranura de encastre: operación de MECANIZADO en la base (no altera el
+#     B-Rep, que conserva contacto coplanar sin solape). La división suma
+#     la profundidad a su largo de corte (VDO_Encastre_mm).
+# ---------------------------------------------------------------------
+TOLERANCIA_ENCASTRE = 0.2       # mm, holgura de la ranura
+FRACCION_PROF_RANURA = 1.0 / 3.0  # profundidad = espesor_base / 3 (6 mm en 18)
+SEPARACION_FRENTE_DEFAULT = 50.0
+
+
+def _config_base_chasis(fp):
+    """Bloque `base` de VDO_Chassis_JSON, o {} si no existe."""
+    raw = getattr(fp, "VDO_Chassis_JSON", "") or "{}"
+    try:
+        cfg = json.loads(raw) if isinstance(raw, str) else {}
+    except (ValueError, TypeError):
+        return {}
+    base = cfg.get("base") if isinstance(cfg, dict) else None
+    return base if isinstance(base, dict) else {}
+
+
+def _altura_zocalo(fp, alto):
+    """(H_zocalo, separacion_frente). H = 0 si no hay zócalo o no cabe."""
+    base = _config_base_chasis(fp)
+    if base.get("estrategia") != "zocalo":
+        return 0.0, SEPARACION_FRENTE_DEFAULT
+    altura = float(base.get("altura", 0.0) or 0.0)
+    sep = float(base.get("separacion_frente", SEPARACION_FRENTE_DEFAULT)
+                or SEPARACION_FRENTE_DEFAULT)
+    if altura <= 0.0 or altura >= alto:
+        return 0.0, sep
+    return altura, sep
+
+
+def _desplazar_z_paneles(paneles, dz):
+    """Sube en Z todo lo que está en el marco del COCO.
+
+    Los mocheos en JSON local (`mocheos_json`) no se tocan: son relativos a
+    su caja, que también se desplaza.
+    """
+    def _sube(punto):
+        return [float(punto[0]), float(punto[1]), float(punto[2]) + dz]
+
+    for pz in paneles:
+        if pz.get("pos") is not None:
+            pz["pos"] = _sube(pz["pos"])
+        for clave in ("caja_geometrica", "caja"):
+            caja = pz.get(clave)
+            if isinstance(caja, dict) and "z" in caja:
+                caja["z"] = float(caja["z"]) + dz
+        for m in (pz.get("mocheos") or []):
+            if "z" in m:
+                m["z"] = float(m["z"]) + dz
+            if "puntos" in m:
+                m["puntos"] = [_sube(q) for q in m["puntos"]]
+        for lista in (pz.get("tiras_cortes") or {}).values():
+            for prisma in lista:
+                if "puntos" in prisma:
+                    prisma["puntos"] = [_sube(q) for q in prisma["puntos"]]
+
+
+def _aplicar_zocalo(paneles, z_zoc, sep, ancho, espesor, material):
+    """Eleva la carcasa `z_zoc`, añade el zócalo frontal y las ranuras."""
+    _desplazar_z_paneles(paneles, z_zoc)
+
+    # Zócalo frontal: tablero de pie entre los laterales, retranqueado
+    # `sep` del frente. Pieza vertical girada 90° (mismo patrón que el fondo):
+    # su largo va en X y su espesor en Y.
+    largo_int = ancho - 2.0 * espesor
+    paneles.append({
+        "nombre": "Zocalo", "tipo": "panel", "rol": "zocalo",
+        # Girado 90°: el largo del tablero queda en X y la altura en Z.
+        "largo": float(largo_int), "ancho": float(z_zoc),
+        "espesor": float(espesor), "orientacion": "vertical",
+        "cantidad": 1, "material_ref": material,
+        "pos": [float(ancho - espesor), float(sep), 0.0],
+        "rot_z": 90.0,
+    })
+
+    base = next((pz for pz in paneles if pz.get("rol") == "base"), None)
+    if base is None or base.get("pos") is None:
+        return
+    profundidad = float(base.get("espesor", espesor)) * FRACCION_PROF_RANURA
+    ancho_ranura = espesor + TOLERANCIA_ENCASTRE
+    cara_z = z_zoc + float(base.get("espesor", espesor))
+    for div in paneles:
+        if div.get("rol") != "division_x" or div.get("pos") is None:
+            continue
+        if div.get("orientacion") != "vertical":
+            continue
+        if abs(float(div["pos"][2]) - cara_z) > 1e-6:
+            continue  # no apoya en la base
+        x0 = float(div["pos"][0]) - TOLERANCIA_ENCASTRE / 2.0
+        x0_local = x0 - float(base["pos"][0])
+        largo_base = float(base.get("largo", 0.0))
+        if x0_local < 0.0 or x0_local + ancho_ranura > largo_base:
+            continue  # la ranura caería fuera de la base
+        base.setdefault("mecanizados", []).append({
+            "tipo": "ranura", "cara": "superior", "eje": "y",
+            "x0": round(x0_local, 3), "ancho": round(ancho_ranura, 3),
+            "profundidad": round(profundidad, 3),
+            "division": div.get("nombre", ""),
+        })
+        div["encastre_mm"] = round(profundidad, 3)
+
+
 class CocoFeature:
     """FeaturePython que genera la geometría de un cofre COCO."""
 
@@ -229,6 +338,10 @@ class CocoFeature:
 
         try:
             alto = float(fp.Alto)
+            # D59: el zócalo va dentro de alto; la carcasa se calcula con
+            # alto - H_zocalo y se desplaza en Z al final.
+            z_zoc, sep_frente = _altura_zocalo(fp, alto)
+            alto = alto - z_zoc
             ancho = float(fp.Ancho)
             fondo = float(fp.FondoModulo)
             espesor = float(fp.Espesor)
@@ -847,6 +960,10 @@ class CocoFeature:
                     continue
                 pz.update(VDO_FR.pose_panel_desde_dict(caja))
 
+            if z_zoc > 0.0:
+                _aplicar_zocalo(paneles_data, z_zoc, sep_frente,
+                                ancho, espesor, fp.VDO_Material_Ref)
+
             fp.VDO_Paneles_JSON = json.dumps(paneles_data, ensure_ascii=False)
 
             # Contenedor lógico: Shape vacío para evitar duplicación geométrica.
@@ -1081,6 +1198,12 @@ class CocoFeature:
         mocheos_json = panel_data.get("mocheos_json", "[]")
         try:
             panel.VDO_Mocheos_JSON = mocheos_json
+        except Exception:
+            pass
+        try:
+            panel.VDO_Encastre_mm = float(panel_data.get("encastre_mm", 0.0))
+            panel.VDO_Mecanizados_JSON = json.dumps(
+                panel_data.get("mecanizados", []), ensure_ascii=False)
         except Exception:
             pass
         panel.ParentCOCO = fp

@@ -20,9 +20,7 @@ except ImportError:
     # aborta el interprete que lo importe (pytest incluido).
     raise ImportError("VDO: este modulo requiere ejecutarse dentro de FreeCAD")
 
-# Importar loader
-_macro_dir = Path(__file__).parent
-sys.path.insert(0, str(_macro_dir))
+# Importar loader (D57: sin sys.path; el paquete VDO ya resuelve)
 from VDO.shared import vdo_shared_loader
 import VDO.core.vdo_math_reengrose as VDO_RE
 
@@ -30,7 +28,10 @@ import VDO.core.vdo_math_reengrose as VDO_RE
 def _datos_panel(obj):
     orientacion = getattr(obj, "VDO_Orientacion", "horizontal")
     if hasattr(obj, "Largo"):
-        largo = float(obj.Largo)
+        # D2: el encastre en ranura suma al largo de corte (cota de taller);
+        # la geometria B-Rep sigue siendo la nominal.
+        largo = float(obj.Largo) + float(
+            getattr(obj, "VDO_Encastre_mm", 0.0) or 0.0)
         ancho = float(obj.Ancho)
         espesor = float(obj.Espesor)
     else:
@@ -69,6 +70,11 @@ def extraer_piezas_panel(obj):
             material_ref=getattr(obj, "VDO_Material_Ref", "melamina_standar"),
             orientacion=orientacion)
     info_grupo = _grupo_desde_padre(obj)
+    texto_mec = _texto_mecanizados(obj)
+    if texto_mec and piezas:
+        # La operación de taller va en la pieza principal del panel.
+        previo = piezas[0].get("operacion", "")
+        piezas[0]["operacion"] = (previo + "; " if previo else "") + texto_mec
     for pieza in piezas:
         pieza.setdefault("herrajes", getattr(obj, "VDO_Hardware", ""))
         pieza.setdefault("herrajes_qty", getattr(obj, "VDO_HardwareQty", 0))
@@ -76,6 +82,23 @@ def extraer_piezas_panel(obj):
             pieza["grupo"] = info_grupo["grupo"]
             pieza["operacion"] = info_grupo["operacion"]
     return piezas
+
+
+def _texto_mecanizados(obj):
+    """Operaciones de mecanizado del panel como texto para la columna CSV."""
+    import json
+    raw = getattr(obj, "VDO_Mecanizados_JSON", "") or "[]"
+    try:
+        ops = json.loads(raw) if isinstance(raw, str) else []
+    except (ValueError, TypeError):
+        return ""
+    textos = []
+    for op in ops:
+        if op.get("tipo") == "ranura":
+            textos.append("Ranura %s: ancho %.1f x prof %.1f mm en x=%.1f" % (
+                op.get("division", ""), op.get("ancho", 0.0),
+                op.get("profundidad", 0.0), op.get("x0", 0.0)))
+    return "; ".join(textos)
 
 
 def _grupo_desde_padre(obj):

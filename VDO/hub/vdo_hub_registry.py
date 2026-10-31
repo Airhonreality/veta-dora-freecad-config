@@ -515,6 +515,14 @@ SPEC_PANEL = ModuloSpec(
               ayuda="Lista de cortes/mocheos a aplicar al solido del panel "
                     "(JSON con cajas {x,y,z,w,h,d} en marco local)",
               default="[]", ui=False),
+        Param("VDO_Encastre_mm", "length", "VDO",
+              ayuda="Longitud que la pieza suma en la lista de corte para "
+                    "encastrar en una ranura (0 = sin encastre)",
+              default=0.0, minimo=0.0, maximo=200.0, ui=False),
+        Param("VDO_Mecanizados_JSON", "string", "VDO",
+              ayuda="Operaciones de mecanizado de taller sobre el panel "
+                    "(JSON; no altera la geometria B-Rep)",
+              default="[]", ui=False),
 
         *_cantos(),
         *PARAMS_REENGROSE,
