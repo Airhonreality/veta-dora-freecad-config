@@ -261,6 +261,121 @@ _FIJOS = {
 }
 
 # [(nombre, instancia)] en el orden que declara el catalogo.
+# ---------------------------------------------------------------------
+# CAM (D55): lista de corte, optimizador, nesting y dossier.
+# Las importaciones son perezosas: el modulo carga sin GUI (headless).
+# ---------------------------------------------------------------------
+def _nesting_disponible():
+    """El nesting depende del addon externo freecad.nestingworkbench."""
+    import importlib.util
+    try:
+        return importlib.util.find_spec(
+            "freecad.nestingworkbench.Tools.Nesting.nesting_logic") is not None
+    except (ImportError, ValueError):
+        return False
+
+
+class CmdListaCorte(_CmdBase):
+    MenuText = "Lista de corte"
+    ToolTip = "Exporta la lista de corte (CSV) con preview visual"
+    Icono = "vdo_panel.svg"
+
+    def Activated(self):
+        from VDO.cam import vdo_cam_cutlist_preview
+        vdo_cam_cutlist_preview.main(modo="todo")
+
+
+class CmdOptimizador(_CmdBase):
+    MenuText = "Optimizador de corte"
+    ToolTip = "Distribuye las piezas del CSV en tableros"
+    Icono = "vdo_panel_estandar.svg"
+
+    def Activated(self):
+        from VDO.cam import vdo_cam_optimizer_dialog
+        vdo_cam_optimizer_dialog.main()
+
+
+class CmdNesting(_CmdBase):
+    MenuText = "Nesting"
+    ToolTip = "Nesting automatico (requiere el addon Nesting Workbench)"
+    Icono = "vdo_panel_estandar.svg"
+
+    def IsActive(self):
+        return _nesting_disponible()
+
+    def Activated(self):
+        try:
+            from VDO.cam import vdo_cam_nesting_workflow
+        except ImportError as exc:
+            App.Console.PrintError(
+                "[VDO] Nesting no disponible: %s\n" % exc)
+            return
+        vdo_cam_nesting_workflow.main()
+
+
+class CmdDossier(_CmdBase):
+    MenuText = "Generar dossier del espacio"
+    ToolTip = "Genera las laminas (planta y fichas) del VDO_Espacio seleccionado"
+    Icono = "vdo_proyecto.svg"
+
+    def Activated(self):
+        from VDO.cam.vdo_cam_dossier import generar_dossier
+        doc = App.ActiveDocument
+        if doc is None:
+            App.Console.PrintWarning("[VDO] No hay documento activo.\n")
+            return
+        espacios = [o for o in doc.Objects
+                    if getattr(o, "VDO_Tipo", "") == "EspacioFeature"]
+        seleccion = [o for o in Gui.Selection.getSelection(doc.Name)
+                     if o in espacios]
+        espacio = seleccion[0] if seleccion else (
+            espacios[0] if len(espacios) == 1 else None)
+        if espacio is None:
+            App.Console.PrintWarning(
+                "[VDO] Selecciona un VDO_Espacio para generar su dossier.\n")
+            return
+        paginas = generar_dossier(doc, espacio)
+        App.Console.PrintMessage(
+            "[VDO] Dossier de '%s': %d lamina(s).\n"
+            % (espacio.Label, len(paginas)))
+
+
+class CmdFachadas(_CmdBase):
+    """Mostrar u ocultar las fachadas (frentes y puertas) del documento.
+
+    Accion de primera clase: el mismo criterio (VDO_Rol == "fachada" o
+    modulo puerta) alimenta las vistas «vanos libres» y «cerrado» del dossier.
+    """
+    MenuText = "Mostrar / ocultar fachadas"
+    ToolTip = "Alterna la visibilidad de todas las fachadas (frentes y puertas)"
+    Icono = "vdo_puerta.svg"
+
+    def Activated(self):
+        from VDO.shared.vdo_shared_fachadas import alternar_fachadas
+        doc = App.ActiveDocument
+        if doc is None:
+            App.Console.PrintWarning("[VDO] No hay documento activo.\n")
+            return
+        n, visibles = alternar_fachadas(doc)
+        if n == 0:
+            App.Console.PrintMessage("[VDO] No hay fachadas en el documento.\n")
+            return
+        App.Console.PrintMessage(
+            "[VDO] Fachadas (%d): %s\n"
+            % (n, "visibles" if visibles else "ocultas"))
+
+
+COMANDOS_VISTA = [("VDO_Fachadas", CmdFachadas())]
+
+
+COMANDOS_CAM = [
+    ("VDO_ListaCorte", CmdListaCorte()),
+    ("VDO_Optimizador", CmdOptimizador()),
+    ("VDO_Nesting", CmdNesting()),
+    ("VDO_Dossier", CmdDossier()),
+]
+
+
 COMANDOS = [
     (nombre, _CREACION.get(nombre) or _FIJOS[nombre])
     for nombre in REG.nombres_comandos()
@@ -312,6 +427,10 @@ class VDO_Workbench(Gui.Workbench):
 
         self.appendToolbar("VDO Muebles", TB_MUEBLES)
         self.appendMenu("VDO", [n for n, _ in COMANDOS])
+        self.appendToolbar("VDO Vista", [n for n, _ in COMANDOS_VISTA])
+        self.appendMenu(["VDO", "Vista"], [n for n, _ in COMANDOS_VISTA])
+        self.appendToolbar("VDO CAM", [n for n, _ in COMANDOS_CAM])
+        self.appendMenu(["VDO", "CAM"], [n for n, _ in COMANDOS_CAM])
 
         if self.bim_disponible:
             registrados = Gui.listCommands()
@@ -360,6 +479,9 @@ def register():
             # COMANDOS lleva INSTANCIAS, no clases: los comandos de
             # creacion son todos CmdCrearModulo parametrizado con su
             # variante, asi que la instancia es lo que los distingue.
+            Gui.addCommand(nombre, comando)
+    for nombre, comando in COMANDOS_CAM + COMANDOS_VISTA:
+        if nombre not in registrados:
             Gui.addCommand(nombre, comando)
     Gui.addWorkbench(VDO_Workbench())
 
