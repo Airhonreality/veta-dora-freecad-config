@@ -3,6 +3,30 @@
   "descripcion": "Catalogo de laminas del dossier VDO (docs/08 §3-§6). Cada lamina usa el membrete vdo_template_a3.svg.",
   "laminas": [
     {
+      "tipo": "1A",
+      "alcance": "espacio",
+      "titulo": "Obra civil y verificacion de escuadras",
+      "familias": [
+        "arquitectura"
+      ],
+      "vistas": [
+        {
+          "id": "planta",
+          "direccion": [
+            0,
+            0,
+            1
+          ],
+          "xdir": [
+            1,
+            0,
+            0
+          ]
+        }
+      ],
+      "descripcion": "docs/08 §3.1: solo arquitectura (cero muebles)"
+    },
+    {
       "tipo": "1B",
       "alcance": "espacio",
       "titulo": "Huella de implantacion",
@@ -21,6 +45,27 @@
           ]
         }
       ]
+    },
+    {
+      "tipo": "L02",
+      "alcance": "espacio",
+      "titulo": "Axonometria general de implantacion",
+      "vistas": [
+        {
+          "id": "iso",
+          "direccion": [
+            1,
+            -1,
+            1
+          ],
+          "xdir": [
+            1,
+            1,
+            0
+          ]
+        }
+      ],
+      "descripcion": "docs/08 §4.1: isometria del espacio amueblado"
     },
     {
       "tipo": "4",

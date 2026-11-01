@@ -119,6 +119,18 @@ class TestEspacioDossier:
         assert shp is not None and shp.isNull(), (
             f"Espacio.Shape no es nula: {shp.ShapeType if shp else 'None'}")
 
+    def test_make_espacio_asigna_nombre_espacio(self):
+        """NombreEspacio sale de 'nombre' sin pasos manuales (membrete)."""
+        espacio = make_espacio({"nombre": "ESPACIO_Membrete"})
+        assert espacio.NombreEspacio == "ESPACIO_Membrete"
+
+    def test_make_espacio_nombre_espacio_explicito_gana(self):
+        """Si el llamador pasa nombre_espacio, prevalece sobre 'nombre'."""
+        espacio = make_espacio({"nombre": "ESPACIO_Obj",
+                                "nombre_espacio": "Cocina"})
+        assert espacio.NombreEspacio == "Cocina"
+        assert espacio.Name == "ESPACIO_Obj"
+
     def test_espacio_vdo_modulo_testigo(self):
         """VDO_Modulo = 'espacio' como testigo de tipo."""
         espacio = make_espacio({"nombre": "ESPACIO_Testigo"})

@@ -142,5 +142,82 @@ class PanelRotado90Tests(unittest.TestCase):
             obj.Shape.common(caja_mundo).Volume, 0.0, places=3)
 
 
+class ConversionConPoseTests(unittest.TestCase):
+    """La conversión global -> marco de pieza deshace la pose completa.
+
+    Contrato: si una pieza se coloca con Placement = pos + rot_z, un mocheo
+    global convertido con `_mocheos_locales(..., pos, rot_z)` debe recortar
+    exactamente el volumen que ocupa en el mundo.
+    """
+
+    def setUp(self):
+        self.doc = App.newDocument("TestConversionPose")
+
+    def tearDown(self):
+        App.closeDocument(self.doc.Name)
+
+    def test_caja_rot90_se_invierte_exacta(self):
+        pos, rot = [582.0, 571.0, 18.0], 90.0
+        local = {"x": 0.0, "y": 0.0, "z": 666.0, "w": 18.0, "h": 50.0,
+                 "d": 18.0}
+        # Caja del mundo = caja local colocada con la pose.
+        s = Part.makeBox(local["w"], local["h"], local["d"],
+                         App.Vector(local["x"], local["y"], local["z"]))
+        s.Placement = App.Placement(App.Vector(*pos),
+                                    App.Rotation(App.Vector(0, 0, 1), rot))
+        bb = s.BoundBox
+        mundo = {"x": bb.XMin, "y": bb.YMin, "z": bb.ZMin,
+                 "w": bb.XLength, "h": bb.YLength, "d": bb.ZLength}
+
+        (salida,) = C._mocheos_locales([mundo], pos, rot)
+        for clave, valor in local.items():
+            self.assertAlmostEqual(salida[clave], valor, places=6,
+                                   msg=f"componente {clave}")
+
+    def test_prisma_rot270_normaliza_sentido_negativo(self):
+        pos, rot = [0.0, 571.0, 18.0], 270.0
+        # Prisma global: polígono en la cara de mínimo Y del mundo, eje y.
+        y_ini = pos[1] - 18.0
+        prisma = {"puntos": [[0.0, y_ini, 684.0], [50.0, y_ini, 684.0],
+                             [50.0, y_ini, 702.0], [0.0, y_ini, 702.0]],
+                  "eje": "y", "largo": 18.0}
+        (salida,) = C._mocheos_locales([prisma], pos, rot)
+        self.assertEqual(salida["eje"], "x")
+        self.assertAlmostEqual(salida["largo"], 18.0, places=6)
+        xs = sorted({round(p[0], 6) for p in salida["puntos"]})
+        self.assertEqual(xs, [0.0])  # polígono en la cara local x=0
+
+    def test_pieza_rot270_recibe_mocheo_y_queda_limpia_en_mundo(self):
+        largo, ancho, espesor = 684.0, 571.0, 18.0
+        pos, rot = [0.0, 571.0, 18.0], 270.0
+        y_ini = pos[1] - espesor
+        prisma_mundo = {"puntos": [[0.0, y_ini, 684.0], [50.0, y_ini, 684.0],
+                                   [50.0, y_ini, 702.0], [0.0, y_ini, 702.0]],
+                        "eje": "y", "largo": espesor}
+        (local,) = C._mocheos_locales([prisma_mundo], pos, rot)
+
+        obj = self.doc.addObject("Part::FeaturePython", "PanelRot270")
+        P.PanelFeature(obj)
+        obj.Largo, obj.Ancho, obj.Espesor = largo, ancho, espesor
+        obj.VDO_Orientacion = "vertical"
+        obj.VDO_Mocheos_JSON = json.dumps([local])
+        obj.Placement = App.Placement(App.Vector(*pos),
+                                      App.Rotation(App.Vector(0, 0, 1), rot))
+        self.doc.recompute()
+
+        # Volumen del mocheo en el mundo, recortado por la pieza original.
+        mundo = Part.Face(Part.makePolygon(
+            [App.Vector(*p) for p in prisma_mundo["puntos"]]
+            + [App.Vector(*prisma_mundo["puntos"][0])])).extrude(
+            App.Vector(0, espesor, 0))
+        sin_mocheo = Part.makeBox(espesor, ancho, largo)
+        sin_mocheo.Placement = obj.Placement
+        volumen_quitado = sin_mocheo.common(mundo).Volume
+        self.assertGreater(volumen_quitado, 0.0)
+        self.assertAlmostEqual(obj.Shape.common(mundo).Volume, 0.0, places=3)
+        self.assertAlmostEqual(obj.Shape.Volume,
+                               sin_mocheo.Volume - volumen_quitado, places=3)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -48,8 +48,6 @@ def _util_mm():
 def construir_escenario(doc):
     """Espacio con un muro (arquitectura) y un COCO (mobiliario)."""
     espacio = make_espacio({"nombre": "ESPACIO_Cocina", "nivel_piso": -150.0})
-    # make_espacio sólo fija Label; el membrete lee NombreEspacio.
-    espacio.NombreEspacio = "ESPACIO_Cocina"
     proyecto = make_proyecto({"nombre": "Proyecto Test"})
     proyecto.Nombre = "Proyecto Test"
     proyecto.Cliente = "Cliente Test"
@@ -123,11 +121,25 @@ class DossierTests(unittest.TestCase):
     def test_genera_planta_y_ficha(self):
         espacio, coco = self._escenario()
         paginas = D.generar_dossier(self.doc, espacio)
-        self.assertEqual(len(paginas), 2,
-                         "esperadas 1 planta (1B) + 1 ficha por mueble (4)")
+        self.assertEqual(len(paginas), 4,
+                         "esperadas 1A (obra) + 1B (huella) + L02 + 1 ficha (4)")
         vistas = [v for p in paginas for v in p.Views
                   if v.isDerivedFrom("TechDraw::DrawViewPart")]
-        self.assertEqual(len(vistas), 4, "planta + casco + vanos + cerrado")
+        self.assertEqual(len(vistas), 6,
+                         "1A + 1B + L02 + ficha (casco, vanos, cerrado)")
+
+    def test_1a_solo_arquitectura_sin_muebles(self):
+        """1A (obra civil) dibuja muros y vanos, nunca mobiliario (docs/08 §3.1)."""
+        espacio, _ = self._escenario()
+        paginas = D.generar_dossier(self.doc, espacio)
+        hoja = [p for p in paginas if p.Name.startswith("Dossier_1A")]
+        self.assertEqual(len(hoja), 1)
+        fuentes = [f.Name for v in hoja[0].Views
+                   if v.isDerivedFrom("TechDraw::DrawViewPart")
+                   for f in v.Source]
+        self.assertTrue(fuentes, "1A debe tener muros")
+        self.assertNotIn("COCO_Demo", fuentes)
+        self.assertTrue(all("Muro" in n for n in fuentes), fuentes)
 
     def test_escala_normalizada_y_cabe_en_util(self):
         espacio, _ = self._escenario()
@@ -215,7 +227,7 @@ class WorkflowCompletoTests(unittest.TestCase):
             with open(csv_path, encoding="utf-8") as fh:
                 self.assertGreater(len(fh.read().splitlines()), 1)
 
-            self.assertEqual(len(D.generar_dossier(doc, espacio)), 2)
+            self.assertEqual(len(D.generar_dossier(doc, espacio)), 4)
 
             doc.saveAs(ruta)
             App.closeDocument(doc.Name)
@@ -228,7 +240,7 @@ class WorkflowCompletoTests(unittest.TestCase):
                 self.assertEqual(float(espacios[0].NivelPiso), -150.0)
                 piezas_despues = E.extraer_piezas_del_documento("todo")
                 self.assertEqual(len(piezas_despues), len(piezas_antes))
-                self.assertEqual(len(D.generar_dossier(doc2, espacios[0])), 2)
+                self.assertEqual(len(D.generar_dossier(doc2, espacios[0])), 4)
             finally:
                 App.closeDocument(doc2.Name)
         finally:

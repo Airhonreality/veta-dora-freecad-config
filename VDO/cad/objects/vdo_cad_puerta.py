@@ -211,6 +211,12 @@ class PuertaFeature:
                 except (ValueError, TypeError):
                     deltas = {}
 
+                # Sin vector propio, una fachada inferior hereda Δ_S del COCO
+                # padre (H_zocalo − luz_suelo). Un vector local manda.
+                if not deltas:
+                    deltas = _deltas_heredados_si_inferior(
+                        fp, montaje, pz, H, apertura) or {}
+
                 if deltas:
                     w_fach, h_fach = calcular_fachada_desde_deltas(
                         W, H, deltas)
@@ -379,6 +385,26 @@ class ViewProviderPuerta(VDOViewProviderBase):
     def get_panel_class(self):
         from VDO.ui.vdo_ui_puerta_task import PuertaTaskPanel
         return PuertaTaskPanel
+
+
+def _deltas_heredados_si_inferior(fp, montaje, pz, H, apertura):
+    """Vector de deltas heredado del COCO padre, o None si no aplica.
+
+    Aplica cuando hay ParentCOCO y el vano arranca en el nivel superior del
+    zócalo o por debajo (fachada inferior). El descuento de gola se conserva
+    en `norte`, porque la rama de deltas no vuelve a aplicar la apertura.
+    """
+    from VDO.cad.objects.vdo_cad_coco import altura_zocalo_de, luz_suelo_de
+    from VDO.core.vdo_math_facade import deltas_heredados_inferior
+    padre = getattr(fp, "ParentCOCO", None)
+    if padre is None or not hasattr(padre, "Alto"):
+        return None
+    h_zocalo = altura_zocalo_de(padre)
+    if float(pz) > h_zocalo + 1e-6:
+        return None
+    descuento = max(0.0, float(H) - ajuste_altura_apertura(apertura, H)[0])
+    return deltas_heredados_inferior(
+        montaje, h_zocalo, luz_suelo_de(padre), norte=-descuento)
 
 
 def make_puerta(configuracion):

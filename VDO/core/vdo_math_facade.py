@@ -107,6 +107,39 @@ _DELTAS_POR_MONTAJE = {
 }
 
 # =====================================================================
+# Herencia de Δ_S (fachada inferior)
+# =====================================================================
+# luz_suelo vive en el módulo (COCO.LuzSueloDefault): holgura uniforme para
+# toda la tirada. Cada fachada inferior hereda Δ_S = H_zocalo − luz_suelo.
+# Si la fachada tiene un vector de deltas propio, ese vector manda.
+
+LUZ_SUELO_DEFAULT = 15.0  # mm: punta del pie / desniveles de suelo
+
+
+def delta_s_fachada_inferior(h_zocalo: float, luz_suelo: float) -> float:
+    """Δ_S heredado: cuánto baja la fachada inferior bajo el vano."""
+    return float(h_zocalo) - float(luz_suelo)
+
+
+def deltas_heredados_inferior(montaje: str, h_zocalo: float,
+                              luz_suelo: float,
+                              norte: float = 0.0) -> DeltasBorde:
+    """Vector completo de una fachada inferior con Δ_S heredado.
+
+    Parte del preset del montaje (lados y solapes) y sustituye sólo `sur`.
+    `norte` admite el descuento de altura por apertura (gola).
+    """
+    base = _DELTAS_POR_MONTAJE.get(str(montaje).strip().lower(),
+                                   DELTA_PARCHE_TOTAL)
+    return {
+        "norte": float(norte),
+        "sur": delta_s_fachada_inferior(h_zocalo, luz_suelo),
+        "este": float(base["este"]),
+        "oeste": float(base["oeste"]),
+    }
+
+
+# =====================================================================
 # Funciones de cálculo puro (sin dependencias CAD)
 # =====================================================================
 
@@ -337,6 +370,9 @@ __all__ = [
     # Funciones
     "validar_deltas",
     "calcular_fachada_desde_deltas",
+    "LUZ_SUELO_DEFAULT",
+    "delta_s_fachada_inferior",
+    "deltas_heredados_inferior",
     "calcular_origen_fachada_local",
     "calcular_fachada_base",
     "aplicar_sistema_apertura",

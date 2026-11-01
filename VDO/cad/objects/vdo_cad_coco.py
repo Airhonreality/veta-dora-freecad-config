@@ -9,6 +9,7 @@ import FreeCAD as App
 import Part
 import sys
 import json
+import math
 
 from VDO._paths import ensure_sys_path
 ensure_sys_path()
@@ -119,13 +120,88 @@ def _prismas_removidos(nominal, resultante):
     return prismas
 
 
-def _mocheos_locales(prismas, origen):
-    """Pasa prismas globales al marco local de una pieza con origen `origen`."""
-    ox, oy, oz = float(origen["x"]), float(origen["y"]), float(origen["z"])
-    return [{"puntos": [[q[0] - ox, q[1] - oy, q[2] - oz]
-                        for q in pr["puntos"]],
-             "eje": pr["eje"], "largo": pr["largo"]}
-            for pr in prismas]
+_VECTOR_EJE_NOMBRE = {"x": (1, 0, 0), "y": (0, 1, 0), "z": (0, 0, 1)}
+
+
+def _girar_z_inversa(v, rot_z_deg):
+    """Deshace la rotación Z de una pose: vector del marco COCO -> marco pieza.
+
+    Solo rotaciones ortogonales (múltiplos de 90°) son exactas en cajas; el
+    resto se redondea a 12 decimales para no arrastrar ruido de coma flotante.
+    """
+    t = math.radians(-float(rot_z_deg))
+    c, s = round(math.cos(t), 12), round(math.sin(t), 12)
+    x, y, z = float(v[0]), float(v[1]), float(v[2])
+    return [c * x - s * y, s * x + c * y, z]
+
+
+def _mocheo_a_marco_pieza(m, pos, rot_z_deg):
+    """Pasa un mocheo (global COCO) al marco local de una pieza con pose.
+
+    La pieza se construye sin rotar en su marco local y luego se coloca con
+    `Placement = pos + rot_z`. Por tanto, local = Rz(-rot_z) · (global - pos).
+
+    - Caja {x,y,z,w,h,d}: se transforman sus 8 vértices y se recalcula la caja
+      alineada (w,h,d) en el marco local.
+    - Prisma {puntos,eje,largo}: se transforman los puntos y el eje. Si el eje
+      local queda en sentido negativo, el polígono se desplaza al otro extremo
+      para que el prisma siga extruyendo en sentido positivo (contrato de
+      `_corte_mocheo` en el panel).
+    """
+    px, py, pz_ = float(pos[0]), float(pos[1]), float(pos[2])
+
+    def a_local(q):
+        d = [float(q[0]) - px, float(q[1]) - py, float(q[2]) - pz_]
+        return _girar_z_inversa(d, rot_z_deg)
+
+    if "puntos" in m:
+        largo = float(m.get("largo", 0.0))
+        eje_g = _VECTOR_EJE_NOMBRE.get(m.get("eje", "z"), (0, 0, 1))
+        # Dirección del eje en el marco local (sin traslación).
+        dir_l = _girar_z_inversa(eje_g, rot_z_deg)
+        k = max(range(3), key=lambda i: abs(dir_l[i]))
+        signo = 1.0 if dir_l[k] >= 0 else -1.0
+        puntos = [a_local(q) for q in m["puntos"]]
+        if signo < 0:
+            puntos = [[p[i] + dir_l[i] * largo for i in range(3)]
+                      for p in puntos]
+        return {"puntos": puntos, "eje": "xyz"[k], "largo": largo}
+
+    x, y, z = float(m.get("x", 0.0)), float(m.get("y", 0.0)), float(
+        m.get("z", 0.0))
+    w, h, d = float(m.get("w", 0.0)), float(m.get("h", 0.0)), float(
+        m.get("d", 0.0))
+    esquinas = [a_local([cx, cy, cz])
+                for cx in (x, x + w) for cy in (y, y + h) for cz in (z, z + d)]
+    mins = [min(e[i] for e in esquinas) for i in range(3)]
+    maxs = [max(e[i] for e in esquinas) for i in range(3)]
+    salida = dict(m)
+    salida.update({"x": mins[0], "y": mins[1], "z": mins[2],
+                   "w": maxs[0] - mins[0], "h": maxs[1] - mins[1],
+                   "d": maxs[2] - mins[2]})
+    return salida
+
+
+def _pose_de_pieza(pieza):
+    """(pos, rot_z) de una pieza: la asignada o la que dará `pos` más tarde.
+
+    Las piezas se colocan después con `pose_panel_desde_dict(caja)` cuando
+    aún no tienen `pos`; aquí se usa la misma fuente para que el mocheo local
+    y la colocación final coincidan.
+    """
+    if pieza.get("pos") is not None:
+        return pieza["pos"], float(pieza.get("rot_z", 0.0))
+    pose = VDO_FR.pose_panel_desde_dict(pieza["caja_geometrica"])
+    return pose["pos"], float(pose["rot_z"])
+
+
+def _mocheos_locales(prismas, origen, rot_z_deg=0.0):
+    """Pasa prismas globales al marco local de una pieza con pose.
+
+    `origen` es la posición de la pieza (pos) en el marco del COCO; `rot_z_deg`,
+    su rotación Z. Con rot_z=0 equivale a restar el origen.
+    """
+    return [_mocheo_a_marco_pieza(pr, origen, rot_z_deg) for pr in prismas]
 
 
 def _cortar_shape(forma, recorte):
@@ -187,8 +263,9 @@ def _expandir_reengrose(pieza):
             continue
         cortes = cortes_tiras.get(sub.get("nombre"))
         if cortes and sub.get("caja_geometrica"):
+            pos_sub, rot_sub = _pose_de_pieza(sub)
             sub["mocheos_json"] = json.dumps(
-                _mocheos_locales(cortes, sub["caja_geometrica"]))
+                _mocheos_locales(cortes, pos_sub, rot_sub))
     for sub in subpiezas:
         if sub.get("rol_reengrose") == "refuerzo":
             # Los refuerzos de reengrose son piezas adicionales del panel
@@ -239,6 +316,17 @@ def _altura_zocalo(fp, alto):
     if altura <= 0.0 or altura >= alto:
         return 0.0, sep
     return altura, sep
+
+
+def altura_zocalo_de(fp):
+    """H_zocalo efectivo de un COCO (0 si no hay zócalo). Lo lee el hijo."""
+    return _altura_zocalo(fp, float(fp.Alto))[0]
+
+
+def luz_suelo_de(fp):
+    """luz_suelo por defecto del COCO (mm), heredado por sus fachadas."""
+    valor = getattr(fp, "LuzSueloDefault", None)
+    return float(valor) if valor is not None else 15.0
 
 
 def _desplazar_z_paneles(paneles, dz):
@@ -856,22 +944,14 @@ class CocoFeature:
                 pz["nombre"] = f"{fp.Label}_{pz['nombre']}"
                 pz["material_ref"] = fp.VDO_Material_Ref
                 # Convertir mocheos (coordenadas globales COCO) al marco local
-                # del panel, para que PanelFeature pueda aplicar los cortes
-                # sobre su propio box base.
+                # de la pieza, deshaciendo su pose (pos + rot_z), para que
+                # PanelFeature los aplique sobre su propio box base.
                 _caja = pz.get("caja_geometrica") or {}
                 _mocheos = pz.get("mocheos")
                 if _caja and _mocheos:
-                    _m_loc = []
-                    for _m in _mocheos:
-                        _m_l = dict(_m)
-                        _m_l["x"] = float(_m.get("x", 0.0)) - float(
-                            _caja.get("x", 0.0))
-                        _m_l["y"] = float(_m.get("y", 0.0)) - float(
-                            _caja.get("y", 0.0))
-                        _m_l["z"] = float(_m.get("z", 0.0)) - float(
-                            _caja.get("z", 0.0))
-                        _m_loc.append(_m_l)
-                    pz["mocheos_json"] = json.dumps(_m_loc)
+                    _pos_pz, _rot_pz = _pose_de_pieza(pz)
+                    pz["mocheos_json"] = json.dumps(
+                        _mocheos_locales(_mocheos, _pos_pz, _rot_pz))
                 paneles_data.append(pz)
 
             # Añadir piezas visto al despiece (Concepto 3A)
@@ -985,6 +1065,8 @@ class CocoFeature:
             raise
 
     PROPS_GEOM_COCO = frozenset({"Alto", "Ancho", "FondoModulo", "Espesor", "Tapa", "Base"})
+    # Propiedades de las que dependen las fachadas hijas (Δ_S heredado).
+    PROPS_HEREDADAS_PUERTA = frozenset({"LuzSueloDefault", "VDO_Chassis_JSON", "Alto"})
 
     def onChanged(self, fp, prop):
         """Propaga la pose y las cotas del COCO a sus hijos (fuera de execute()).
@@ -994,9 +1076,11 @@ class CocoFeature:
         Espesor/Tapa/Base re-dimensiona los PanelFeature hijos sin abrir
         TaskPanel y sin disparar "still touched after recompute".
         """
-        if prop != "Placement" and prop not in self.PROPS_GEOM_COCO:
-            return
         if getattr(fp, "_bloqueo_sync", False):
+            return
+        if prop in self.PROPS_HEREDADAS_PUERTA:
+            self._tocar_puertas_hijas(fp)
+        if prop != "Placement" and prop not in self.PROPS_GEOM_COCO:
             return
         try:
             self._bloqueo_sync = True
@@ -1006,6 +1090,17 @@ class CocoFeature:
                 self._propagar_dimensiones_hijos(fp)
         finally:
             self._bloqueo_sync = False
+
+    def _tocar_puertas_hijas(self, fp):
+        """Marca las puertas hijas para recalcular su Δ_S heredado.
+
+        El documento no sabe que una puerta depende de propiedades del padre;
+        sin este toque, un cambio de luz_suelo o de zócalo no se propaga.
+        """
+        doc = fp.Document
+        for obj in list(doc.Objects):
+            if getattr(obj, "ParentCOCO", None) is fp:
+                obj.touch()
 
     def _propagar_dimensiones_hijos(self, fp):
         """Empuja las cotas teoricas del COCO a los PanelFeature hijos existentes.

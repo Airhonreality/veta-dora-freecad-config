@@ -152,6 +152,12 @@ SPEC_COCO = ModuloSpec(
               ayuda="Espesor del tablero (mm)",
               default=VDO_D.ESPESOR_DEFAULT, minimo=1, maximo=40,
               decimales=0, sufijo=" mm", clave_motor="espesor"),
+        Param("LuzSueloDefault", "length", "Dimensiones",
+              etiqueta="Luz al suelo (fachadas)",
+              ayuda="Holgura entre fachadas inferiores y el piso (mm). "
+                    "Cada fachada inferior hereda Δ_S = H_zocalo − luz",
+              default=15.0, minimo=0.0, maximo=100.0, sufijo=" mm",
+              clave_config="luz_suelo_default"),
 
         Param("TieneFondo", "bool", "Estructura", etiqueta="Tiene fondo",
               ayuda="Habilitar fondo/respaldo",

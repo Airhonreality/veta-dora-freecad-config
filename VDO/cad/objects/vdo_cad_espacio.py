@@ -112,6 +112,11 @@ def make_espacio(configuracion):
         return None
 
     nombre = configuracion.get("nombre", "ESPACIO_SinNombre")
+    # "nombre" es el identificador del objeto; NombreEspacio (que alimenta
+    # el membrete del dossier) toma el mismo valor salvo que el llamador
+    # pase explicitamente "nombre_espacio".
+    config = dict(configuracion)
+    config.setdefault("nombre_espacio", nombre)
 
     # Toda la creacion en una transaccion para que un solo Ctrl+Z
     # deshaga el espacio completo (criterio E-2 de docs/07).
@@ -123,7 +128,7 @@ def make_espacio(configuracion):
         if App.GuiUp:
             ViewProviderEspacio(obj.ViewObject)
 
-        aplicar_config(obj, SPEC_ESPACIO, configuracion)
+        aplicar_config(obj, SPEC_ESPACIO, config)
 
         doc.commitTransaction()
     except Exception:

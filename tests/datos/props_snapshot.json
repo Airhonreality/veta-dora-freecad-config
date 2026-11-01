@@ -157,19 +157,19 @@
    "doc": "",
    "grupo": "",
    "typeid": "App::PropertyPythonObject",
-   "valor": "<VDO.cad.objects.vdo_cad_cajon.CajonFeature object at 0x7fc93cb942f0>"
+   "valor": "<VDO.cad.objects.vdo_cad_cajon.CajonFeature object at 0x7fd22240c2f0>"
   },
   "Shape": {
    "doc": "",
    "grupo": "",
    "typeid": "Part::PropertyPartShape",
-   "valor": "<Shape object at 0x7fc910004f80>"
+   "valor": "<Shape object at 0x55d8689d5430>"
   },
   "ShapeMaterial": {
    "doc": "",
    "grupo": "",
    "typeid": "Materials::PropertyMaterial",
-   "valor": "<Material at 0x55db997dc2b0>"
+   "valor": "<Material at 0x55d868248430>"
   },
   "SistemaApertura": {
    "doc": "Sistema de apertura del frente del cajón",
@@ -372,6 +372,12 @@
    "typeid": "App::PropertyString",
    "valor": ""
   },
+  "LuzSueloDefault": {
+   "doc": "Holgura entre fachadas inferiores y el piso (mm). Cada fachada inferior hereda Δ_S = H_zocalo − luz",
+   "grupo": "Dimensiones",
+   "typeid": "App::PropertyLength",
+   "valor": 15.0
+  },
   "Piezas_Omitidas": {
    "doc": "Roles de paneles desvinculados (omitos al recompute)",
    "grupo": "VDO",
@@ -406,7 +412,7 @@
    "doc": "",
    "grupo": "",
    "typeid": "App::PropertyPythonObject",
-   "valor": "<VDO.cad.objects.vdo_cad_coco.CocoFeature object at 0x7fc93cb94d70>"
+   "valor": "<VDO.cad.objects.vdo_cad_coco.CocoFeature object at 0x7fd22240cd70>"
   },
   "ResumenEspacios": {
    "doc": "Resumen legible de espacios calculados (solo lectura)",
@@ -418,13 +424,13 @@
    "doc": "",
    "grupo": "",
    "typeid": "Part::PropertyPartShape",
-   "valor": "<Shape object at 0x7fc90c001800>"
+   "valor": "<Shape object at 0x7fd20800cfa0>"
   },
   "ShapeMaterial": {
    "doc": "",
    "grupo": "",
    "typeid": "Materials::PropertyMaterial",
-   "valor": "<Material at 0x55db997dc2b0>"
+   "valor": "<Material at 0x55d868248430>"
   },
   "Tapa": {
    "doc": "Configuración de la tapa",
@@ -621,19 +627,19 @@
    "doc": "",
    "grupo": "",
    "typeid": "App::PropertyPythonObject",
-   "valor": "<VDO.cad.objects.vdo_cad_panel.PanelFeature object at 0x7fc940d35b80>"
+   "valor": "<VDO.cad.objects.vdo_cad_panel.PanelFeature object at 0x7fd226a45a90>"
   },
   "Shape": {
    "doc": "",
    "grupo": "",
    "typeid": "Part::PropertyPartShape",
-   "valor": "<Solid object at 0x7fc90c001800>"
+   "valor": "<Solid object at 0x7fd20800cfa0>"
   },
   "ShapeMaterial": {
    "doc": "",
    "grupo": "",
    "typeid": "Materials::PropertyMaterial",
-   "valor": "<Material at 0x55db997dc2b0>"
+   "valor": "<Material at 0x55d868248430>"
   },
   "VDO_Anclaje": {
    "doc": "Esquina del módulo que se alinea con el punto de colocación",
@@ -982,19 +988,19 @@
    "doc": "",
    "grupo": "",
    "typeid": "App::PropertyPythonObject",
-   "valor": "<VDO.cad.objects.vdo_cad_panel.PanelFeature object at 0x7fc940d492b0>"
+   "valor": "<VDO.cad.objects.vdo_cad_panel.PanelFeature object at 0x7fd226a51c50>"
   },
   "Shape": {
    "doc": "",
    "grupo": "",
    "typeid": "Part::PropertyPartShape",
-   "valor": "<Solid object at 0x7fc90c001800>"
+   "valor": "<Solid object at 0x7fd20800cfa0>"
   },
   "ShapeMaterial": {
    "doc": "",
    "grupo": "",
    "typeid": "Materials::PropertyMaterial",
-   "valor": "<Material at 0x55db997dc2b0>"
+   "valor": "<Material at 0x55d868248430>"
   },
   "VDO_Anclaje": {
    "doc": "Esquina del módulo que se alinea con el punto de colocación",
@@ -1343,19 +1349,19 @@
    "doc": "",
    "grupo": "",
    "typeid": "App::PropertyPythonObject",
-   "valor": "<VDO.cad.objects.vdo_cad_panel.PanelFeature object at 0x7fc940d49d30>"
+   "valor": "<VDO.cad.objects.vdo_cad_panel.PanelFeature object at 0x7fd226a51e10>"
   },
   "Shape": {
    "doc": "",
    "grupo": "",
    "typeid": "Part::PropertyPartShape",
-   "valor": "<Solid object at 0x7fc90c001800>"
+   "valor": "<Solid object at 0x7fd20800cfa0>"
   },
   "ShapeMaterial": {
    "doc": "",
    "grupo": "",
    "typeid": "Materials::PropertyMaterial",
-   "valor": "<Material at 0x55db997dc2b0>"
+   "valor": "<Material at 0x55d868248430>"
   },
   "VDO_Anclaje": {
    "doc": "Esquina del módulo que se alinea con el punto de colocación",
@@ -1734,7 +1740,7 @@
    "doc": "",
    "grupo": "",
    "typeid": "App::PropertyPythonObject",
-   "valor": "<VDO.cad.objects.vdo_cad_puerta.PuertaFeature object at 0x7fc93cb95e80>"
+   "valor": "<VDO.cad.objects.vdo_cad_puerta.PuertaFeature object at 0x7fd22240de80>"
   },
   "SentidoApertura": {
    "doc": "Sentido de apertura",
@@ -1755,13 +1761,13 @@
    "doc": "",
    "grupo": "",
    "typeid": "Part::PropertyPartShape",
-   "valor": "<Compound object at 0x7fc90c0036f0>"
+   "valor": "<Compound object at 0x55d868a09050>"
   },
   "ShapeMaterial": {
    "doc": "",
    "grupo": "",
    "typeid": "Materials::PropertyMaterial",
-   "valor": "<Material at 0x55db997dc2b0>"
+   "valor": "<Material at 0x55d868248430>"
   },
   "SistemaApertura": {
    "doc": "Sistema de apertura/fachada",
@@ -1992,19 +1998,19 @@
    "doc": "",
    "grupo": "",
    "typeid": "App::PropertyPythonObject",
-   "valor": "<VDO.cad.objects.vdo_cad_tambor.TamborFeature object at 0x7fc93cb95fd0>"
+   "valor": "<VDO.cad.objects.vdo_cad_tambor.TamborFeature object at 0x7fd22240dfd0>"
   },
   "Shape": {
    "doc": "",
    "grupo": "",
    "typeid": "Part::PropertyPartShape",
-   "valor": "<Compound object at 0x7fc90c0036f0>"
+   "valor": "<Compound object at 0x55d868a09050>"
   },
   "ShapeMaterial": {
    "doc": "",
    "grupo": "",
    "typeid": "Materials::PropertyMaterial",
-   "valor": "<Material at 0x55db997dc2b0>"
+   "valor": "<Material at 0x55d868248430>"
   },
   "TipoTambor": {
    "doc": "Tipo de panel entamborado",
@@ -2189,19 +2195,19 @@
    "doc": "",
    "grupo": "",
    "typeid": "App::PropertyPythonObject",
-   "valor": "<VDO.cad.objects.vdo_cad_zocalo.ZocaloFeature object at 0x7fc93cb96270>"
+   "valor": "<VDO.cad.objects.vdo_cad_zocalo.ZocaloFeature object at 0x7fd22240e270>"
   },
   "Shape": {
    "doc": "",
    "grupo": "",
    "typeid": "Part::PropertyPartShape",
-   "valor": "<Compound object at 0x7fc90c0036f0>"
+   "valor": "<Compound object at 0x55d868a09050>"
   },
   "ShapeMaterial": {
    "doc": "",
    "grupo": "",
    "typeid": "Materials::PropertyMaterial",
-   "valor": "<Material at 0x55db997dc2b0>"
+   "valor": "<Material at 0x55d868248430>"
   },
   "TieneTrasera": {
    "doc": "Cierra el cajón del zócalo por detrás",

@@ -113,11 +113,18 @@ def _sin_duplicados(objetos):
     return salida
 
 
-def fuentes_planta(espacio):
-    """Hoja A: arquitectura y mobiliario del espacio, en sus sólidos reales."""
+FAMILIAS_POR_DEFECTO = ("arquitectura", "mobiliario")
+
+
+def fuentes_planta(espacio, familias=FAMILIAS_POR_DEFECTO):
+    """Sólidos reales del espacio de las familias pedidas.
+
+    Por defecto, arquitectura y mobiliario (huella y L02). La lámina 1A usa
+    sólo arquitectura: «cero muebles» para el replanteo en obra.
+    """
     fuentes = []
     for hijo in (getattr(espacio, "Hijos", None) or []):
-        if clasificar_hijo(hijo) in ("arquitectura", "mobiliario"):
+        if clasificar_hijo(hijo) in familias:
             fuentes.extend(_fuentes(hijo))
     return _sin_duplicados(fuentes)
 
@@ -274,7 +281,9 @@ def generar_dossier(doc, espacio, destino=None):
     try:
         for lamina in catalogo:
             if lamina["alcance"] == "espacio":
-                fuentes = fuentes_planta(espacio)
+                fuentes = fuentes_planta(
+                    espacio, tuple(lamina.get("familias",
+                                              FAMILIAS_POR_DEFECTO)))
                 if not fuentes:
                     continue  # DOS-18: sin geometría, hoja omitida
                 page, tpl = _crear_pagina(doc, "Dossier_%s" % lamina["tipo"])
