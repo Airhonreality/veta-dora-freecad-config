@@ -430,7 +430,7 @@ Recibidas como indicación de diseño del Guardián de Arquitectura. Donde el te
 | **D59 · Zócalo dentro de `alto`** | La carcasa se calcula con `alto - H_zocalo` y se desplaza en Z. El zócalo frontal ocupa Z ∈ [0, H_zocalo], retranqueado `separacion_frente` (50 mm) en Y, entre laterales. La base arranca en Z = H_zocalo. Sin configuración de base no hay zócalo. | `vdo_cad_coco.py`: `_altura_zocalo`, `_aplicar_zocalo`, `_desplazar_z_paneles` |
 | **Ranura de encastre (D2)** | Operación de **mecanizado** en la base, no B-Rep: cara superior, eje Y, profundidad `espesor_base / 3` (6 mm), anchura `espesor_division + 0.2` (18.2 mm). Se registra en `VDO_Mecanizados_JSON` y aparece en la columna *Operation* del CSV. | `vdo_cad_coco.py`, `vdo_cam_cutlist.py` |
 | **Altura de la división** | **Resolución de la contradicción**: el texto pide que la división crezca 6 mm y, a la vez, contacto coplanar sin solape. El B-Rep queda nominal (sin solape, como exigen las pruebas). El crecimiento de 6 mm va a la **lista de corte** (`VDO_Encastre_mm`). | `vdo_cam_cutlist.py::_datos_panel` |
-| **Fachadas Δ_S** | **No implementado.** La regla `Δ_S = +H_zocalo − luz_suelo` necesita un parámetro de fachada que todavía no existe. | (pendiente) |
+| **Fachadas Δ_S** | **Puertas: implementado.** `Δ_S = H_zocalo − COCO.LuzSueloDefault` en fachadas inferiores; el vector local de la fachada manda. **Cajones: pendiente** (sin vínculo `ParentCOCO`). | `vdo_cad_puerta.py::_deltas_heredados_si_inferior`, `vdo_math_facade.py::deltas_heredados_inferior` |
 
 **Nota de datos:** las propiedades nuevas `VDO_Encastre_mm` y `VDO_Mecanizados_JSON` cambian el contrato de propiedades. La instantánea `tests/datos/props_snapshot.json` se regeneró con `tools/vdo_snapshot_props.py`.
 
